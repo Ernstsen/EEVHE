@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Integration test" type="Application" factoryName="Application">
-    <option name="MAIN_CLASS_NAME" value="dk.mmj.evhe.Main" />
-    <module name="EVHE" />
+    <option name="MAIN_CLASS_NAME" value="dk.mmj.eevhe.Main" />
+    <module name="eevhe" />
     <option name="PROGRAM_PARAMETERS" value="--integrationTest --duration=2 --vote -start -end -after" />
     <method v="2">
       <option name="Make" enabled="true" />

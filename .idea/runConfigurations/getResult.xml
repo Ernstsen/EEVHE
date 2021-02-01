@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="getResult" type="Application" factoryName="Application" folderName="Client">
-    <option name="MAIN_CLASS_NAME" value="dk.mmj.evhe.Main" />
-    <module name="EVHE" />
+    <option name="MAIN_CLASS_NAME" value="dk.mmj.eevhe.Main" />
+    <module name="eevhe" />
     <option name="PROGRAM_PARAMETERS" value="--client --read=true" />
     <method v="2">
       <option name="Make" enabled="true" />
