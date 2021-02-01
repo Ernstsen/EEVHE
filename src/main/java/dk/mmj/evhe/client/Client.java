@@ -63,7 +63,7 @@ public abstract class Client implements Application {
 
         PublicInfoList publicInfoList;
         try {
-            publicInfoList = new ObjectMapper().readerFor(PublicInfoList.class).readValue(responseString);
+            publicInfoList = new ObjectMapper().readValue(responseString,PublicInfoList.class);
         } catch (IOException e) {
             logger.error("Failed to deserialize public informations list retrieved from bulletin board", e);
             System.exit(-1);

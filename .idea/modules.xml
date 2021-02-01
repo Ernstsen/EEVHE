@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/EVHE.iml" filepath="$PROJECT_DIR$/EVHE.iml" />
+      <module fileurl="file://$PROJECT_DIR$/eevhe.iml" filepath="$PROJECT_DIR$/eevhe.iml" />
     </modules>
   </component>
 </project>

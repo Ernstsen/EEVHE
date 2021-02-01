@@ -75,7 +75,7 @@ public class ResultFetcher extends Client {
             List<PersistedVote> actualVotes;
             try {
                 String getVotes = target.path("getVotes").request().get(String.class);
-                votes = new ObjectMapper().readerFor(VoteList.class).readValue(getVotes);
+                votes = new ObjectMapper().readValue(getVotes, VoteList.class);
                 logger.debug("Filtering votes");
                 actualVotes = votes.getVotes().parallelStream()
                         .filter(v -> v.getTs().getTime() < endTime)

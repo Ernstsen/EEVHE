@@ -66,7 +66,7 @@ public class DecryptionAuthority extends AbstractServer {
             String publicKeyString = reader.readLine();
             String endTimeString = reader.readLine();
 
-            pk = new ObjectMapper().readerFor(PublicKey.class).readValue(publicKeyString);
+            pk = new ObjectMapper().readValue(publicKeyString, PublicKey.class);
 
 
             sk = new PartialSecretKey(secretValue, p);
@@ -144,7 +144,7 @@ public class DecryptionAuthority extends AbstractServer {
     private ArrayList<PersistedVote> getVotes() {
         try {
             String getVotes = bulletinBoard.path("getVotes").request().get(String.class);
-            VoteList voteObjects = new ObjectMapper().readerFor(VoteList.class).readValue(getVotes);
+            VoteList voteObjects = new ObjectMapper().readValue(getVotes, VoteList.class);
             ArrayList<PersistedVote> votes = new ArrayList<>();
 
             for (Object vote : voteObjects.getVotes()) {
