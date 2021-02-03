@@ -1,9 +1,7 @@
 package dk.mmj.eevhe.crypto;
 
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
-import dk.mmj.eevhe.entities.CipherText;
-import dk.mmj.eevhe.entities.PublicKey;
-import dk.mmj.eevhe.entities.VoteDTO;
+import dk.mmj.eevhe.entities.*;
 import jersey.repackaged.com.google.common.collect.Lists;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
@@ -61,12 +59,45 @@ public class SecurityUtils {
      * @param publicKey the public key used to encrypt the vote.
      * @return a VoteDTO containing the ciphertext, id and proof for the encrypted vote.
      */
-    public static VoteDTO generateVote(int vote, String id, PublicKey publicKey) {
+    public static CandidateVoteDTO generateVote(int vote, String id, PublicKey publicKey) {
         BigInteger r = SecurityUtils.getRandomNumModN(publicKey.getQ());
         CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, BigInteger.valueOf(vote), r);
-        VoteDTO.Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, BigInteger.valueOf(vote));
+        Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, BigInteger.valueOf(vote));
 
-        return new VoteDTO(ciphertext, id, proof);
+        return new CandidateVoteDTO(ciphertext, id, proof);
+    }
+
+    public static BallotDTO generateBallot(int vote, int candidates, String id, PublicKey publicKey) {
+        ArrayList<CandidateVoteDTO> votes = new ArrayList<>();
+        BigInteger[] rVals = new BigInteger[candidates];
+        List<CipherText> cipherTexts = new ArrayList<>();
+
+        boolean voted = false;
+        for (int i = 0; i < candidates; i++) {
+            int isYes = i == vote ? 1 : 0;
+            //If votes is yes, flip voted boolean as to register vote is not blank
+            voted |= i == vote;
+
+            BigInteger r = SecurityUtils.getRandomNumModN(publicKey.getQ());
+            rVals[i] = r;
+
+            CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, BigInteger.valueOf(isYes), r);
+            cipherTexts.add(ciphertext);
+
+            Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, BigInteger.valueOf(isYes));
+
+            votes.add(new CandidateVoteDTO(ciphertext, id, proof));
+        }
+
+        BigInteger rSum = Arrays.stream(rVals).reduce(BigInteger.ZERO, BigInteger::add);
+        CipherText cipherTextSum = concurrentSum(cipherTexts, 500);
+
+        //Sum of votes is one if a vote was cast, zero if the votes was blank (outside range of candidate list)
+        BigInteger sumOfVotes = voted ? BigInteger.ONE : BigInteger.ZERO;
+        Proof proof = VoteProofUtils.generateProof(cipherTextSum, publicKey, rSum, id, sumOfVotes);
+
+        //TODO: Return BallotDTO
+        return new BallotDTO(votes, id, proof);
     }
 
     /**
@@ -193,12 +224,12 @@ public class SecurityUtils {
      * @param publicKey public key the votes are encrypted under
      * @return sum of all votes - meaning the product of the ciphertexts
      */
-    static CipherText voteSum(List<? extends VoteDTO> votes, PublicKey publicKey) {
+    static CipherText voteSum(List<? extends CandidateVoteDTO> votes, PublicKey publicKey) {
         CipherText acc = new CipherText(BigInteger.ONE, BigInteger.ONE);
 
         return votes.stream()
                 .filter(v -> VoteProofUtils.verifyProof(v, publicKey))
-                .map(VoteDTO::getCipherText)
+                .map(CandidateVoteDTO::getCipherText)
                 .reduce(acc, ElGamal::homomorphicAddition);
     }
 
@@ -215,11 +246,11 @@ public class SecurityUtils {
      * @param partitionSize size of partitions
      * @return sum of all votes
      */
-    public static CipherText concurrentVoteSum(List<? extends VoteDTO> votes, PublicKey publicKey, int partitionSize) {
+    public static CipherText concurrentVoteSum(List<? extends CandidateVoteDTO> votes, PublicKey publicKey, int partitionSize) {
 
         List<CipherText> cipherTexts = votes.parallelStream()
                 .filter(v -> VoteProofUtils.verifyProof(v, publicKey))
-                .map(VoteDTO::getCipherText)
+                .map(CandidateVoteDTO::getCipherText)
                 .collect(Collectors.toList());
 
         return concurrentSum(cipherTexts, partitionSize);

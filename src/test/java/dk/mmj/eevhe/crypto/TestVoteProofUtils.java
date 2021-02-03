@@ -1,10 +1,7 @@
 package dk.mmj.eevhe.crypto;
 
-import dk.mmj.eevhe.entities.CipherText;
-import dk.mmj.eevhe.entities.KeyPair;
-import dk.mmj.eevhe.entities.PublicKey;
+import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
-import dk.mmj.eevhe.entities.VoteDTO;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -26,11 +23,11 @@ public class TestVoteProofUtils {
 
         CipherText cipherText = ElGamal.homomorphicEncryption(publicKey, v, r);
 
-        VoteDTO.Proof proof = VoteProofUtils.generateProof(cipherText, publicKey, r, cipherTextId, v);
+        Proof proof = VoteProofUtils.generateProof(cipherText, publicKey, r, cipherTextId, v);
 
-        VoteDTO voteDTO = new VoteDTO(cipherText, proofId, proof);
+        CandidateVoteDTO candidateVoteDTO = new CandidateVoteDTO(cipherText, proofId, proof);
 
-        return VoteProofUtils.verifyProof(voteDTO, publicKey);
+        return VoteProofUtils.verifyProof(candidateVoteDTO, publicKey);
     }
 
     @Test
@@ -73,11 +70,11 @@ public class TestVoteProofUtils {
         BigInteger v = BigInteger.valueOf(1);
         CipherText cipherText = ElGamal.homomorphicEncryption(keyPair.getPublicKey(), v, r);
 
-        VoteDTO.Proof proof = VoteProofUtils.generateProof(cipherText, keyPair.getPublicKey(), r2, "ID", v);
+        Proof proof = VoteProofUtils.generateProof(cipherText, keyPair.getPublicKey(), r2, "ID", v);
 
-        VoteDTO voteDTO = new VoteDTO(cipherText, "ID", proof);
+        CandidateVoteDTO candidateVoteDTO = new CandidateVoteDTO(cipherText, "ID", proof);
 
-        boolean verify = VoteProofUtils.verifyProof(voteDTO, keyPair.getPublicKey());
+        boolean verify = VoteProofUtils.verifyProof(candidateVoteDTO, keyPair.getPublicKey());
 
         assertFalse("Verified proof where r was different from ciphertext", verify);
     }
@@ -93,16 +90,15 @@ public class TestVoteProofUtils {
             r2 = SecurityUtils.getRandomNumModN(keyPair.getPublicKey().getQ());
         } while (r2.equals(r));//Make sure r2 is not equals to r
 
-
         BigInteger v = BigInteger.valueOf(1);
         CipherText cipherText = ElGamal.homomorphicEncryption(keyPair.getPublicKey(), v, r);
         CipherText cipherText2 = ElGamal.homomorphicEncryption(keyPair.getPublicKey(), BigInteger.valueOf(0), r);
 
-        VoteDTO.Proof proof = VoteProofUtils.generateProof(cipherText, keyPair.getPublicKey(), r2, "ID", v);
+        Proof proof = VoteProofUtils.generateProof(cipherText, keyPair.getPublicKey(), r2, "ID", v);
 
-        VoteDTO voteDTO = new VoteDTO(cipherText2, "ID", proof);
+        CandidateVoteDTO candidateVoteDTO = new CandidateVoteDTO(cipherText2, "ID", proof);
 
-        boolean verify = VoteProofUtils.verifyProof(voteDTO, keyPair.getPublicKey());
+        boolean verify = VoteProofUtils.verifyProof(candidateVoteDTO, keyPair.getPublicKey());
 
         assertFalse("Verified proof where ciphertext had been replaced", verify);
     }

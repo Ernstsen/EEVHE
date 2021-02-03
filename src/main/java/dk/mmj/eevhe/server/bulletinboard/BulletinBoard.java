@@ -17,7 +17,7 @@ public class BulletinBoard extends AbstractServer {
     static final String RESULT = "result";
     static final String VOTES = "votes";
 
-    private BulletinBoardConfiguration configuration;
+    private final BulletinBoardConfiguration configuration;
 
     public BulletinBoard(BulletinBoardConfiguration configuration) {
         this.configuration = configuration;
@@ -43,7 +43,7 @@ public class BulletinBoard extends AbstractServer {
     }
 
     public static class BulletinBoardConfiguration implements Configuration {
-        private Integer port;
+        private final Integer port;
 
         BulletinBoardConfiguration(Integer port) {
             this.port = port;

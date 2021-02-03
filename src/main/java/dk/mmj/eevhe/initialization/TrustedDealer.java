@@ -7,6 +7,7 @@ import dk.mmj.eevhe.Application;
 import dk.mmj.eevhe.crypto.ElGamal;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParametersImpl;
+import dk.mmj.eevhe.entities.Candidate;
 import dk.mmj.eevhe.entities.DistKeyGenResult;
 import dk.mmj.eevhe.entities.PublicInformationEntity;
 import org.apache.commons.compress.utils.IOUtils;
@@ -41,12 +42,13 @@ public class TrustedDealer implements Application {
     private static final String PRIVATE_KEY_NAME = "rsa.pub";
     private static final String PUBLIC_KEY_NAME = "rsa";
     private static final Logger logger = LogManager.getLogger(TrustedDealer.class);
-    private JerseyWebTarget bulletinBoard;
-    private int polynomialDegree;
-    private int servers;
-    private long endTime;
-    private Path rootPath;
-    private Path keyPath;
+    private final JerseyWebTarget bulletinBoard;
+    private final int polynomialDegree;
+    private final int servers;
+    private final long endTime;
+    private final Path rootPath;
+    private final Path keyPath;
+    private List<Candidate> candidates;
 
     public TrustedDealer(TrustedDealerConfiguration config) {
         bulletinBoard = configureWebTarget(logger, config.bulletinBoardPath);
@@ -58,6 +60,8 @@ public class TrustedDealer implements Application {
 
         createIfNotExists(rootPath);
         createIfNotExists(keyPath);
+
+        loadCandidates();
 
         if (config.newKey) {
             try {
@@ -78,6 +82,15 @@ public class TrustedDealer implements Application {
                 System.exit(-1);
             }
         }
+    }
+
+    private void loadCandidates(){
+        //TODO: Replace with load from config file
+        candidates = Arrays.asList(
+                new Candidate(0, "mette", "A - Socialdemokratiet"),
+                new Candidate(1, "lars", "V - Venstre"),
+                new Candidate(2, "pia", "O - Dansk Folkeparti")
+        );
     }
 
 
@@ -130,7 +143,8 @@ public class TrustedDealer implements Application {
                 distKeyGenResult.getG(),
                 distKeyGenResult.getQ(),
                 distKeyGenResult.getP(),
-                endTime);
+                endTime,
+                candidates);
 
         logger.info("Signing public information");
         File privateFile = keyPath.resolve(PRIVATE_KEY_NAME).toFile();
@@ -168,7 +182,7 @@ public class TrustedDealer implements Application {
 
     private void post(PublicInformationEntity publicInformation) {
         try {
-            Entity entity = Entity.entity(new ObjectMapper().writeValueAsString(publicInformation), MediaType.APPLICATION_JSON);
+            Entity<?> entity = Entity.entity(new ObjectMapper().writeValueAsString(publicInformation), MediaType.APPLICATION_JSON);
             Response response = bulletinBoard.path("postPublicInfo").request().post(entity);
             if (response.getStatus() <= 200 || response.getStatus() >= 300) {
                 logger.error("Unable to post information to bulletin board, response code was " + response.getStatus());
@@ -206,13 +220,13 @@ public class TrustedDealer implements Application {
      */
     public static class TrustedDealerConfiguration implements Configuration {
 
-        private Path rootPath;
-        private Path keyPath;
-        private int servers;
-        private int polynomialDegree;
-        private String bulletinBoardPath;
-        private boolean newKey;
-        private long endTime;
+        private final Path rootPath;
+        private final Path keyPath;
+        private final int servers;
+        private final int polynomialDegree;
+        private final String bulletinBoardPath;
+        private final boolean newKey;
+        private final long endTime;
 
         /**
          * Constructor for the Trusted Dealer configuration

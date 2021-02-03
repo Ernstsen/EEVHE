@@ -22,7 +22,7 @@ public class ClientConfigBuilder implements CommandLineParser.ConfigBuilder {
     //State
     private String targetUrl = "https://localhost:8080";
     private String id = "TEST_ID" + UUID.randomUUID().toString();
-    private Boolean vote = null;
+    private Integer vote = null;
     private Integer multi = null;
     private boolean read = false;
     private boolean forceCalculations = false;
@@ -41,7 +41,7 @@ public class ClientConfigBuilder implements CommandLineParser.ConfigBuilder {
         } else if (cmd.startsWith(ID)) {
             id = cmd.substring(ID.length());
         } else if (cmd.startsWith(VOTE)) {
-            vote = Boolean.parseBoolean(cmd.substring(VOTE.length()));
+            vote = Integer.parseInt(cmd.substring(VOTE.length()));
         } else if (cmd.startsWith(MULTI)) {
             multi = Integer.parseInt(cmd.substring(MULTI.length()));
         } else if (cmd.startsWith(READ)) {

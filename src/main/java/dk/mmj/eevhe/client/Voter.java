@@ -1,8 +1,10 @@
 package dk.mmj.eevhe.client;
 
 import dk.mmj.eevhe.crypto.SecurityUtils;
+import dk.mmj.eevhe.entities.BallotDTO;
+import dk.mmj.eevhe.entities.Candidate;
 import dk.mmj.eevhe.entities.PublicKey;
-import dk.mmj.eevhe.entities.VoteDTO;
+import dk.mmj.eevhe.entities.CandidateVoteDTO;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthorityConfigBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,14 +15,16 @@ import javax.ws.rs.core.Response;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
 public class Voter extends Client {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthorityConfigBuilder.class);
+    private final Integer multi;
     private String id;
-    private Boolean vote;
-    private Integer multi;
+    private Integer vote;
 
 
     /**
@@ -89,8 +93,10 @@ public class Voter extends Client {
      * @param vote      is the vote to be cast, either 0 or 1.
      */
     private void doVote(int vote, PublicKey publicKey) {
-        VoteDTO voteDTO = SecurityUtils.generateVote(vote, id, publicKey);
-        postVote(voteDTO);
+        int candidateCount = getCandidates().size();
+
+        BallotDTO ballot = SecurityUtils.generateBallot(vote, candidateCount, id, publicKey);
+        postBallot(ballot);
     }
 
     /**
@@ -117,10 +123,26 @@ public class Voter extends Client {
      * Posts the encrypted vote to the public server, using the "/vote" path.
      *
      * @param vote the VoteDTO with vote encrypted under the public key, and zero knowledge proof.
+     * @deprecated Use postBallot instead
      */
-    private void postVote(VoteDTO vote) {
+    @Deprecated
+    private void postVote(CandidateVoteDTO vote) {
         Entity<?> entity = Entity.entity(vote, MediaType.APPLICATION_JSON_TYPE);
-        Response response = target.path("vote").request().post(entity);
+        Response response = target.path("postBallot").request().post(entity);
+
+        if (response.getStatus() != 204) {
+            logger.warn("Failed to post vote to server: Error code was " + response.getStatus());
+        }
+    }
+
+    /**
+     * Posts the encrypted vote to the public server, using the "/vote" path.
+     *
+     * @param ballot the ballot with vote encrypted under the public key, and zero knowledge proofs.
+     */
+    private void postBallot(BallotDTO ballot) {
+        Entity<?> entity = Entity.entity(ballot, MediaType.APPLICATION_JSON_TYPE);
+        Response response = target.path("ballot").request().post(entity);
 
         if (response.getStatus() != 204) {
             logger.warn("Failed to post vote to server: Error code was " + response.getStatus());
@@ -137,13 +159,22 @@ public class Voter extends Client {
      * @return 1 or 0 according to input.
      */
     private int getVote() {
-        if (vote == null) {
-            System.out.println("Please enter vote to be cast: true/false");
+        List<Candidate> candidates = getCandidates();
+        if (vote == null || vote >= candidates.size()) {
+            System.out.println("Please enter vote to be cast. Candidates:");
+            System.out.println("--------------------------------------------");
+            for (Candidate candidate : candidates) {
+                System.out.println(candidate.getIdx() + ": " + candidate.getName());
+                System.out.println(candidate.getDescription());
+                System.out.println("\n");
+            }
+            System.out.println("--------------------------------------------");
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
             try {
                 String s = reader.readLine();
-                vote = Boolean.parseBoolean(s);
+                vote = Integer.parseInt(s);
                 System.out.println("voting: " + vote);
             } catch (IOException ignored) {
                 System.out.println("Unable to read vote - terminating");
@@ -151,11 +182,7 @@ public class Voter extends Client {
             }
         }
 
-        if (vote) {
-            return 1;
-        } else {
-            return 0;
-        }
+        return vote;
     }
 
 
@@ -166,7 +193,7 @@ public class Voter extends Client {
      */
     public static class VoterConfiguration extends ClientConfiguration {
         private final String id;
-        private final Boolean vote;
+        private final Integer vote;
         private final Integer multi;
 
         /**
@@ -175,7 +202,7 @@ public class Voter extends Client {
          * @param vote      what to vote. True is pro while False is against
          * @param multi     if different from null, multiple random votes are dispatched
          */
-        VoterConfiguration(String targetUrl, String id, Boolean vote, Integer multi) {
+        VoterConfiguration(String targetUrl, String id, Integer vote, Integer multi) {
             super(targetUrl);
             this.id = id;
             this.vote = vote;

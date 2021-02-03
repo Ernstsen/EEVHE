@@ -3,6 +3,7 @@ package dk.mmj.eevhe.entities;
 import java.util.List;
 
 @SuppressWarnings("JavaDocs, unused")
+@Deprecated
 public class VoteList {
 
     private List<PersistedVote> votes;

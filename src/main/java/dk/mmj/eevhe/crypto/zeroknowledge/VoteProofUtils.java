@@ -1,9 +1,7 @@
 package dk.mmj.eevhe.crypto.zeroknowledge;
 
 import dk.mmj.eevhe.crypto.SecurityUtils;
-import dk.mmj.eevhe.entities.CipherText;
-import dk.mmj.eevhe.entities.PublicKey;
-import dk.mmj.eevhe.entities.VoteDTO;
+import dk.mmj.eevhe.entities.*;
 
 import java.math.BigInteger;
 
@@ -20,7 +18,7 @@ public class VoteProofUtils {
      * @return the zero-knowledge proof
      */
     @SuppressWarnings("DuplicateExpressions")
-    public static VoteDTO.Proof generateProof(CipherText cipherText, PublicKey publicKey, BigInteger witness, String id, BigInteger vote) {
+    public static Proof generateProof(CipherText cipherText, PublicKey publicKey, BigInteger witness, String id, BigInteger vote) {
         int v = (vote.intValue() > 0) ? 1 : 0; // For unit-test purposes.
 
         BigInteger[] e = new BigInteger[2];
@@ -65,9 +63,31 @@ public class VoteProofUtils {
         e[v] = s.subtract(e[fakeIndex]).mod(q);
         z[v] = y.subtract(e[v].multiply(witness)).mod(q);
 
-        return new VoteDTO.Proof(e[0], e[1], z[0], z[1]);
+        return new Proof(e[0], e[1], z[0], z[1]);
     }
 
+    /**
+     * Verifies a ballot. For a ballot be verified the following must be true:
+     * <ul>
+     *     <li>Each vote must contain a verifiable proof that it is either 0 or 1</li>
+     *     <li>The proof that the sum of all ciphertexts is either 0 or 1 must be verifiable</li>
+     * </ul>
+     *
+     * @param ballot    the ballot object to be verified
+     * @param publicKey key the votes is encrypted under
+     * @return whether or not the ballot is valid
+     */
+    public static boolean verifyBallot(BallotDTO ballot, PublicKey publicKey) {
+        for (CandidateVoteDTO candidateVote : ballot.getCandidateVotes()) {
+            if (!verifyProof(candidateVote, publicKey)) {
+                return false;
+            }
+        }
+
+        CipherText sum = SecurityUtils.concurrentVoteSum(ballot.getCandidateVotes(), publicKey, 200);
+
+        return verifyProof(ballot.getSumIsOneProof(), sum, ballot.getId(), publicKey);
+    }
 
     /**
      * Method for verifying that the zero-knowledge proof of a vote is correct
@@ -76,16 +96,29 @@ public class VoteProofUtils {
      * @param publicKey key the vote is encrypted under
      * @return whether the vote could be verified
      */
-    public static boolean verifyProof(VoteDTO vote, PublicKey publicKey) {
-        BigInteger e0 = vote.getProof().getE0();
-        BigInteger e1 = vote.getProof().getE1();
-        BigInteger z0 = vote.getProof().getZ0();
-        BigInteger z1 = vote.getProof().getZ1();
+    public static boolean verifyProof(CandidateVoteDTO vote, PublicKey publicKey) {
+        return verifyProof(vote.getProof(), vote.getCipherText(), vote.getId(), publicKey);
+    }
+
+    /**
+     * Method for verifying that the zero-knowledge proof of a vote is correct
+     *
+     * @param proof      the proof to be verified
+     * @param cipherText ciphertext part of the vote
+     * @param id         id used in creating the proof
+     * @param publicKey  key the vote is encrypted under
+     * @return whether the vote could be verified
+     */
+    static boolean verifyProof(Proof proof, CipherText cipherText, String id, PublicKey publicKey) {
+        BigInteger e0 = proof.getE0();
+        BigInteger e1 = proof.getE1();
+        BigInteger z0 = proof.getZ0();
+        BigInteger z1 = proof.getZ1();
         BigInteger g = publicKey.getG();
         BigInteger h = publicKey.getH();
         BigInteger p = publicKey.getP();
-        BigInteger c = vote.getCipherText().getC();
-        BigInteger d = vote.getCipherText().getD();
+        BigInteger c = cipherText.getC();
+        BigInteger d = cipherText.getD();
 
         BigInteger a0 = g.modPow(z0, p).multiply(c.modPow(e0, p)).mod(p);
         BigInteger b0 = h.modPow(z0, p).multiply(d.modPow(e0, p)).mod(p);
@@ -100,7 +133,7 @@ public class VoteProofUtils {
                         b1.toByteArray(),
                         c.toByteArray(),
                         d.toByteArray(),
-                        vote.getId().getBytes()
+                        id.getBytes()
                 })).mod(publicKey.getQ());
 
         BigInteger e = e0.add(e1);

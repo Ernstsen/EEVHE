@@ -15,9 +15,9 @@ import static dk.mmj.eevhe.server.bulletinboard.BulletinBoard.*;
 
 @Path("/")
 public class BulletinBoardResource {
-    private static final String PUBLIC_INFO = "publicInfo";
-    private static Logger logger = LogManager.getLogger(BulletinBoardResource.class);
-    private ServerState state = ServerState.getInstance();
+    private final static String PUBLIC_INFO = "publicInfo";
+    private final static Logger logger = LogManager.getLogger(BulletinBoardResource.class);
+    private final ServerState state = ServerState.getInstance();
 
     @GET
     @Path("type")
@@ -79,9 +79,10 @@ public class BulletinBoardResource {
     @POST
     @Path("vote")
     @Consumes(MediaType.APPLICATION_JSON)
+    @Deprecated
     @SuppressWarnings("unchecked")
-    public void Vote(VoteDTO vote) {
-        Set hasVoted = state.get(HAS_VOTED, HashSet.class);
+    public void vote(CandidateVoteDTO vote) {
+        Set<String> hasVoted = state.get(HAS_VOTED, HashSet.class);
         String voterId = vote.getId();
 
 
@@ -90,8 +91,27 @@ public class BulletinBoardResource {
             throw new NotAllowedException("A vote has already been registered with this ID");
         }
 
-        List votes = state.get(VOTES, ArrayList.class);
+        List<PersistedVote> votes = state.get(VOTES, ArrayList.class);
         votes.add(new PersistedVote(vote));
+        hasVoted.add(voterId);
+    }
+
+    @POST
+    @Path("postBallot")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @SuppressWarnings("unchecked")
+    public void postBallot(BallotDTO ballot) {
+        Set<String> hasVoted = state.get(HAS_VOTED, HashSet.class);
+        String voterId = ballot.getId();
+
+
+        if (hasVoted.contains(voterId)) {
+            logger.warn("Voter with id=" + voterId + " attempted to vote more than once");
+            throw new NotAllowedException("A vote has already been registered with this ID");
+        }
+
+        List<PersistedBallot> votes = state.get(VOTES, ArrayList.class);
+        votes.add(new PersistedBallot(ballot));
         hasVoted.add(voterId);
     }
 
@@ -109,8 +129,8 @@ public class BulletinBoardResource {
     @POST
     @Path("result")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void postResult(PartialResult partialDecryption) {
-        addToList(RESULT, partialDecryption);
+    public void postResult(PartialResultList partialDecryptions) {
+        addToList(RESULT, partialDecryptions);
     }
 
     @SuppressWarnings("unchecked")
@@ -138,6 +158,21 @@ public class BulletinBoardResource {
 
         return new VoteList(list);
     }
+
+    @SuppressWarnings("unchecked")
+    @GET
+    @Path("getVotes")
+    @Produces(MediaType.APPLICATION_JSON)
+    public BallotList getBallots() {
+        List<PersistedBallot> list = state.get(VOTES, List.class);
+
+        if (list == null) {
+            throw new NotFoundException("Voting has not been initialized");
+        }
+
+        return new BallotList(list);
+    }
+
 
     @GET
     @Path("getCurrentTime")

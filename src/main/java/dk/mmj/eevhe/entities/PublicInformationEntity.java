@@ -16,17 +16,19 @@ public class PublicInformationEntity {
     private BigInteger p;
     private long endTime;
     private String signature;
+    private List<Candidate> candidates;
 
     public PublicInformationEntity() {
     }
 
-    public PublicInformationEntity(List<Integer> ids, Map<Integer, BigInteger> publicKeys, BigInteger g, BigInteger q, BigInteger p, long endTime) {
+    public PublicInformationEntity(List<Integer> ids, Map<Integer, BigInteger> publicKeys, BigInteger g, BigInteger q, BigInteger p, long endTime, List<Candidate> candidates) {
         this.ids = ids;
         this.publicKeys = publicKeys;
         this.g = g;
         this.q = q;
         this.p = p;
         this.endTime = endTime;
+        this.candidates = candidates;
     }
 
     public List<Integer> getIds() {
@@ -83,6 +85,15 @@ public class PublicInformationEntity {
 
     public void setSignature(String signature) {
         this.signature = signature;
+    }
+
+    public List<Candidate> getCandidates() {
+        return candidates;
+    }
+
+    public PublicInformationEntity setCandidates(List<Candidate> candidates) {
+        this.candidates = candidates;
+        return this;
     }
 
     /**

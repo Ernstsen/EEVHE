@@ -29,9 +29,9 @@ import java.util.concurrent.TimeUnit;
 public class IntegrationTest implements Application {
     private static final Logger logger = LogManager.getLogger(IntegrationTest.class);
     private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private List<Integer> decryptionAuthorities;
-    private List<Integer> voteDelays;
-    private int duration;
+    private final List<Integer> decryptionAuthorities;
+    private final List<Integer> voteDelays;
+    private final int duration;
 
     public IntegrationTest(IntegrationTest.IntegrationTestConfiguration configuration) {
         this.decryptionAuthorities = configuration.decryptionAuthorities;
@@ -148,9 +148,9 @@ public class IntegrationTest implements Application {
     }
 
     public static class IntegrationTestConfiguration implements Configuration {
-        private List<Integer> decryptionAuthorities;
-        private List<Integer> voteDelays;
-        private int duration;
+        private final List<Integer> decryptionAuthorities;
+        private final List<Integer> voteDelays;
+        private final int duration;
 
         /**
          * @param decryptionAuthorities list of ids for all enabled decryption authorities

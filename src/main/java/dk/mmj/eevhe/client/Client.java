@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.Configuration;
 import dk.mmj.eevhe.Application;
 import dk.mmj.eevhe.crypto.SecurityUtils;
+import dk.mmj.eevhe.entities.Candidate;
 import dk.mmj.eevhe.entities.PublicInfoList;
 import dk.mmj.eevhe.entities.PublicInformationEntity;
 import dk.mmj.eevhe.entities.PublicKey;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
@@ -53,7 +55,16 @@ public abstract class Client implements Application {
         return new PublicKey(h, info.getG(), info.getQ());
     }
 
-    PublicInformationEntity fetchPublicInfo() {
+    /**
+     * @return the list of candidates in the election
+     */
+    protected List<Candidate> getCandidates(){
+        PublicInformationEntity info = fetchPublicInfo();
+
+        return info.getCandidates();
+    }
+
+    protected PublicInformationEntity fetchPublicInfo() {
         if (publicInfo != null) {
             return publicInfo;
         }

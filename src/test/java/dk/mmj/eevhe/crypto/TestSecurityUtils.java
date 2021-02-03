@@ -19,13 +19,30 @@ public class TestSecurityUtils {
     public void shouldCreateCorrectVote1() {
         KeyPair keyPair = generateKeysFromP2048bitsG2();
         String id = "TESTID";
-        VoteDTO voteDTO = SecurityUtils.generateVote(1, id, keyPair.getPublicKey());
+        CandidateVoteDTO candidateVoteDTO = SecurityUtils.generateVote(1, id, keyPair.getPublicKey());
 
-        boolean verified = VoteProofUtils.verifyProof(voteDTO, keyPair.getPublicKey());
+        boolean verified = VoteProofUtils.verifyProof(candidateVoteDTO, keyPair.getPublicKey());
         assertTrue("Unable to verify generated vote", verified);
 
         try {
-            int message = ElGamal.homomorphicDecryption(keyPair, voteDTO.getCipherText(), 1000);
+            int message = ElGamal.homomorphicDecryption(keyPair, candidateVoteDTO.getCipherText(), 1000);
+            assertEquals("Decrypted message to wrong value", 1, message);
+        } catch (UnableToDecryptException e) {
+            fail("Unable to decrypt generated ciphertext");
+        }
+    }
+
+    @Test
+    public void shouldCreateCorrectVote1newTest() {
+        KeyPair keyPair = generateKeysFromP2048bitsG2();
+        String id = "TESTID";
+        BallotDTO ballotDTO = SecurityUtils.generateBallot(2, 5, id, keyPair.getPublicKey());
+
+        boolean verified = VoteProofUtils.verifyBallot(ballotDTO, keyPair.getPublicKey());
+        assertTrue("Unable to verify generated vote", verified);
+
+        try {
+            int message = ElGamal.homomorphicDecryption(keyPair, SecurityUtils.voteSum(ballotDTO.getCandidateVotes(), keyPair.getPublicKey()), 1000);
             assertEquals("Decrypted message to wrong value", 1, message);
         } catch (UnableToDecryptException e) {
             fail("Unable to decrypt generated ciphertext");
@@ -36,13 +53,13 @@ public class TestSecurityUtils {
     public void shouldCreateCorrectVote0() {
         KeyPair keyPair = generateKeysFromP2048bitsG2();
         String id = "TESTID";
-        VoteDTO voteDTO = SecurityUtils.generateVote(0, id, keyPair.getPublicKey());
+        CandidateVoteDTO candidateVoteDTO = SecurityUtils.generateVote(0, id, keyPair.getPublicKey());
 
-        boolean verified = VoteProofUtils.verifyProof(voteDTO, keyPair.getPublicKey());
+        boolean verified = VoteProofUtils.verifyProof(candidateVoteDTO, keyPair.getPublicKey());
         assertTrue("Unable to verify generated vote", verified);
 
         try {
-            int message = ElGamal.homomorphicDecryption(keyPair, voteDTO.getCipherText(), 1000);
+            int message = ElGamal.homomorphicDecryption(keyPair, candidateVoteDTO.getCipherText(), 1000);
             assertEquals("Decrypted message to wrong value", 0, message);
         } catch (UnableToDecryptException e) {
             fail("Unable to decrypt generated ciphertext");
@@ -197,7 +214,7 @@ public class TestSecurityUtils {
         KeyPair keyPair = generateKeysFromP2048bitsG2();
         PublicKey publicKey = keyPair.getPublicKey();
 
-        ArrayList<VoteDTO> votes = new ArrayList<>();
+        ArrayList<CandidateVoteDTO> votes = new ArrayList<>();
         int amount = 200;
         for (int i = 0; i < amount; i++) {
             votes.add(SecurityUtils.generateVote(i % 2, "ID" + 1, publicKey));
@@ -222,7 +239,7 @@ public class TestSecurityUtils {
         PublicKey publicKey = keyPair.getPublicKey();
 
         int amount = 2000;
-        List<? extends VoteDTO> votes = generateVotes(amount, publicKey);
+        List<? extends CandidateVoteDTO> votes = generateVotes(amount, publicKey);
 
         CipherText oldSum = SecurityUtils.voteSum(votes, publicKey);
 

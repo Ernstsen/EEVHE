@@ -3,10 +3,12 @@ package dk.mmj.eevhe.entities;
 import java.util.Date;
 
 /**
- * {@link VoteDTO} with timestamp
+ * {@link CandidateVoteDTO} with timestamp
+ * @deprecated use {@link PersistedBallot} instead
  */
 @SuppressWarnings("unused, JavaDocs")
-public class PersistedVote extends VoteDTO {
+@Deprecated
+public class PersistedVote extends CandidateVoteDTO {
 
     private Date ts;
 
@@ -18,8 +20,8 @@ public class PersistedVote extends VoteDTO {
         this.ts = ts;
     }
 
-    public PersistedVote(VoteDTO voteDTO) {
-        super(voteDTO.getCipherText(), voteDTO.getId(), voteDTO.getProof());
+    public PersistedVote(CandidateVoteDTO candidateVoteDTO) {
+        super(candidateVoteDTO.getCipherText(), candidateVoteDTO.getId(), candidateVoteDTO.getProof());
         this.ts = new Date();
     }
 

@@ -6,10 +6,17 @@ import dk.eSoftware.commandLineParser.Configuration;
 import dk.mmj.eevhe.crypto.ElGamal;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
+import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.server.AbstractServer;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.crypto.signers.RSADigestSigner;
+import org.bouncycastle.crypto.util.PublicKeyFactory;
+import org.bouncycastle.util.encoders.Base64;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
@@ -18,9 +25,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,7 +37,7 @@ import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 public class DecryptionAuthority extends AbstractServer {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthority.class);
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-    private JerseyWebTarget bulletinBoard;
+    private final JerseyWebTarget bulletinBoard;
     private boolean timeCorrupt = false;
     private PartialSecretKey sk;
     private int port = 8081;
@@ -91,8 +97,42 @@ public class DecryptionAuthority extends AbstractServer {
         }
     }
 
+    /**
+     * TODO: Find better solution than duplicate code
+     *
+     * @return
+     */
+    protected PublicInformationEntity fetchPublicInfo() {
+        Response response = bulletinBoard.path("getPublicInfo").request().buildGet().invoke();
+        String responseString = response.readEntity(String.class);
+
+        PublicInfoList publicInfoList;
+        try {
+            publicInfoList = new ObjectMapper().readValue(responseString, PublicInfoList.class);
+        } catch (IOException e) {
+            logger.error("Failed to deserialize public informations list retrieved from bulletin board", e);
+            System.exit(-1);
+            return null;//Never happens
+        }
+
+        Optional<PublicInformationEntity> any = publicInfoList.getInformationEntities().stream()
+//                .filter(this::verifyPublicInformation)//TODO!
+                .findAny();
+
+        if (!any.isPresent()) {
+            logger.error("No public information retrieved from the server was signed by the trusted dealer. Terminating");
+            System.exit(-1);
+            return null;//Never happens
+        }
+
+        return any.get();
+    }
+
     private void terminateVoting() {
         Long bulletinBoardTime = new Long(bulletinBoard.path("getCurrentTime").request().get(String.class));
+        PublicInformationEntity pi = fetchPublicInfo();
+        List<Candidate> candidates = pi.getCandidates();
+
         long remainingTime = endTime - bulletinBoardTime;
 
         if (!timeCorrupt && remainingTime > 0) {
@@ -101,35 +141,59 @@ public class DecryptionAuthority extends AbstractServer {
             return;
         }
 
-        logger.info("Terminating voting - Fetching votes");
-        ArrayList<PersistedVote> votes = getVotes();
+        logger.info("Terminating voting - Fetching ballots");
+        List<PersistedBallot> ballots = getBallots();
 
-        if (votes == null || votes.size() < 1) {
+        if (ballots == null || ballots.size() < 1) {
             logger.error("No votes registered. Terminating server without result");
             terminate();
             return;
         }
 
+        logger.info("Verifying ballots");
+        ballots = ballots.parallelStream()
+                .filter(v -> v.getTs().getTime() < endTime)
+                .filter(b -> VoteProofUtils.verifyBallot(b, pk)).collect(Collectors.toList());
+
+
         logger.info("Summing votes");
-        List<PersistedVote> filteredVotes = votes.parallelStream().filter(v -> v.getTs().getTime() < endTime).collect(Collectors.toList());
-        CipherText sum = SecurityUtils.concurrentVoteSum(
-                filteredVotes,
-                pk,
-                1000);
+        Map<Integer, List<CandidateVoteDTO>> votes = new HashMap<>(candidates.size());
+        ballots.forEach(b -> {
+            for (int i = 0; i < candidates.size(); i++) {
+                List<CandidateVoteDTO> lst = votes.computeIfAbsent(i, j -> new ArrayList<>());
+                lst.add(b.getCandidateVotes().get(i));
+            }
+        });
+
+        CipherText[] sums = new CipherText[candidates.size()];
+
+        for (int i = 0; i < candidates.size(); i++) {
+            sums[i] = SecurityUtils.concurrentVoteSum(votes.get(i), pk, 1000);
+        }
 
         logger.info("Beginning partial decryption");
 
-
-        BigInteger result = ElGamal.partialDecryption(sum.getC(), sk.getSecretValue(), sk.getP());
+        BigInteger[] results = new BigInteger[candidates.size()];
+        for (int i = 0; i < candidates.size(); i++) {
+            results[i] = ElGamal.partialDecryption(sums[i].getC(), sk.getSecretValue(), sk.getP());
+        }
 
         logger.info("Partially decrypted value. Generating proof");
 
         PublicKey partialPublicKey = new PublicKey(pk.getG().modPow(sk.getSecretValue(), sk.getP()), pk.getG(), pk.getQ());
-        DLogProofUtils.Proof proof = DLogProofUtils.generateProof(sum, sk.getSecretValue(), partialPublicKey, id);
+
+        DLogProofUtils.Proof[] proofs = new DLogProofUtils.Proof[candidates.size()];
+        for (int i = 0; i < candidates.size(); i++) {
+            proofs[i] = DLogProofUtils.generateProof(sums[i], sk.getSecretValue(), partialPublicKey, id);
+        }
 
         logger.info("Posting to bulletin board");
+        ArrayList<PartialResult> partialResults = new ArrayList<>();
+        for (int i = 0; i < candidates.size(); i++) {
+            partialResults.add(new PartialResult(id, results[i], proofs[i], sums[i], ballots.size()));
+        }
 
-        Entity<PartialResult> resultEntity = Entity.entity(new PartialResult(id, result, proof, sum, filteredVotes.size()), MediaType.APPLICATION_JSON);
+        Entity<PartialResultList> resultEntity = Entity.entity(new PartialResultList(partialResults), MediaType.APPLICATION_JSON);
         Response post = bulletinBoard.path("result").request().post(resultEntity);
 
         if (post.getStatus() < 200 || post.getStatus() > 300) {
@@ -141,6 +205,7 @@ public class DecryptionAuthority extends AbstractServer {
 
     }
 
+    @Deprecated
     private ArrayList<PersistedVote> getVotes() {
         try {
             String getVotes = bulletinBoard.path("getVotes").request().get(String.class);
@@ -156,6 +221,32 @@ public class DecryptionAuthority extends AbstractServer {
                 }
             }
             return votes;
+        } catch (IOException e) {
+            logger.error("Failed to read VoteList from JSON string", e);
+            return null;
+        }
+    }
+
+    /**
+     * Retrieves cast ballots from BulletinBoard
+     *
+     * @return list of ballots from BulletinBoard
+     */
+    private List<PersistedBallot> getBallots() {
+        try {
+            String getVotes = bulletinBoard.path("getVotes").request().get(String.class);
+            BallotList voteObjects = new ObjectMapper().readValue(getVotes, BallotList.class);
+            ArrayList<PersistedBallot> ballots = new ArrayList<>();
+
+            for (Object ballot : voteObjects.getBallots()) {
+                if (ballot instanceof PersistedBallot) {
+                    ballots.add((PersistedBallot) ballot);
+                } else {
+                    logger.error("Found ballot that was not correct class. Was " + ballot.getClass() + ". Terminating server");
+                    terminate();
+                }
+            }
+            return ballots;
         } catch (IOException e) {
             logger.error("Failed to read VoteList from JSON string", e);
             return null;
@@ -179,9 +270,9 @@ public class DecryptionAuthority extends AbstractServer {
      */
     public static class DecryptionAuthorityConfiguration implements Configuration {
         private final Integer port;
-        private String bulletinBoard;
-        private String confPath;
-        private int timeCorrupt;
+        private final String bulletinBoard;
+        private final String confPath;
+        private final int timeCorrupt;
 
         DecryptionAuthorityConfiguration(Integer port, String bulletinBoard, String confPath, int timeCorrupt) {
             this.port = port;

@@ -5,20 +5,20 @@ import java.util.List;
 @SuppressWarnings("JavaDocs, unused")
 public class ResultList {
 
-    private List<PartialResult> results;
+    private List<PartialResultList> results;
 
     public ResultList() {
     }
 
-    public ResultList(List<PartialResult> results) {
+    public ResultList(List<PartialResultList> results) {
         this.results = results;
     }
 
-    public List<PartialResult> getResults() {
+    public List<PartialResultList> getResults() {
         return results;
     }
 
-    public void setResults(List<PartialResult> results) {
+    public void setResults(List<PartialResultList> results) {
         this.results = results;
     }
 }
