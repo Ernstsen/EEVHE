@@ -12,4 +12,4 @@ For a guide in using EVHE for a poll please read this [wiki entry](https://githu
 Even though this was created as a masters thesis, which has been finished as this is made public, pull requests are welcome.
 They must adhere to the guidelines set forth i GUIDELINES.md
 
-For thoughts and descriptions about different parts of the system, such as logging or encryption, please visit the wiki
+For thoughts and descriptions about different parts of the system, such as logging or encryption, please visit the wiki..
