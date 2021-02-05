@@ -15,10 +15,7 @@ import javax.ws.rs.core.Response;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 public class Voter extends Client {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthorityConfigBuilder.class);
@@ -66,24 +63,18 @@ public class Voter extends Client {
      */
     private void doMultiVote(PublicKey publicKey) {
         Random random = new Random();
-        int trueVotes = 0;
-        int falseVotes = 0;
+        int[] castVotes = new int[]{0, 0, 0};
 
         for (int i = 0; i < multi; i++) {
             System.out.print("Dispatching votes: " + i + "/" + multi + " \r");
 
             id = UUID.randomUUID().toString();
-            int vote = random.nextInt(2);
-
-            if (vote == 0) {
-                falseVotes++;
-            } else {
-                trueVotes++;
-            }
+            int vote = random.nextInt(3);
+            castVotes[vote]++;
 
             doVote(vote, publicKey);
         }
-        System.out.println("Dispatched " + multi + " votes with " + trueVotes + " for, and " + falseVotes + " against");
+        System.out.println("Dispatched " + multi + " votes with distribution: " + Arrays.toString(castVotes));
     }
 
     /**
@@ -142,7 +133,7 @@ public class Voter extends Client {
      */
     private void postBallot(BallotDTO ballot) {
         Entity<?> entity = Entity.entity(ballot, MediaType.APPLICATION_JSON_TYPE);
-        Response response = target.path("ballot").request().post(entity);
+        Response response = target.path("postBallot").request().post(entity);
 
         if (response.getStatus() != 204) {
             logger.warn("Failed to post vote to server: Error code was " + response.getStatus());

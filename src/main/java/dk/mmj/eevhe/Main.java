@@ -22,8 +22,6 @@ public class Main {
     static {
         //Disable JMX as a way to bypass errors known to OpenJDK8
         System.setProperty("log4j2.disable.jmx", Boolean.TRUE.toString());
-        //Set loggingManager to be one supplied by Log4J for proper logging
-        System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
         //Register BouncyCastle as Securityprovider
         Security.addProvider(new BouncyCastleProvider());
     }

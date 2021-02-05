@@ -93,7 +93,7 @@ public class IntegrationTest implements Application {
         CommandLineParser parser = new SingletonCommandLineParser(new ClientConfigBuilder());
         Configuration parse;
         try {
-            parse = parser.parse("--client --multi=50 --port=8080".split(" "));
+            parse = parser.parse("--client --multi=50".split(" "));
         } catch (NoSuchBuilderException | WrongFormatException e) {
             throw new RuntimeException("Failed parsing multivote conf", e);
         }

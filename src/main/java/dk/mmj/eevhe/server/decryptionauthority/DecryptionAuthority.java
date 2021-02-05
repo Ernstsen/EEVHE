@@ -9,14 +9,8 @@ import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.server.AbstractServer;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
-import org.bouncycastle.crypto.signers.RSADigestSigner;
-import org.bouncycastle.crypto.util.PublicKeyFactory;
-import org.bouncycastle.util.encoders.Base64;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
@@ -25,7 +19,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.math.BigInteger;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -234,7 +227,7 @@ public class DecryptionAuthority extends AbstractServer {
      */
     private List<PersistedBallot> getBallots() {
         try {
-            String getVotes = bulletinBoard.path("getVotes").request().get(String.class);
+            String getVotes = bulletinBoard.path("getBallots").request().get(String.class);
             BallotList voteObjects = new ObjectMapper().readValue(getVotes, BallotList.class);
             ArrayList<PersistedBallot> ballots = new ArrayList<>();
 
@@ -248,7 +241,7 @@ public class DecryptionAuthority extends AbstractServer {
             }
             return ballots;
         } catch (IOException e) {
-            logger.error("Failed to read VoteList from JSON string", e);
+            logger.error("Failed to read BallotList from JSON string", e);
             return null;
         }
     }
