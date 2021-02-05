@@ -149,6 +149,7 @@ public class BulletinBoardResource {
     @GET
     @Path("getVotes")
     @Produces(MediaType.APPLICATION_JSON)
+    @Deprecated
     public VoteList getVotes() {
         List<PersistedVote> list = state.get(VOTES, List.class);
 
@@ -161,7 +162,7 @@ public class BulletinBoardResource {
 
     @SuppressWarnings("unchecked")
     @GET
-    @Path("getVotes")
+    @Path("getBallots")
     @Produces(MediaType.APPLICATION_JSON)
     public BallotList getBallots() {
         List<PersistedBallot> list = state.get(VOTES, List.class);

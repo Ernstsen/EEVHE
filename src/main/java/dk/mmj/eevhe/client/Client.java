@@ -33,6 +33,7 @@ import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 public abstract class Client implements Application {
     private static final String PUBLIC_KEY_NAME = "rsa";
     private static final Logger logger = LogManager.getLogger(Client.class);
+    private PublicKey publicKey;
 
     JerseyWebTarget target;
 
@@ -48,11 +49,14 @@ public abstract class Client implements Application {
      * @return the response containing the Public Key.
      */
     protected PublicKey getPublicKey() {
+        if(publicKey != null){
+            return publicKey;
+        }
         PublicInformationEntity info = fetchPublicInfo();
 
         BigInteger h = SecurityUtils.combinePartials(info.getPublicKeys(), info.getP());
 
-        return new PublicKey(h, info.getG(), info.getQ());
+        return publicKey = new PublicKey(h, info.getG(), info.getQ());
     }
 
     /**
