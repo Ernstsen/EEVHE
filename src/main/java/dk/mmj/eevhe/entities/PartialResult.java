@@ -11,7 +11,6 @@ public class PartialResult {
     private BigInteger result;
     private DLogProofUtils.Proof proof;
     private CipherText cipherText;
-    private int votes;
 
     public PartialResult() {
     }
@@ -21,7 +20,6 @@ public class PartialResult {
         this.result = result;
         this.proof = proof;
         this.cipherText = cipherText;
-        this.votes = votes;
     }
 
     public Integer getId() {
@@ -56,14 +54,6 @@ public class PartialResult {
         this.cipherText = cipherText;
     }
 
-    public int getVotes() {
-        return votes;
-    }
-
-    public void setVotes(int votes) {
-        this.votes = votes;
-    }
-
     @Override
     public String toString() {
         return "PartialResult{" +
@@ -71,7 +61,6 @@ public class PartialResult {
                 ", result=" + result +
                 ", proof=" + proof +
                 ", cipherText=" + cipherText +
-                ", votes=" + votes +
                 '}';
     }
 
@@ -80,8 +69,7 @@ public class PartialResult {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PartialResult that = (PartialResult) o;
-        return votes == that.votes &&
-                Objects.equals(id, that.id) &&
+        return Objects.equals(id, that.id) &&
                 Objects.equals(result, that.result) &&
                 Objects.equals(proof, that.proof) &&
                 Objects.equals(cipherText, that.cipherText);
@@ -89,7 +77,7 @@ public class PartialResult {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, result, proof, cipherText, votes);
+        return Objects.hash(id, result, proof, cipherText);
     }
 }
 

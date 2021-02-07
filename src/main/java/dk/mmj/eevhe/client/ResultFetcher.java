@@ -162,7 +162,7 @@ public class ResultFetcher extends Client {
             logger.info("Fetched ciphertexts and number of votes were equal");
             logger.info("Using ciphertext and amount of collected votes from DA with id=" + firstDA.getResults().get(0).getId());
             return firstDA.getResults().stream()
-                    .map(pr -> new MinimalPartialResult(pr.getCipherText(), pr.getVotes()))
+                    .map(pr -> new MinimalPartialResult(pr.getCipherText(), firstDA.getVoteCount()))
                     .collect(Collectors.toList());
         }
     }
@@ -177,8 +177,9 @@ public class ResultFetcher extends Client {
     private boolean decryptionAuthoritiesAgrees(List<PartialResultList> partialResultLists) {
         int size = getCandidates().size();
 
-        if (partialResultsDiffers(partialResultLists.get(0).getResults())) {
-            logger.info("First DA did not have same votecount for all candidates");
+        boolean sameVoteCount = partialResultLists.stream().map(PartialResultList::getVoteCount).allMatch(i -> i == partialResultLists.get(0).getVoteCount());
+        if(!sameVoteCount){
+            logger.info("DAs differed in number of votes");
             return false;
         }
 
@@ -204,12 +205,10 @@ public class ResultFetcher extends Client {
      */
     private boolean partialResultsDiffers(List<PartialResult> results) {
         List<CipherText> cipherTexts = results.stream().map(PartialResult::getCipherText).collect(Collectors.toList());
-        List<Integer> voteCounts = results.stream().map(PartialResult::getVotes).collect(Collectors.toList());
 
         boolean ciphertextEquals = cipherTexts.stream().allMatch(cipherTexts.get(0)::equals);
-        boolean voteCountsEqual = voteCounts.stream().allMatch(voteCounts.get(0)::equals);
 
-        return !ciphertextEquals || !voteCountsEqual;
+        return !ciphertextEquals;
     }
 
     /**

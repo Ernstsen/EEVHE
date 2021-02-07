@@ -186,7 +186,7 @@ public class DecryptionAuthority extends AbstractServer {
             partialResults.add(new PartialResult(id, results[i], proofs[i], sums[i], ballots.size()));
         }
 
-        Entity<PartialResultList> resultEntity = Entity.entity(new PartialResultList(partialResults), MediaType.APPLICATION_JSON);
+        Entity<PartialResultList> resultEntity = Entity.entity(new PartialResultList(partialResults, ballots.size()), MediaType.APPLICATION_JSON);
         Response post = bulletinBoard.path("result").request().post(resultEntity);
 
         if (post.getStatus() < 200 || post.getStatus() > 300) {

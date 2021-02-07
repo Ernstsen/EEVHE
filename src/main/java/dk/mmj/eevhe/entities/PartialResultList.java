@@ -5,9 +5,11 @@ import java.util.Objects;
 
 public class PartialResultList {
     private List<PartialResult> results;
+    private int voteCount;
 
-    public PartialResultList(List<PartialResult> results) {
+    public PartialResultList(List<PartialResult> results, int voteCount) {
         this.results = results;
+        this.voteCount = voteCount;
     }
 
     public PartialResultList() {
@@ -19,6 +21,15 @@ public class PartialResultList {
 
     public PartialResultList setResults(List<PartialResult> results) {
         this.results = results;
+        return this;
+    }
+
+    public int getVoteCount() {
+        return voteCount;
+    }
+
+    public PartialResultList setVoteCount(int voteCount) {
+        this.voteCount = voteCount;
         return this;
     }
 

@@ -60,8 +60,8 @@ public class TestSerialization {
         PartialResult partialResult2 = new PartialResult(54, new BigInteger("234221"), dlogProof, cipherText, 122);
         serializables.add(partialResult);
 
-        PartialResultList partialResultList = new PartialResultList(Arrays.asList(partialResult, partialResult2));
-        PartialResultList partialResultList2 = new PartialResultList(Arrays.asList(partialResult2, partialResult));
+        PartialResultList partialResultList = new PartialResultList(Arrays.asList(partialResult, partialResult2), 5);
+        PartialResultList partialResultList2 = new PartialResultList(Arrays.asList(partialResult2, partialResult), 94);
         serializables.add(partialResultList);
         serializables.add(new PartialSecretKey(new BigInteger("23422"), new BigInteger("235423523")));
 
