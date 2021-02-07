@@ -105,10 +105,10 @@ public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBui
             voteDelays.add(0);
         }
         if (voteEnd) {
-            voteDelays.add(duration - 15_000);//approx. 15. sec before termination
+            voteDelays.add((duration * 60_000) - 15_000);//approx. 15. sec before termination
         }
         if (voteAfter) {
-            voteDelays.add(duration + 15_000);//approx. 15. sec after termination
+            voteDelays.add((duration * 60_000) + 5_000);//approx. 5. sec after termination
         }
 
         return voteDelays;

@@ -148,7 +148,7 @@ public class ResultFetcher extends Client {
             List<MinimalPartialResult> res = new ArrayList<>();
             for (int i = 0; i < getCandidates().size(); i++) {
                 final int idx = i;
-                List<CandidateVoteDTO> votesForI = ballots.getBallots().parallelStream()
+                List<CandidateVoteDTO> votesForI = validBallots.parallelStream()
                         .map(b -> b.getCandidateVotes().get(idx))
                         .collect(Collectors.toList());
 
