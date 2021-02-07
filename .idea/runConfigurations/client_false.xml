@@ -1,5 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="client false" type="Application" factoryName="Application" folderName="Client">
+    <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="dk.mmj.eevhe.Main" />
     <module name="eevhe" />
     <option name="PROGRAM_PARAMETERS" value="--client --vote=false" />
