@@ -1,6 +1,7 @@
 package dk.mmj.eevhe.entities;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 /**
  * Simple DTO object for casting votes
@@ -42,5 +43,29 @@ public class CandidateVoteDTO {
 
     public void setProof(Proof proof) {
         this.proof = proof;
+    }
+
+    @Override
+    public String toString() {
+        return "CandidateVoteDTO{" +
+                "cipherText=" + cipherText +
+                ", id='" + id + '\'' +
+                ", proof=" + proof +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CandidateVoteDTO that = (CandidateVoteDTO) o;
+        return Objects.equals(cipherText, that.cipherText) &&
+                Objects.equals(id, that.id) &&
+                Objects.equals(proof, that.proof);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(cipherText, id, proof);
     }
 }

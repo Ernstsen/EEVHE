@@ -1,5 +1,7 @@
 package dk.mmj.eevhe.entities;
 
+import java.util.Objects;
+
 /**
  * DTO for a candidate in the election
  */
@@ -42,5 +44,29 @@ public class Candidate {
     public Candidate setDescription(String description) {
         this.description = description;
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "Candidate{" +
+                "idx=" + idx +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Candidate candidate = (Candidate) o;
+        return idx == candidate.idx &&
+                Objects.equals(name, candidate.name) &&
+                Objects.equals(description, candidate.description);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(idx, name, description);
     }
 }

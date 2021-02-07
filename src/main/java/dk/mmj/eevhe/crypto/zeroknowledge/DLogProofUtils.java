@@ -5,6 +5,7 @@ import dk.mmj.eevhe.entities.CipherText;
 import dk.mmj.eevhe.entities.PublicKey;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 import static dk.mmj.eevhe.crypto.SecurityUtils.computePartial;
 import static dk.mmj.eevhe.crypto.SecurityUtils.getRandomNumModN;
@@ -112,6 +113,28 @@ public class DLogProofUtils {
 
         public void setZ(BigInteger z) {
             this.z = z;
+        }
+
+        @Override
+        public String toString() {
+            return "Proof{" +
+                    "e=" + e +
+                    ", z=" + z +
+                    '}';
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Proof proof = (Proof) o;
+            return Objects.equals(e, proof.e) &&
+                    Objects.equals(z, proof.z);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(e, z);
         }
     }
 }

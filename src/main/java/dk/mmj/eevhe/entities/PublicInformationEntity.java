@@ -5,6 +5,7 @@ import org.bouncycastle.crypto.Signer;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @SuppressWarnings("unused, JavaDocs")
 public class PublicInformationEntity {
@@ -114,5 +115,39 @@ public class PublicInformationEntity {
 
         byte[] endTimeBytes = Long.toString(endTime).getBytes();
         signer.update(endTimeBytes, 0, endTimeBytes.length);
+    }
+
+    @Override
+    public String toString() {
+        return "PublicInformationEntity{" +
+                "ids=" + ids +
+                ", publicKeys=" + publicKeys +
+                ", g=" + g +
+                ", q=" + q +
+                ", p=" + p +
+                ", endTime=" + endTime +
+                ", signature='" + signature + '\'' +
+                ", candidates=" + candidates +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PublicInformationEntity that = (PublicInformationEntity) o;
+        return endTime == that.endTime &&
+                Objects.equals(ids, that.ids) &&
+                Objects.equals(publicKeys, that.publicKeys) &&
+                Objects.equals(g, that.g) &&
+                Objects.equals(q, that.q) &&
+                Objects.equals(p, that.p) &&
+                Objects.equals(signature, that.signature) &&
+                Objects.equals(candidates, that.candidates);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ids, publicKeys, g, q, p, endTime, signature, candidates);
     }
 }

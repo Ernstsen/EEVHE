@@ -3,6 +3,7 @@ package dk.mmj.eevhe.entities;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 @SuppressWarnings("unused, JavaDocs")
 public class PartialResult {
@@ -61,6 +62,34 @@ public class PartialResult {
 
     public void setVotes(int votes) {
         this.votes = votes;
+    }
+
+    @Override
+    public String toString() {
+        return "PartialResult{" +
+                "id=" + id +
+                ", result=" + result +
+                ", proof=" + proof +
+                ", cipherText=" + cipherText +
+                ", votes=" + votes +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PartialResult that = (PartialResult) o;
+        return votes == that.votes &&
+                Objects.equals(id, that.id) &&
+                Objects.equals(result, that.result) &&
+                Objects.equals(proof, that.proof) &&
+                Objects.equals(cipherText, that.cipherText);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, result, proof, cipherText, votes);
     }
 }
 

@@ -1,6 +1,7 @@
 package dk.mmj.eevhe.entities;
 
 import java.util.Date;
+import java.util.Objects;
 
 /**
  * {@link CandidateVoteDTO} with timestamp
@@ -31,5 +32,26 @@ public class PersistedVote extends CandidateVoteDTO {
 
     public void setTs(Date ts) {
         this.ts = ts;
+    }
+
+    @Override
+    public String toString() {
+        return "PersistedVote{" +
+                "ts=" + ts +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        PersistedVote that = (PersistedVote) o;
+        return Objects.equals(ts, that.ts);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), ts);
     }
 }

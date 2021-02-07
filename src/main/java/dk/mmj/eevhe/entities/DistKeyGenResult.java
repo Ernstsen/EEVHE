@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class DistKeyGenResult {
     private BigInteger g;
@@ -51,5 +52,23 @@ public class DistKeyGenResult {
 
     public Map<Integer, BigInteger> getPublicValues() {
         return publicValues;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        DistKeyGenResult that = (DistKeyGenResult) o;
+        return Objects.equals(g, that.g) &&
+                Objects.equals(q, that.q) &&
+                Objects.equals(p, that.p) &&
+                Objects.equals(authorityIds, that.authorityIds) &&
+                Objects.equals(secretValues, that.secretValues) &&
+                Objects.equals(publicValues, that.publicValues);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(g, q, p, authorityIds, secretValues, publicValues);
     }
 }
