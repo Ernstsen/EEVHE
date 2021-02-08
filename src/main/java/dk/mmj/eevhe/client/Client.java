@@ -1,42 +1,25 @@
 package dk.mmj.eevhe.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.Configuration;
 import dk.mmj.eevhe.Application;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.entities.Candidate;
-import dk.mmj.eevhe.entities.PublicInfoList;
 import dk.mmj.eevhe.entities.PublicInformationEntity;
 import dk.mmj.eevhe.entities.PublicKey;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.crypto.digests.SHA256Digest;
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
-import org.bouncycastle.crypto.signers.RSADigestSigner;
-import org.bouncycastle.crypto.util.PublicKeyFactory;
-import org.bouncycastle.util.encoders.Base64;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
-import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
 public abstract class Client implements Application {
     private static final String PUBLIC_KEY_NAME = "rsa";
     private static final Logger logger = LogManager.getLogger(Client.class);
+    protected JerseyWebTarget target;
     private PublicKey publicKey;
-
-    JerseyWebTarget target;
-
     private PublicInformationEntity publicInfo;
 
     public Client(ClientConfiguration configuration) {
@@ -49,7 +32,7 @@ public abstract class Client implements Application {
      * @return the response containing the Public Key.
      */
     protected PublicKey getPublicKey() {
-        if(publicKey != null){
+        if (publicKey != null) {
             return publicKey;
         }
         PublicInformationEntity info = fetchPublicInfo();
@@ -62,7 +45,7 @@ public abstract class Client implements Application {
     /**
      * @return the list of candidates in the election
      */
-    protected List<Candidate> getCandidates(){
+    protected List<Candidate> getCandidates() {
         PublicInformationEntity info = fetchPublicInfo();
 
         return info.getCandidates();
@@ -73,56 +56,9 @@ public abstract class Client implements Application {
             return publicInfo;
         }
 
-        Response response = target.path("getPublicInfo").request().buildGet().invoke();
-        String responseString = response.readEntity(String.class);
-
-        PublicInfoList publicInfoList;
-        try {
-            publicInfoList = new ObjectMapper().readValue(responseString,PublicInfoList.class);
-        } catch (IOException e) {
-            logger.error("Failed to deserialize public informations list retrieved from bulletin board", e);
-            System.exit(-1);
-            return null;//Never happens
-        }
-
-        Optional<PublicInformationEntity> any = publicInfoList.getInformationEntities().stream()
-                .filter(this::verifyPublicInformation)
-                .findAny();
-
-        if (!any.isPresent()) {
-            logger.error("No public information retrieved from the server was signed by the trusted dealer. Terminating");
-            System.exit(-1);
-            return null;//Never happens
-        }
-        publicInfo = any.get();
-
-        return publicInfo;
+        return publicInfo = FetchingUtilities.fetchPublicInfo(logger, PUBLIC_KEY_NAME, target);
     }
 
-    private boolean verifyPublicInformation(PublicInformationEntity info) {
-        File keyFile = Paths.get("rsa").resolve(PUBLIC_KEY_NAME).toFile();
-        if (!keyFile.exists()) {
-            logger.error("Unable to locate RSA public key from Trusted Dealer");
-            return false;
-        }
-
-        try {
-            byte[] bytes = new byte[2048];
-            int len = IOUtils.readFully(new FileInputStream(keyFile), bytes);
-            byte[] actualBytes = Arrays.copyOfRange(bytes, 0, len);
-
-            AsymmetricKeyParameter key = PublicKeyFactory.createKey(Base64.decode(actualBytes));
-            RSADigestSigner digest = new RSADigestSigner(new SHA256Digest());
-            digest.init(false, key);
-            info.updateSigner(digest);
-            byte[] encodedSignature = info.getSignature().getBytes();
-
-            return digest.verifySignature(Base64.decode(encodedSignature));
-        } catch (IOException e) {
-            logger.error("Failed to verify signature", e);
-            return false;
-        }
-    }
 
     static class ClientConfiguration implements Configuration {
         private final String targetUrl;

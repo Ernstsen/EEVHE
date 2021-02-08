@@ -3,6 +3,7 @@ package dk.mmj.eevhe.server.decryptionauthority;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.Configuration;
+import dk.mmj.eevhe.client.FetchingUtilities;
 import dk.mmj.eevhe.crypto.ElGamal;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
@@ -29,6 +30,7 @@ import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
 public class DecryptionAuthority extends AbstractServer {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthority.class);
+    private static final String RSA_PUBLIC_KEY_NAME = "rsa";
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final JerseyWebTarget bulletinBoard;
     private boolean timeCorrupt = false;
@@ -90,40 +92,10 @@ public class DecryptionAuthority extends AbstractServer {
         }
     }
 
-    /**
-     * TODO: Find better solution than duplicate code
-     *
-     * @return
-     */
-    protected PublicInformationEntity fetchPublicInfo() {
-        Response response = bulletinBoard.path("getPublicInfo").request().buildGet().invoke();
-        String responseString = response.readEntity(String.class);
-
-        PublicInfoList publicInfoList;
-        try {
-            publicInfoList = new ObjectMapper().readValue(responseString, PublicInfoList.class);
-        } catch (IOException e) {
-            logger.error("Failed to deserialize public informations list retrieved from bulletin board", e);
-            System.exit(-1);
-            return null;//Never happens
-        }
-
-        Optional<PublicInformationEntity> any = publicInfoList.getInformationEntities().stream()
-//                .filter(this::verifyPublicInformation)//TODO!
-                .findAny();
-
-        if (!any.isPresent()) {
-            logger.error("No public information retrieved from the server was signed by the trusted dealer. Terminating");
-            System.exit(-1);
-            return null;//Never happens
-        }
-
-        return any.get();
-    }
 
     private void terminateVoting() {
         Long bulletinBoardTime = new Long(bulletinBoard.path("getCurrentTime").request().get(String.class));
-        PublicInformationEntity pi = fetchPublicInfo();
+        PublicInformationEntity pi = FetchingUtilities.fetchPublicInfo(logger, RSA_PUBLIC_KEY_NAME, bulletinBoard);
         List<Candidate> candidates = pi.getCandidates();
 
         long remainingTime = endTime - bulletinBoardTime;
