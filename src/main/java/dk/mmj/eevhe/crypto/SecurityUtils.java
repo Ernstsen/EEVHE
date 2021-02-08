@@ -235,9 +235,9 @@ public class SecurityUtils {
 
     /**
      * Computes the sum of all votes.
-     * <br/>
+     * <br>
      * Before sum is computed all proofs are verified, and those that could not are discarded.
-     * <br/>
+     * <br>
      * The method is executed asynchronously.
      * All votes are partitioned into subsets of size <code>partitionSize</code>, which are summed in their own thread
      *

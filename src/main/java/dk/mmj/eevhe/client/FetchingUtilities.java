@@ -28,7 +28,7 @@ public class FetchingUtilities {
 
     /**
      * Fetches a list of  {@link PublicInformationEntity}s from the BulletinBoard, supplied as a {@link WebTarget}.
-     * <br></br>
+     * <br>
      * Returns the first entity signed by the <i>Trusted Dealer</i>, null if none is found
      *
      * @param logger        logger for reporting errors

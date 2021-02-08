@@ -36,7 +36,7 @@ public class ServerState {
 
     /**
      * Getter for a stored object.
-     * <br/>
+     * <br>
      * If the the object that is retrieved is not assignable from the
      * class given as parameter, null is returned and a warning is logged.
      *

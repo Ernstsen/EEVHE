@@ -64,7 +64,7 @@ public abstract class AbstractServer implements Application {
 
     /**
      * Generates and returns a {@link Server}
-     * <br/>
+     * <br>
      * After creation the method <code>configure</code> method is called
      * with the servletHolder as a parameter, so <code>initParameters</code> can be set.
      *
@@ -102,7 +102,7 @@ public abstract class AbstractServer implements Application {
     /**
      * Method that is used to configure the {@link ServletHolder} that is used
      * in the {@link Server} returned by the <code>getServer</code> method call
-     * <br/><br/>
+     * <br><br>
      * This is where servlets are registered
      *
      * @param servletHolder servlet to be configured

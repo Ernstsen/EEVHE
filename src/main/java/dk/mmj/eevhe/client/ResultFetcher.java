@@ -213,7 +213,7 @@ public class ResultFetcher extends Client {
 
     /**
      * The Result fetcher Configuration.
-     * <br/>
+     * <br>
      * Created in the {@link ClientConfigBuilder}.
      */
     public static class ResultFetcherConfiguration extends ClientConfiguration {

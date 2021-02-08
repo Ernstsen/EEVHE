@@ -38,9 +38,9 @@ public class Voter extends Client {
 
     /**
      * Fetches the public key from the public server, and casts vote.
-     * <br/>
+     * <br>
      * if <code>multi</code> is set it casts <code>multi</code> random votes, for testing purposes.
-     * <br/>
+     * <br>
      * Otherwise just casts a single, specified vote.
      */
     @Override
@@ -163,7 +163,7 @@ public class Voter extends Client {
 
     /**
      * The Voter Configuration.
-     * <br/>
+     * <br>
      * Built in the {@link ClientConfigBuilder}.
      */
     public static class VoterConfiguration extends ClientConfiguration {
