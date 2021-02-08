@@ -1,4 +1,4 @@
-# EEVHE
+# EEVHE [![Testsuite](https://github.com/Ernstsen/EEVHE/workflows/Test-suite/badge.svg)](https://github.com/Ernstsen/EEVHE/actions)
 This is a repository for a masters thesis concerning Electronic Voting using Homomorphic Encryption
 
 ## Description
