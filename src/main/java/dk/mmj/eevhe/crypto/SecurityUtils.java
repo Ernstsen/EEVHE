@@ -265,7 +265,7 @@ public class SecurityUtils {
      * @param partitionSize size of partitions.
      * @return sum of all cipherTexts
      */
-    private static CipherText concurrentSum(List<CipherText> cipherTexts, int partitionSize) {
+    static CipherText concurrentSum(List<CipherText> cipherTexts, int partitionSize) {
         ConcurrentLinkedQueue<CipherText> result = new ConcurrentLinkedQueue<>();
 
         if (cipherTexts.size() > 2 * partitionSize) {

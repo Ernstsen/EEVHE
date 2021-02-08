@@ -36,16 +36,59 @@ public class TestSecurityUtils {
     public void shouldCreateCorrectVote1newTest() {
         KeyPair keyPair = generateKeysFromP2048bitsG2();
         String id = "TESTID";
-        BallotDTO ballotDTO = SecurityUtils.generateBallot(2, 5, id, keyPair.getPublicKey());
+        for (int i = 0; i < 5; i++) {
+            BallotDTO ballotDTO = SecurityUtils.generateBallot(i, 5, id, keyPair.getPublicKey());
 
-        boolean verified = VoteProofUtils.verifyBallot(ballotDTO, keyPair.getPublicKey());
-        assertTrue("Unable to verify generated vote", verified);
+            boolean verified = VoteProofUtils.verifyBallot(ballotDTO, keyPair.getPublicKey());
+            assertTrue("Unable to verify generated vote", verified);
 
-        try {
-            int message = ElGamal.homomorphicDecryption(keyPair, SecurityUtils.voteSum(ballotDTO.getCandidateVotes(), keyPair.getPublicKey()), 1000);
-            assertEquals("Decrypted message to wrong value", 1, message);
-        } catch (UnableToDecryptException e) {
-            fail("Unable to decrypt generated ciphertext");
+            try {
+                int message = ElGamal.homomorphicDecryption(keyPair, SecurityUtils.voteSum(ballotDTO.getCandidateVotes(), keyPair.getPublicKey()), 1000);
+                assertEquals("Decrypted message to wrong value", 1, message);
+            } catch (UnableToDecryptException e) {
+                fail("Unable to decrypt generated ciphertext");
+            }
+        }
+    }
+
+
+    /**
+     * Tests that the ballot-creations used in negative test, actually works
+     */
+    @Test
+    public void shouldAcceptLocalBallotCreation() {
+        KeyPair keyPair = generateKeysFromP2048bitsG2();
+        String id = "TESTID";
+        for (int i = 0; i < 5; i++) {
+
+            BallotDTO ballotDTO = generateBallot(5, Collections.singletonList(i), keyPair.getPublicKey(), id);
+
+            boolean verified = VoteProofUtils.verifyBallot(ballotDTO, keyPair.getPublicKey());
+            assertTrue("Unable to verify generated vote", verified);
+
+            try {
+                int message = ElGamal.homomorphicDecryption(keyPair, SecurityUtils.voteSum(ballotDTO.getCandidateVotes(), keyPair.getPublicKey()), 1000);
+                assertEquals("Decrypted message to wrong value", 1, message);
+            } catch (UnableToDecryptException e) {
+                fail("Unable to decrypt generated ciphertext");
+            }
+        }
+    }
+
+    @Test
+    public void shouldRejectBallot() {
+        KeyPair keyPair = generateKeysFromP2048bitsG2();
+        String id = "TESTID";
+        for (List<Integer> list : Arrays.asList(
+                Arrays.asList(2, 3),
+                Arrays.asList(1, 4),
+                Arrays.asList(3, 4),
+                Arrays.asList(2, 4))) {
+
+            BallotDTO ballotDTO = generateBallot(5, list, keyPair.getPublicKey(), id);
+
+            boolean verified = VoteProofUtils.verifyBallot(ballotDTO, keyPair.getPublicKey());
+            assertFalse("Verified invalidly generated vote", verified);
         }
     }
 
@@ -262,5 +305,38 @@ public class TestSecurityUtils {
         List<PersistedVote> collectConc = votes.stream().filter(v -> v.getTs().getTime() < endTime).collect(Collectors.toList());
 
         assertEquals("Filters did not match in results", collect.size(), collectConc.size());
+    }
+
+    private BallotDTO generateBallot(int candidates, List<Integer> chosenVotes, PublicKey publicKey, String id) {
+        ArrayList<CandidateVoteDTO> votes = new ArrayList<>();
+        BigInteger[] rVals = new BigInteger[candidates];
+        List<CipherText> cipherTexts = new ArrayList<>();
+
+        boolean voted = false;
+        for (int i = 0; i < candidates; i++) {
+            boolean isChosen = chosenVotes.contains(i);
+            int isYes = isChosen ? 1 : 0;
+            //If votes is yes, flip voted boolean as to register vote is not blank
+            voted |= isChosen;
+
+            BigInteger r = SecurityUtils.getRandomNumModN(publicKey.getQ());
+            rVals[i] = r;
+
+            CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, BigInteger.valueOf(isYes), r);
+            cipherTexts.add(ciphertext);
+
+            Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, BigInteger.valueOf(isYes));
+
+            votes.add(new CandidateVoteDTO(ciphertext, id, proof));
+        }
+
+        BigInteger rSum = Arrays.stream(rVals).reduce(BigInteger.ZERO, BigInteger::add);
+        CipherText cipherTextSum = SecurityUtils.concurrentSum(cipherTexts, 500);
+
+        //Sum of votes is one if a vote was cast, zero if the votes was blank (outside range of candidate list)
+        BigInteger sumOfVotes = voted ? BigInteger.ONE : BigInteger.ZERO;
+        Proof proof = VoteProofUtils.generateProof(cipherTextSum, publicKey, rSum, id, sumOfVotes);
+
+        return new BallotDTO(votes, id, proof);
     }
 }
