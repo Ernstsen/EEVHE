@@ -170,28 +170,6 @@ public class DecryptionAuthority extends AbstractServer {
 
     }
 
-    @Deprecated
-    private ArrayList<PersistedVote> getVotes() {
-        try {
-            String getVotes = bulletinBoard.path("getVotes").request().get(String.class);
-            VoteList voteObjects = new ObjectMapper().readValue(getVotes, VoteList.class);
-            ArrayList<PersistedVote> votes = new ArrayList<>();
-
-            for (Object vote : voteObjects.getVotes()) {
-                if (vote instanceof PersistedVote) {
-                    votes.add((PersistedVote) vote);
-                } else {
-                    logger.error("Found vote that was not ciphertext. Was " + vote.getClass() + ". Terminating server");
-                    terminate();
-                }
-            }
-            return votes;
-        } catch (IOException e) {
-            logger.error("Failed to read VoteList from JSON string", e);
-            return null;
-        }
-    }
-
     /**
      * Retrieves cast ballots from BulletinBoard
      *

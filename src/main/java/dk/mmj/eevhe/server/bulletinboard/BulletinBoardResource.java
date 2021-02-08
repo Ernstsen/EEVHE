@@ -77,26 +77,6 @@ public class BulletinBoardResource {
     }
 
     @POST
-    @Path("vote")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Deprecated
-    @SuppressWarnings("unchecked")
-    public void vote(CandidateVoteDTO vote) {
-        Set<String> hasVoted = state.get(HAS_VOTED, HashSet.class);
-        String voterId = vote.getId();
-
-
-        if (hasVoted.contains(voterId)) {
-            logger.warn("Voter with id=" + voterId + " attempted to vote more than once");
-            throw new NotAllowedException("A vote has already been registered with this ID");
-        }
-
-        List<PersistedVote> votes = state.get(VOTES, ArrayList.class);
-        votes.add(new PersistedVote(vote));
-        hasVoted.add(voterId);
-    }
-
-    @POST
     @Path("postBallot")
     @Consumes(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
@@ -110,7 +90,7 @@ public class BulletinBoardResource {
             throw new NotAllowedException("A vote has already been registered with this ID");
         }
 
-        List<PersistedBallot> votes = state.get(VOTES, ArrayList.class);
+        List<PersistedBallot> votes = state.get(BALLOTS, ArrayList.class);
         votes.add(new PersistedBallot(ballot));
         hasVoted.add(voterId);
     }
@@ -147,25 +127,10 @@ public class BulletinBoardResource {
 
     @SuppressWarnings("unchecked")
     @GET
-    @Path("getVotes")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Deprecated
-    public VoteList getVotes() {
-        List<PersistedVote> list = state.get(VOTES, List.class);
-
-        if (list == null) {
-            throw new NotFoundException("Voting has not been initialized");
-        }
-
-        return new VoteList(list);
-    }
-
-    @SuppressWarnings("unchecked")
-    @GET
     @Path("getBallots")
     @Produces(MediaType.APPLICATION_JSON)
     public BallotList getBallots() {
-        List<PersistedBallot> list = state.get(VOTES, List.class);
+        List<PersistedBallot> list = state.get(BALLOTS, List.class);
 
         if (list == null) {
             throw new NotFoundException("Voting has not been initialized");

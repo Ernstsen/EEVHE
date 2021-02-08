@@ -113,22 +113,6 @@ public class Voter extends Client {
     /**
      * Posts the encrypted vote to the public server, using the "/vote" path.
      *
-     * @param vote the VoteDTO with vote encrypted under the public key, and zero knowledge proof.
-     * @deprecated Use postBallot instead
-     */
-    @Deprecated
-    private void postVote(CandidateVoteDTO vote) {
-        Entity<?> entity = Entity.entity(vote, MediaType.APPLICATION_JSON_TYPE);
-        Response response = target.path("postBallot").request().post(entity);
-
-        if (response.getStatus() != 204) {
-            logger.warn("Failed to post vote to server: Error code was " + response.getStatus());
-        }
-    }
-
-    /**
-     * Posts the encrypted vote to the public server, using the "/vote" path.
-     *
      * @param ballot the ballot with vote encrypted under the public key, and zero knowledge proofs.
      */
     private void postBallot(BallotDTO ballot) {

@@ -67,7 +67,6 @@ public class TestSerialization {
 
         serializables.add(new PersistedBallot(ballot));
         PersistedVote pv1 = new PersistedVote(candidateVoteDTO);
-        PersistedVote pv2 = new PersistedVote(candidateVoteDTO2);
         serializables.add(pv1);
         serializables.add(new PrimePair(new BigInteger("3253"), new BigInteger("3298573493")));
 
@@ -86,7 +85,6 @@ public class TestSerialization {
         serializables.add(new PublicInfoList(Arrays.asList(publicInfo1, publicInfo2)));
 
         serializables.add(new ResultList(Arrays.asList(partialResultList, partialResultList2)));
-        serializables.add(new VoteList(Arrays.asList(pv1, pv2)));
     }
 
 

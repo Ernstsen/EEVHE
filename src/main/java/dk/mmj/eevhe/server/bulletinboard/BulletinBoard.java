@@ -2,7 +2,7 @@ package dk.mmj.eevhe.server.bulletinboard;
 
 
 import dk.eSoftware.commandLineParser.Configuration;
-import dk.mmj.eevhe.entities.PersistedVote;
+import dk.mmj.eevhe.entities.PersistedBallot;
 import dk.mmj.eevhe.server.AbstractServer;
 import dk.mmj.eevhe.server.ServerState;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -15,7 +15,7 @@ public class BulletinBoard extends AbstractServer {
     static final String PUBLIC_KEY = "publicKey";
     static final String HAS_VOTED = "hasVoted";
     static final String RESULT = "result";
-    static final String VOTES = "votes";
+    static final String BALLOTS = "ballots";
 
     private final BulletinBoardConfiguration configuration;
 
@@ -33,7 +33,7 @@ public class BulletinBoard extends AbstractServer {
     }
 
     private void initializeVoting() {
-        ServerState.getInstance().put(VOTES, new ArrayList<PersistedVote>());
+        ServerState.getInstance().put(BALLOTS, new ArrayList<PersistedBallot>());
         ServerState.getInstance().put(HAS_VOTED, new HashSet<String>());
     }
 
