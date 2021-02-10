@@ -8,6 +8,7 @@ import org.junit.runners.Suite;
 
 @Suite.SuiteClasses({
         TestKeyGenerationsParametersImpl.class,
+        TestDLogProofUtils.class,
         TestElGamal.class,
         TestVoteProofUtils.class,
         TestSecurityUtils.class

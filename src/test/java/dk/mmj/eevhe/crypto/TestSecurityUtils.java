@@ -15,6 +15,8 @@ import static org.junit.Assert.*;
 
 public class TestSecurityUtils {
 
+    public static final int ITERATIONS = 20;
+
     @Test
     public void shouldCreateCorrectVote1() {
         KeyPair keyPair = generateKeysFromP2048bitsG2();
@@ -258,7 +260,7 @@ public class TestSecurityUtils {
         PublicKey publicKey = keyPair.getPublicKey();
 
         ArrayList<CandidateVoteDTO> votes = new ArrayList<>();
-        int amount = 200;
+        int amount = ITERATIONS;
         for (int i = 0; i < amount; i++) {
             votes.add(SecurityUtils.generateVote(i % 2, "ID" + 1, publicKey));
         }
@@ -281,12 +283,11 @@ public class TestSecurityUtils {
         KeyPair keyPair = generateKeysFromP2048bitsG2();
         PublicKey publicKey = keyPair.getPublicKey();
 
-        int amount = 2000;
-        List<? extends CandidateVoteDTO> votes = generateVotes(amount, publicKey);
+        List<? extends CandidateVoteDTO> votes = generateVotes(ITERATIONS, publicKey);
 
         CipherText oldSum = SecurityUtils.voteSum(votes, publicKey);
 
-        CipherText concSum = SecurityUtils.concurrentVoteSum(votes, publicKey, amount / 10);
+        CipherText concSum = SecurityUtils.concurrentVoteSum(votes, publicKey, ITERATIONS / 10);
 
         assertEquals("Sums did not match.", oldSum, concSum);
     }
@@ -297,8 +298,7 @@ public class TestSecurityUtils {
         PublicKey publicKey = keyPair.getPublicKey();
         long endTime = new Date().getTime() + 5000;
 
-        int amount = 2000;
-        List<PersistedVote> votes = generateVotes(amount, publicKey);
+        List<PersistedVote> votes = generateVotes(ITERATIONS, publicKey);
 
         List<PersistedVote> collect = votes.stream().filter(v -> v.getTs().getTime() < endTime).collect(Collectors.toList());
 
