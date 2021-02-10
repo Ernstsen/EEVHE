@@ -129,16 +129,44 @@ public class SecurityUtils {
 
         for (int i = 0; i < authorities; i++) {
             int authorityIndex = i + 1;
-            BigInteger acc = BigInteger.ZERO;
+            BigInteger evaluation = evaluatePolynomial(polynomial, authorityIndex);
 
-            for (int j = 0; j < polynomial.length; j++) {
-                acc = acc.add(BigInteger.valueOf(authorityIndex).pow(j).multiply(polynomial[j]));
-            }
-
-            secretValuesMap.put(authorityIndex, acc.mod(q));
+            secretValuesMap.put(authorityIndex, evaluation.mod(q));
         }
 
         return secretValuesMap;
+    }
+
+    /**
+     * Evaluates polynomial
+     *
+     * @param polynomial The polynomial to evaluate
+     * @param x          The variable to evaluate the polynomial at
+     * @return The BigInteger value of the evaluated polynomial
+     */
+    private static BigInteger evaluatePolynomial(BigInteger[] polynomial, int x) {
+        BigInteger acc = BigInteger.ZERO;
+
+        for (int j = 0; j < polynomial.length; j++) {
+            acc = acc.add(BigInteger.valueOf(x).pow(j).multiply(polynomial[j]));
+        }
+        return acc;
+    }
+
+    /**
+     * @param g          The generator
+     * @param p          The prime modulus
+     * @param polynomial The polynomial
+     * @return
+     */
+    private static BigInteger[] computeCoefficientCommitments(BigInteger g, BigInteger p, BigInteger[] polynomial) {
+        BigInteger[] coefficientCommitments = new BigInteger[polynomial.length];
+
+        for (int i = 0; i < polynomial.length; i++) {
+            coefficientCommitments[i] = g.modPow(polynomial[i], p);
+        }
+
+        return coefficientCommitments;
     }
 
     /**
