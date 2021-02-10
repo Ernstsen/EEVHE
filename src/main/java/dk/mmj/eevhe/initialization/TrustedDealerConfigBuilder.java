@@ -16,6 +16,7 @@ public class TrustedDealerConfigBuilder implements CommandLineParser.ConfigBuild
     private static final String SELF = "--dealer";
     private static final String ROOT_PATH = "root=";
     private static final String KEY_PATH = "keyPath=";
+    private static final String CAND_LIST_PATH = "candidates=";
     private static final String SERVERS = "servers=";
     private static final String DEGREE = "degree=";
     private static final String BULLETIN_BOARD_PATH = "url=";
@@ -29,6 +30,7 @@ public class TrustedDealerConfigBuilder implements CommandLineParser.ConfigBuild
     //state
     private Path rootPath = Paths.get("");
     private Path keyPath = Paths.get("");
+    private Path candidateListPath = Paths.get("./conf/testing_candidates.json");
     private int servers;
     private int polynomialDegree;
     private String bulletinBoardPath = "https://localhost:8080";
@@ -65,14 +67,16 @@ public class TrustedDealerConfigBuilder implements CommandLineParser.ConfigBuild
                 int day = hour * 24;
 
                 if (param.startsWith(TIME_DAY)) {
-                    time += Integer.parseInt(param.substring(TIME_DAY.length())) * day;
+                    time += (long) Integer.parseInt(param.substring(TIME_DAY.length())) * day;
                 } else if (param.startsWith(TIME_HR)) {
-                    time += Integer.parseInt(param.substring(TIME_HR.length())) * hour;
+                    time += (long) Integer.parseInt(param.substring(TIME_HR.length())) * hour;
                 } else if (param.startsWith(TIME_MIN)) {
-                    time += Integer.parseInt(param.substring(TIME_MIN.length())) * minute;
+                    time += (long) Integer.parseInt(param.substring(TIME_MIN.length())) * minute;
                 }
             }
 
+        } else if(cmd.startsWith(CAND_LIST_PATH)){
+            candidateListPath = Paths.get(cmd.substring(CAND_LIST_PATH.length()));
         } else if (!cmd.equals(SELF)) {
             logger.warn("Did not recognize command " + command.getCommand());
         }
@@ -82,6 +86,7 @@ public class TrustedDealerConfigBuilder implements CommandLineParser.ConfigBuild
         return new TrustedDealer.TrustedDealerConfiguration(
                 rootPath,
                 keyPath,
+                candidateListPath,
                 servers,
                 polynomialDegree,
                 bulletinBoardPath,

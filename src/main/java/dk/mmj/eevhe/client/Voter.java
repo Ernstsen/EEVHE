@@ -62,14 +62,16 @@ public class Voter extends Client {
      * @param publicKey is the public key used to encrypt the vote.
      */
     private void doMultiVote(PublicKey publicKey) {
+        int size = getCandidates().size();
         Random random = new Random();
-        int[] castVotes = new int[]{0, 0, 0};
+        int[] castVotes = new int[size];
+        Arrays.fill(castVotes, 0);
 
         for (int i = 0; i < multi; i++) {
             System.out.print("Dispatching votes: " + i + "/" + multi + " \r");
 
             id = UUID.randomUUID().toString();
-            int vote = random.nextInt(3);
+            int vote = random.nextInt(size);
             castVotes[vote]++;
 
             doVote(vote, publicKey);

@@ -1,6 +1,7 @@
 package dk.mmj.eevhe.initialization;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.Configuration;
 import dk.mmj.eevhe.Application;
@@ -29,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
 import java.util.ArrayList;
@@ -61,7 +63,7 @@ public class TrustedDealer implements Application {
         createIfNotExists(rootPath);
         createIfNotExists(keyPath);
 
-        loadCandidates();
+        loadCandidates(config.candidateListPath);
 
         if (config.newKey) {
             try {
@@ -84,13 +86,16 @@ public class TrustedDealer implements Application {
         }
     }
 
-    private void loadCandidates(){
-        //TODO: Replace with load from config file
-        candidates = Arrays.asList(
-                new Candidate(0, "mette", "A - Socialdemokratiet"),
-                new Candidate(1, "lars", "V - Venstre"),
-                new Candidate(2, "pia", "O - Dansk Folkeparti")
-        );
+    private void loadCandidates(Path candidateListPath) {
+        try {
+            TypeReference<List<Candidate>> typeRef = new TypeReference<List<Candidate>>() {
+            };
+
+            candidates = new ObjectMapper().readValue(Files.newInputStream(candidateListPath), typeRef);
+        } catch (IOException e) {
+            logger.error("failed to load candidate list - cannot initialize", e);
+            System.exit(-1);
+        }
     }
 
 
@@ -227,21 +232,29 @@ public class TrustedDealer implements Application {
         private final String bulletinBoardPath;
         private final boolean newKey;
         private final long endTime;
+        private final Path candidateListPath;
 
         /**
          * Constructor for the Trusted Dealer configuration
          *
          * @param rootPath          root path used when writing output files
          * @param keyPath           path to the private key used for signing values
+         * @param candidateListPath path to json file containing candidate information
          * @param servers           number of servers to create files for
          * @param polynomialDegree  the degree of the polynomial used during key generation
          * @param bulletinBoardPath path to the bulletin board where public key should be posted
          * @param newKey            whether new key should be generated in the root
          * @param endTime           When the vote comes to an end. ms since January 1, 1970, 00:00:00 GMT
          */
-        TrustedDealerConfiguration(Path rootPath, Path keyPath, int servers, int polynomialDegree, String bulletinBoardPath, boolean newKey, long endTime) {
+        TrustedDealerConfiguration(
+                Path rootPath, Path keyPath,
+                Path candidateListPath,
+                int servers, int polynomialDegree,
+                String bulletinBoardPath,
+                boolean newKey, long endTime) {
             this.rootPath = rootPath;
             this.keyPath = keyPath;
+            this.candidateListPath = candidateListPath;
             this.servers = servers;
             this.polynomialDegree = polynomialDegree;
             this.bulletinBoardPath = bulletinBoardPath;

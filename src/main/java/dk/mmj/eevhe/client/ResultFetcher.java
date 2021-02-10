@@ -94,7 +94,7 @@ public class ResultFetcher extends Client {
                 BigInteger cs = SecurityUtils.combinePartials(partialMap, publicKey.getP());
                 CipherText cipherText = minimalPartials.get(idx).getCipherText();
                 int result = ElGamal.homomorphicDecryptionFromPartials(cipherText.getD(), cs, publicKey.getG(), publicKey.getP(), amountOfVotes);
-                resBuilder.append(result).append("votes, from ").append(amountOfVotes).append(" cast in total\n\n");
+                resBuilder.append(result).append(" votes, from ").append(amountOfVotes).append(" cast in total\n\n");
 
             }
         } catch (UnableToDecryptException e) {
