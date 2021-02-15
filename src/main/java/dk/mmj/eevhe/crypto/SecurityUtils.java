@@ -144,7 +144,7 @@ public class SecurityUtils {
      * @param x          The variable to evaluate the polynomial at
      * @return The BigInteger value of the evaluated polynomial
      */
-    private static BigInteger evaluatePolynomial(BigInteger[] polynomial, int x) {
+    static BigInteger evaluatePolynomial(BigInteger[] polynomial, int x) {
         BigInteger acc = BigInteger.ZERO;
 
         for (int j = 0; j < polynomial.length; j++) {
@@ -159,7 +159,7 @@ public class SecurityUtils {
      * @param polynomial The polynomial
      * @return
      */
-    private static BigInteger[] computeCoefficientCommitments(BigInteger g, BigInteger p, BigInteger[] polynomial) {
+    static BigInteger[] computeCoefficientCommitments(BigInteger g, BigInteger p, BigInteger[] polynomial) {
         BigInteger[] coefficientCommitments = new BigInteger[polynomial.length];
 
         for (int i = 0; i < polynomial.length; i++) {
