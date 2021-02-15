@@ -1,6 +1,7 @@
 package dk.mmj.eevhe.server.decryptionauthority;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.Configuration;
 import dk.mmj.eevhe.client.FetchingUtilities;
@@ -10,6 +11,7 @@ import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.server.AbstractServer;
+import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -20,6 +22,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -27,23 +31,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
+import static dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthorityResource.statePrefix;
 
 public class DecryptionAuthority extends AbstractServer {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthority.class);
     private static final String RSA_PUBLIC_KEY_NAME = "rsa";
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private final JerseyWebTarget bulletinBoard;
+    private final int port;
+    private final Integer id;
+    private final boolean integrationTest;
+    private List<DecryptionAuthorityInfo> daInfo;
     private boolean timeCorrupt = false;
     private PartialSecretKey sk;
-    private int port = 8081;
     private long endTime;
     private PublicKey pk;
-    private Integer id;
 
     public DecryptionAuthority(DecryptionAuthorityConfiguration configuration) {
-        if (configuration.port != null) {
-            port = configuration.port;
-        }
+        ObjectMapper mapper = new ObjectMapper();
+
+        port = configuration.port;
+        id = configuration.id;
+        integrationTest = configuration.integrationTest;
 
         if (configuration.timeCorrupt > 0) {
             timeCorrupt = true;
@@ -57,20 +66,23 @@ public class DecryptionAuthority extends AbstractServer {
             System.exit(-1);
         }
 
+        try (InputStream is = Files.newInputStream(configuration.authoritiesFile)) {
+            daInfo = mapper.readValue(is, new TypeReference<List<DecryptionAuthorityInfo>>() {
+            });
+        } catch (IOException e) {
+            logger.error("Failed to read authorities configuration file", e);
+            System.exit(-1);
+        }
 
         try (FileInputStream ous = new FileInputStream(conf)) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(ous));
 
-            id = Integer.parseInt(reader.readLine());
-            BigInteger secretValue = new BigInteger(reader.readLine());
-            BigInteger p = new BigInteger(reader.readLine());
-            String publicKeyString = reader.readLine();
+            int id_ = Integer.parseInt(reader.readLine()); //No longer relevant - is param
+            BigInteger secretValue_ = new BigInteger(reader.readLine());
+            BigInteger p_ = new BigInteger(reader.readLine());
+            String publicKeyString_ = reader.readLine();
             String endTimeString = reader.readLine();
 
-            pk = new ObjectMapper().readValue(publicKeyString, PublicKey.class);
-
-
-            sk = new PartialSecretKey(secretValue, p);
             endTime = Long.parseLong(endTimeString);
             long relativeEndTime = endTime - new Date().getTime();
 
@@ -88,6 +100,107 @@ public class DecryptionAuthority extends AbstractServer {
             System.exit(-1);
         } catch (IOException e) {
             logger.error("Unable to read configuration file. Terminating", e);
+            System.exit(-1);
+        }
+    }
+
+    @Override
+    protected void afterStart() {
+        scheduler.execute(this::startKeyGenProtocol);
+    }
+
+    /**
+     * Initializes the key-generation protocol by sending polynomial to the other peers,
+     * and awaiting input from the other authorities
+     */
+    private void startKeyGenProtocol() {
+        if (integrationTest) {
+            integrationTestStateWorkaround();
+        }
+
+        Map<Integer, String> daInfos = daInfo.stream().collect(Collectors.toMap(DecryptionAuthorityInfo::getId, DecryptionAuthorityInfo::getAddress));
+        daInfos.remove(id);//We remove ourself, to be able to iterate without
+
+        //We chose our polynomial
+        BigInteger[] pol = new BigInteger[]{BigInteger.valueOf(2), BigInteger.valueOf(3)};//TODO
+
+
+        //Calculates commitments
+        BigInteger[] commitments = new BigInteger[]{BigInteger.valueOf(2), BigInteger.valueOf(3)};//TODO
+
+        Entity<BigInteger[]> commitmentsEntity = Entity.entity(commitments, MediaType.APPLICATION_JSON);
+        Response postCommitments = bulletinBoard.path("postCommitments").request().post(commitmentsEntity);
+        if (!(postCommitments.getStatus() == 200)) {
+            logger.error("failed to post commitments to bulletin board. Terminating. Status: " + postCommitments.getStatus());
+            System.exit(-1);
+        }
+
+        //Post commitments to bulletin board
+        for (Integer daId : daInfos.keySet()) {
+            JerseyWebTarget da = configureWebTarget(logger, daInfos.get(daId));
+
+            BigInteger fij = BigInteger.valueOf(87); //f_i(j) //TODO
+            Entity<PartialSecretMessage> partialSecretEntity = Entity.entity(new PartialSecretMessage(fij, id), MediaType.APPLICATION_JSON);
+            Response resp = da.path("postPartialSecret").request().post(partialSecretEntity);
+            if (!(resp.getStatus() == 200)) {
+                logger.error("failed to post f_i(j) to DA with id=" + da + ". Terminating. Status: " + resp.getStatus());
+            }
+        }
+
+        scheduler.schedule(this::verifyReceivedValues, 4, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Verifies received secret-values as part of the key-generation protocol
+     */
+    private void verifyReceivedValues() {
+        boolean hasReceivedFromAll = true;
+        List<Integer> ids = daInfo.stream()
+                .map(DecryptionAuthorityInfo::getId)
+                .filter(i -> i != id.intValue())
+                .collect(Collectors.toList());
+
+        ServerState state = ServerState.getInstance();
+        HashMap<Integer, PartialSecretMessage> secrets = new HashMap<>();
+        for (Integer integer : ids) {
+            PartialSecretMessage ps = state.get(partialSecretKey(integer), PartialSecretMessage.class);
+            if (ps != null) {
+                secrets.put(integer, ps);
+            } else {
+                hasReceivedFromAll = false;
+            }
+        }
+
+        if (!hasReceivedFromAll) {//TODO: When should we just ignore the missing value(s)? Otherwise risk corruption killing election by non-participation
+            scheduler.schedule(this::verifyReceivedValues, 200, TimeUnit.MILLISECONDS);
+            return;
+        }
+
+        //TODO: Check partial secrets, and potentially send complaint to BB
+
+        BigInteger g = BigInteger.ONE;//TODO - where will we get this? Common input?
+        BigInteger q = BigInteger.ONE;//TODO - where will we get this? Common input?
+        BigInteger p = BigInteger.ONE;//TODO - where will we get this? Common input?
+        BigInteger combineToPublicKey = BigInteger.TEN; //TODO!
+        BigInteger combineToPartialSecret = BigInteger.TEN; //TODO!
+        pk = new PublicKey(combineToPublicKey, g, q);
+        sk = new PartialSecretKey(combineToPartialSecret, p);
+    }
+
+    private String partialSecretKey(Integer id) {
+        return statePrefix(integrationTest ? this.id : null) + "secret:" + id;
+    }
+
+    /**
+     * Posts id to self.
+     * <br>
+     * Workaround as static vars are not respected in the integrationTest setup
+     */
+    private void integrationTestStateWorkaround() {
+        JerseyWebTarget me = configureWebTarget(logger, "127.0.0.1:" + getPort());
+        Response idResponse = me.path("id").request().post(Entity.entity(this.id, MediaType.APPLICATION_JSON));
+        if (idResponse.getStatus() != 200) {
+            logger.error("Failed to write id to own state for integration test work-around. Failing. Status: " + idResponse.getStatus());
             System.exit(-1);
         }
     }
@@ -208,6 +321,36 @@ public class DecryptionAuthority extends AbstractServer {
         return port;
     }
 
+    @SuppressWarnings("unused")
+    public static class PartialSecretMessage {
+        private BigInteger partialSecret;
+        private Integer id;
+
+        public PartialSecretMessage(BigInteger partialSecret, Integer id) {
+            this.partialSecret = partialSecret;
+            this.id = id;
+        }
+
+        public PartialSecretMessage() {
+        }
+
+        public BigInteger getPartialSecret() {
+            return partialSecret;
+        }
+
+        public void setPartialSecret(BigInteger partialSecret) {
+            this.partialSecret = partialSecret;
+        }
+
+        public Integer getId() {
+            return id;
+        }
+
+        public void setId(Integer id) {
+            this.id = id;
+        }
+    }
+
     /**
      * Configuration for a DecryptionAuthority
      */
@@ -216,12 +359,18 @@ public class DecryptionAuthority extends AbstractServer {
         private final String bulletinBoard;
         private final String confPath;
         private final int timeCorrupt;
+        private final Path authoritiesFile;
+        private final Integer id;
+        private final boolean integrationTest;
 
-        DecryptionAuthorityConfiguration(Integer port, String bulletinBoard, String confPath, int timeCorrupt) {
+        DecryptionAuthorityConfiguration(int port, String bulletinBoard, String confPath, Path authoritiesFile, Integer id, int timeCorrupt, boolean integrationTest) {
             this.port = port;
             this.bulletinBoard = bulletinBoard;
+            this.authoritiesFile = authoritiesFile;
+            this.id = id;
             this.confPath = confPath;
             this.timeCorrupt = timeCorrupt;
+            this.integrationTest = integrationTest;
         }
     }
 }

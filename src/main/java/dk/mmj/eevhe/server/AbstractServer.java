@@ -21,6 +21,7 @@ public abstract class AbstractServer implements Application {
         server = getServer(port);
         try {
             server.start();
+            afterStart();
             server.join();
         } catch (Exception e) {
             //noinspection finally
@@ -97,6 +98,12 @@ public abstract class AbstractServer implements Application {
         configure(jerseyServlet);
 
         return jettyServer;
+    }
+
+    /**
+     * Method called after the server has been started. Must be non-blocking
+     */
+    protected void afterStart() {
     }
 
     /**

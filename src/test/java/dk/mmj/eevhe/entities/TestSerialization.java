@@ -85,6 +85,7 @@ public class TestSerialization {
         serializables.add(new PublicInfoList(Arrays.asList(publicInfo1, publicInfo2)));
 
         serializables.add(new ResultList(Arrays.asList(partialResultList, partialResultList2)));
+        serializables.add(new DecryptionAuthorityInfo(0, "127.0.0.1"));
     }
 
 

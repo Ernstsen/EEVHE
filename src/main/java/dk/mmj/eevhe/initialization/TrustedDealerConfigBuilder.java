@@ -124,7 +124,7 @@ public class TrustedDealerConfigBuilder implements CommandLineParser.ConfigBuild
                 "\t  --" + SERVERS + "int\t\t How many servers are going to participate\n" +
                 "\t  --" + DEGREE + "int\t\t Degree of polynomial for keygeneration. System is safe when #of corrupt is less or" +
                 "equals to degree\n" +
-                "\t  --" + BULLETIN_BOARD_PATH + "int\t\t Url pointing to the bulletin board where public keys should be posed\n" +
+                "\t  --" + BULLETIN_BOARD_PATH + "url\t\t Url pointing to the bulletin board where public keys should be posed\n" +
                 "\t  --" + NEW_KEY + "boolean\t Whether new RSA keypair should be generated. If keyPath does not point dir with keys, " +
                 "it defaults to true. Otherwise false\n" +
                 "\t  --" + TIME + "\t\t Sets time. Vote ends at current time + time parameters. Standard value: 10 min\n" +

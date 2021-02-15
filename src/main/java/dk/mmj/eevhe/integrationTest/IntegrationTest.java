@@ -135,7 +135,7 @@ public class IntegrationTest implements Application {
     }
 
     private void launchDecryptionAuthority(Integer id) {
-        String params = "--authority --conf=initFiles/" + id + " --port=808" + id;
+        String params = "--authority integrationTest=True --conf=initFiles/" + id + " --port=808" + id;
         SingletonCommandLineParser parser = new SingletonCommandLineParser(new DecryptionAuthorityConfigBuilder());
         Configuration conf;
         try {
