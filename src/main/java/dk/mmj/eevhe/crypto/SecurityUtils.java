@@ -11,6 +11,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
+import static java.math.BigInteger.valueOf;
+
 /**
  * Class used for methods not tied directly to ElGamal
  */
@@ -61,8 +63,8 @@ public class SecurityUtils {
      */
     public static CandidateVoteDTO generateVote(int vote, String id, PublicKey publicKey) {
         BigInteger r = SecurityUtils.getRandomNumModN(publicKey.getQ());
-        CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, BigInteger.valueOf(vote), r);
-        Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, BigInteger.valueOf(vote));
+        CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, valueOf(vote), r);
+        Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, valueOf(vote));
 
         return new CandidateVoteDTO(ciphertext, id, proof);
     }
@@ -81,10 +83,10 @@ public class SecurityUtils {
             BigInteger r = SecurityUtils.getRandomNumModN(publicKey.getQ());
             rVals[i] = r;
 
-            CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, BigInteger.valueOf(isYes), r);
+            CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, valueOf(isYes), r);
             cipherTexts.add(ciphertext);
 
-            Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, BigInteger.valueOf(isYes));
+            Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, valueOf(isYes));
 
             votes.add(new CandidateVoteDTO(ciphertext, id, proof));
         }
@@ -148,8 +150,9 @@ public class SecurityUtils {
         BigInteger acc = BigInteger.ZERO;
 
         for (int j = 0; j < polynomial.length; j++) {
-            acc = acc.add(BigInteger.valueOf(x).pow(j).multiply(polynomial[j]));
+            acc = acc.add(valueOf(x).pow(j).multiply(polynomial[j]));
         }
+
         return acc;
     }
 
@@ -167,6 +170,38 @@ public class SecurityUtils {
         }
 
         return coefficientCommitments;
+    }
+
+    /**
+     * @param coefficientCommitments Coefficient commitments
+     * @param j                      DA id > 0
+     * @return g^f_i(j)
+     */
+    static BigInteger combineCoefficientCommitments(BigInteger[] coefficientCommitments, BigInteger j, BigInteger p, BigInteger q) {
+        BigInteger acc = BigInteger.ONE;
+
+        for (int t = 0; t < coefficientCommitments.length; t++) {
+            BigInteger jExp = j.modPow(valueOf(t), q);
+            acc = acc.multiply(coefficientCommitments[t].modPow(jExp, p));
+        }
+
+        return acc.mod(p);
+    }
+
+    /**
+     * Verifies that g^u_i equals g^combinedCoefficientCommitments
+     *
+     * @param g                              generator
+     * @param u                              u_i, which is equal to f_i(j)
+     * @param p                              prime modulus
+     * @param combinedCoefficientCommitments combined coefficient commitments
+     * @return whether g^u_i equals g^combinedCoefficientCommitments or not
+     */
+    static boolean verifyEvaluatedPolynomial(BigInteger g, BigInteger u,
+                                             BigInteger p, BigInteger combinedCoefficientCommitments) {
+        BigInteger gU = g.modPow(u, p);
+
+        return gU.equals(combinedCoefficientCommitments);
     }
 
     /**
@@ -195,11 +230,11 @@ public class SecurityUtils {
      */
     static BigInteger generateLagrangeCoefficient(int[] authorityIndexes, int currentIndexValue, BigInteger q) {
         BigInteger acc = BigInteger.ONE;
-        BigInteger currentIndexBig = BigInteger.valueOf(currentIndexValue);
+        BigInteger currentIndexBig = valueOf(currentIndexValue);
 
         for (int authorityIndex : authorityIndexes) {
             if (authorityIndex != currentIndexValue) {
-                BigInteger iBig = BigInteger.valueOf(authorityIndex);
+                BigInteger iBig = valueOf(authorityIndex);
                 BigInteger diff = iBig.subtract(currentIndexBig);
                 BigInteger diffModInv = diff.modInverse(q);
                 acc = acc.multiply(iBig.multiply(diffModInv)).mod(q);
@@ -229,7 +264,7 @@ public class SecurityUtils {
      * @return the combination of the partials
      */
     public static BigInteger combinePartials(Map<Integer, BigInteger> partialsMap, BigInteger p) {
-        BigInteger q = p.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2));
+        BigInteger q = p.subtract(BigInteger.ONE).divide(valueOf(2));
         Integer[] authorityIndexesInteger = partialsMap.keySet().toArray(new Integer[0]);
         int[] authorityIndexes = new int[authorityIndexesInteger.length];
         for (int i = 0; i < authorityIndexesInteger.length; i++) {

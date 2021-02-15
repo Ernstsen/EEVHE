@@ -228,7 +228,7 @@ public class TestSecurityUtils {
         BigInteger expectedResult = polynomial[0].add(valueOf(x).multiply(polynomial[1]))
                                                  .add(valueOf(x).pow(2).multiply(polynomial[2]));
 
-        assertEquals("Evaluation of polynomial failed", actualResult, expectedResult);
+        assertEquals("Evaluation of polynomial failed", expectedResult, actualResult);
     }
 
     @Test
@@ -243,7 +243,45 @@ public class TestSecurityUtils {
         expectedResult[1] = g.modPow(polynomial[1], p);
         expectedResult[2] = g.modPow(polynomial[2], p);
 
-        assertEquals("Computation of coefficient commitments failed", actualResult, expectedResult);
+        assertArrayEquals("Computation of coefficient commitments failed", expectedResult, actualResult);
+    }
+
+    @Test
+    public void testCombineCoefficientCommitments() {
+        BigInteger g = valueOf(2);
+        BigInteger q = valueOf(7919);
+        BigInteger p = q.multiply(valueOf(2)).add(valueOf(1));
+        BigInteger j = valueOf(1);
+
+        BigInteger[] polynomial = new BigInteger[]{valueOf(11), valueOf(2), valueOf(2)};
+        BigInteger[] coefficientCommitments = SecurityUtils.computeCoefficientCommitments(g, p, polynomial);
+
+        BigInteger actualResult = SecurityUtils.combineCoefficientCommitments(coefficientCommitments, j, p, q);
+
+        BigInteger jExp = j.modPow(valueOf(2), q);
+        BigInteger expectedResult = coefficientCommitments[0]
+                .multiply(coefficientCommitments[1].modPow(j, p))
+                .multiply(coefficientCommitments[2].modPow(jExp, p)).mod(p);
+
+        assertEquals("Combining coefficient commitments failed", expectedResult, actualResult);
+    }
+
+    @Test
+    public void shouldBeAbleToVerifyEvaluatedPolynomial() {
+        BigInteger g = valueOf(2);
+        BigInteger q = valueOf(7919);
+        BigInteger p = q.multiply(valueOf(2)).add(valueOf(1));
+        BigInteger j = valueOf(1);
+
+        BigInteger[] polynomial = new BigInteger[]{valueOf(11), valueOf(2), valueOf(2)};
+        BigInteger[] coefficientCommitments = SecurityUtils.computeCoefficientCommitments(g, p, polynomial);
+
+        BigInteger combinedCoefficientCommitments = SecurityUtils.combineCoefficientCommitments(coefficientCommitments, j, p, q);
+        BigInteger u = SecurityUtils.evaluatePolynomial(polynomial, j.intValue());
+
+        boolean actualResult = SecurityUtils.verifyEvaluatedPolynomial(g, u, p, combinedCoefficientCommitments);
+
+        assertTrue(actualResult);
     }
 
     @Test
