@@ -3,7 +3,6 @@ package dk.mmj.eevhe.server.bulletinboard;
 
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.server.ServerState;
-import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -116,10 +115,10 @@ public class BulletinBoardResource {
 
     @SuppressWarnings("unchecked")
     private void addToList(String key, Object element) {
-        List list = state.get(key, List.class);
+        List<Object> list = state.get(key, List.class);
 
         if (list == null) {
-            list = new ArrayList();
+            list = new ArrayList<>();
             state.put(key, list);
         }
 
@@ -142,14 +141,14 @@ public class BulletinBoardResource {
 
     @POST
     @Path("commitments")
-    public void postCommitments(BigInteger[] commitment){
+    public void postCommitments(BigInteger[] commitment) {
         addToList(COEFFICIENT_COMMITMENT, commitment);
     }
 
     @SuppressWarnings("unchecked")
     @POST
     @Path("postCommitments")
-    public List<BigInteger[]> getCommitments(){
+    public List<BigInteger[]> getCommitments() {
         List<BigInteger[]> list = state.get(COEFFICIENT_COMMITMENT, List.class);
 
         if (list == null) {
@@ -157,6 +156,36 @@ public class BulletinBoardResource {
         }
 
         return list;
+    }
+
+    @POST
+    @Path("complain")
+    public void postComplaint(ComplaintDTO complaint) {
+        addToList(COMPLAINTS, complaint);
+    }
+
+    @SuppressWarnings("unchecked")
+    @GET
+    @Path("complaints")
+    public List<ComplaintDTO> getComplaints(){
+        List<ComplaintDTO> list = state.get(COMPLAINTS, List.class);
+
+        return list != null ? list : new ArrayList<>();
+    }
+
+    @POST
+    @Path("resolveComplaint")
+    public void resolveComplaint(ComplaintResolveDTO resolveDTO) {
+        addToList(RESOLVED_COMPLAINTS, resolveDTO);
+    }
+
+    @SuppressWarnings("unchecked")
+    @GET
+    @Path("complaintResolves")
+    public List<ComplaintResolveDTO> getComplaintResolves(){
+        List<ComplaintResolveDTO> list = state.get(RESOLVED_COMPLAINTS, List.class);
+
+        return list != null ? list : new ArrayList<>();
     }
 
 

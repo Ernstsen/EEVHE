@@ -47,9 +47,11 @@ public class DecryptionAuthority extends AbstractServer {
     private PartialSecretKey sk;
     private long endTime;
     private PublicKey pk;
+    private ObjectMapper mapper = new ObjectMapper();
+
+    private HashMap<Integer, BigInteger[]> commitmentMap = new HashMap<>();
 
     public DecryptionAuthority(DecryptionAuthorityConfiguration configuration) {
-        ObjectMapper mapper = new ObjectMapper();
 
         port = configuration.port;
         id = configuration.id;
@@ -185,14 +187,12 @@ public class DecryptionAuthority extends AbstractServer {
         List<CommitmentDTO> commitments;
 
         try {
-            commitments = new ObjectMapper().readValue(commitmentsString, commitmentListType);
+            commitments = mapper.readValue(commitmentsString, commitmentListType);
         } catch (IOException e) {
             logger.error("Failed to read commitments from BulletinBoard! Failing.", e);
             System.exit(-1);
             return;
         }
-
-        HashMap<Integer, BigInteger[]> commitmentMap = new HashMap<>();
 
         for (CommitmentDTO commitment : commitments) {
             int id = commitment.getId();
@@ -206,10 +206,75 @@ public class DecryptionAuthority extends AbstractServer {
             Predicate<CommitmentDTO> verifier = (m) -> m.getCommitment() != null;//TODO: Placeholder for actual verifier!
 
             if (!verifier.test(commitment)) {
-                //TODO: Post complaint!
+                Entity<ComplaintDTO> entity = Entity.entity(new ComplaintDTO(commitment.getId()), MediaType.APPLICATION_JSON);
+                bulletinBoard.path("complain").request().post(entity);
+            } else {
+                commitmentMap.put(id, commitment.getCommitment());
             }
         }
 
+        scheduler.schedule(this::handleComplaints, 20, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Resolves complaints made about values from this DA, as part of the key-generation protocol
+     */
+    private void handleComplaints() {
+        String complaintsString = bulletinBoard.path("complaints").request().get(String.class);
+        List<ComplaintDTO> complaints;
+        try {
+            complaints = mapper.readValue(complaintsString, new TypeReference<List<ComplaintDTO>>() {
+            });
+        } catch (IOException e) {
+            logger.error("Failed to read complaint list from Bulletin Board", e);
+            System.exit(-1);
+            return;
+        }
+
+        for (ComplaintDTO complaint : complaints) {
+            if (complaint.getId() == id) {
+                BigInteger complaintValue = BigInteger.ZERO;//TODO: Which value?!?
+                ComplaintResolveDTO complaintResolveDTO = new ComplaintResolveDTO(id, complaintValue);
+                bulletinBoard.path("resolveComplaint").request().post(Entity.entity(complaintResolveDTO, MediaType.APPLICATION_JSON));
+            }
+        }
+
+        scheduler.schedule(this::checkIfComplaintsAreResolved, 20, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Asserts that all raised complaints are resolved, and updates state to reflect resolves.
+     * <br>
+     * Part of the key-generation protocol
+     */
+    private void checkIfComplaintsAreResolved() {
+        String complaintResolvesString = bulletinBoard.request("complaintResolves").get(String.class);
+        List<ComplaintResolveDTO> resolves;
+        try {
+            resolves = mapper.readValue(complaintResolvesString, new TypeReference<List<ComplaintResolveDTO>>() {
+            });
+        } catch (IOException e) {
+            logger.error("Failed to read resolved complaints from Bulletin Board. Terminating", e);
+            System.exit(-1);
+            return;
+        }
+
+        ServerState state = ServerState.getInstance();
+
+        for (ComplaintResolveDTO resolve : resolves) {
+            boolean resolveIsVerifiable = true; //TODO: CHECK!
+            if (resolveIsVerifiable) {
+                state.put(partialSecretKey(resolve.getId()), resolve.getValue());
+            }
+        }
+
+        scheduler.schedule(this::combineKeys, 20, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Finalizes the key-generation protocol, by combining the data received to a public key, and a partial secret key
+     */
+    private void combineKeys() {
         BigInteger g = BigInteger.ONE;//TODO - where will we get this? Common input?
         BigInteger q = BigInteger.ONE;//TODO - where will we get this? Common input?
         BigInteger p = BigInteger.ONE;//TODO - where will we get this? Common input?
@@ -323,7 +388,7 @@ public class DecryptionAuthority extends AbstractServer {
     private List<PersistedBallot> getBallots() {
         try {
             String getVotes = bulletinBoard.path("getBallots").request().get(String.class);
-            BallotList voteObjects = new ObjectMapper().readValue(getVotes, BallotList.class);
+            BallotList voteObjects = mapper.readValue(getVotes, BallotList.class);
             ArrayList<PersistedBallot> ballots = new ArrayList<>();
 
             for (Object ballot : voteObjects.getBallots()) {
