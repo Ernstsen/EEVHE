@@ -98,7 +98,6 @@ public class SecurityUtils {
         BigInteger sumOfVotes = voted ? BigInteger.ONE : BigInteger.ZERO;
         Proof proof = VoteProofUtils.generateProof(cipherTextSum, publicKey, rSum, id, sumOfVotes);
 
-        //TODO: Return BallotDTO
         return new BallotDTO(votes, id, proof);
     }
 
@@ -109,7 +108,7 @@ public class SecurityUtils {
      * @param q      q-1 specifies the maximum value of coefficients in the polynomial
      * @return a BigInteger array representing the polynomial
      */
-    static BigInteger[] generatePolynomial(int degree, BigInteger q) {
+    public static BigInteger[] generatePolynomial(int degree, BigInteger q) {
         BigInteger[] polynomial = new BigInteger[degree + 1];
         for (int i = 0; i <= degree; i++) {
             polynomial[i] = getRandomNumModN(q);
@@ -146,7 +145,7 @@ public class SecurityUtils {
      * @param x          The variable to evaluate the polynomial at
      * @return The BigInteger value of the evaluated polynomial
      */
-    static BigInteger evaluatePolynomial(BigInteger[] polynomial, int x) {
+    public static BigInteger evaluatePolynomial(BigInteger[] polynomial, int x) {
         BigInteger acc = BigInteger.ZERO;
 
         for (int j = 0; j < polynomial.length; j++) {

@@ -4,21 +4,31 @@ import java.util.Objects;
 
 @SuppressWarnings("unused")
 public class ComplaintDTO {
-    int id;
+    private int senderId;
+    private int targetId;
 
     public ComplaintDTO() {
     }
 
-    public ComplaintDTO(int id) {
-        this.id = id;
+    public ComplaintDTO(int senderId, int targetId) {
+        this.senderId = senderId;
+        this.targetId = targetId;
     }
 
-    public int getId() {
-        return id;
+    public int getSenderId() {
+        return senderId;
     }
 
-    public void setId(int id) {
-        this.id = id;
+    public void setSenderId(int senderId) {
+        this.senderId = senderId;
+    }
+
+    public int getTargetId() {
+        return targetId;
+    }
+
+    public void setTargetId(int targetId) {
+        this.targetId = targetId;
     }
 
     @Override
@@ -26,11 +36,11 @@ public class ComplaintDTO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ComplaintDTO that = (ComplaintDTO) o;
-        return id == that.id;
+        return senderId == that.senderId && targetId == that.targetId;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return Objects.hash(senderId, targetId);
     }
 }

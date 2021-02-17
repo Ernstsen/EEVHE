@@ -1,12 +1,10 @@
 package dk.mmj.eevhe.crypto;
 
-import dk.mmj.eevhe.entities.KeyPair;
 import dk.mmj.eevhe.entities.PartialKeyPair;
 import dk.mmj.eevhe.entities.PublicKey;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Optional;
 
 import static java.math.BigInteger.valueOf;
 
@@ -15,9 +13,9 @@ public class SecretSharingUtils {
      * @param g          The generator
      * @param p          The prime modulus
      * @param polynomial The polynomial
-     * @return
+     * @return g^coeff for all coefficients in polynomial
      */
-    static BigInteger[] computeCoefficientCommitments(BigInteger g, BigInteger p, BigInteger[] polynomial) {
+    public static BigInteger[] computeCoefficientCommitments(BigInteger g, BigInteger p, BigInteger[] polynomial) {
         BigInteger[] coefficientCommitments = new BigInteger[polynomial.length];
 
         for (int i = 0; i < polynomial.length; i++) {
@@ -78,9 +76,9 @@ public class SecretSharingUtils {
     }
 
     /**
-     * @param g generator
-     * @param q Prime modulus q = (p-1)/2
-     * @param u For all i: u_i, which is equal to f_i(j)
+     * @param g  generator
+     * @param q  Prime modulus q = (p-1)/2
+     * @param u  For all i: u_i, which is equal to f_i(j)
      * @param gV For all i: g^v_i
      * @return Partial key pair containing public key containing (h,g,q,p), partial public key h_j, partial secret key s_j
      */
