@@ -85,10 +85,13 @@ public class TestSerialization {
         serializables.add(new PublicInfoList(Arrays.asList(publicInfo1, publicInfo2)));
 
         serializables.add(new ResultList(Arrays.asList(partialResultList, partialResultList2)));
-        serializables.add(new DecryptionAuthorityInfo(0, "127.0.0.1"));
+        DecryptionAuthorityInfo daInfo1 = new DecryptionAuthorityInfo(0, "127.0.0.1:8080");
+        DecryptionAuthorityInfo daInfo2 = new DecryptionAuthorityInfo(1, "127.0.0.1:8081");
+        serializables.add(daInfo1);
         serializables.add(new CommitmentDTO(new BigInteger[]{new BigInteger("5464"), new BigInteger("641349646")}, 56));
         serializables.add(new ComplaintDTO(69849684));
         serializables.add(new ComplaintResolveDTO(5874767, new BigInteger("6519841354")));
+        serializables.add(new DecryptionAuthorityInput("wiughweiugnwe", "woegnweoginw", 54684654, Arrays.asList(daInfo1, daInfo2)));
     }
 
 

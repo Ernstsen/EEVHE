@@ -5,16 +5,12 @@ import dk.eSoftware.commandLineParser.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 public class DecryptionAuthorityConfigBuilder implements CommandLineParser.ConfigBuilder {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthorityConfigBuilder.class);
     private static final String SELF = "--authority";
 
     //Configuration options
     private static final String ID = "id=";
-    private static final String AUTHORITY_LIST_PATH = "authorities=";
     private static final String PORT = "port=";
     private static final String BULLETIN_BOARD_1 = "bb=";
     private static final String BULLETIN_BOARD_2 = "bulletinBoard=";
@@ -25,7 +21,6 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
     //State
     private Integer port = 8080;
     private Integer id = null;
-    private Path authoritiesFile = Paths.get("./conf/DA_addresses.json");
     private String bulletinBoard = "https://localhost:8080";
     private String confPath = "";
     private Integer timeCorrupt = 0;
@@ -48,8 +43,6 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
             timeCorrupt = Integer.parseInt(cmd.substring(CORRUPT.length()));
         } else if (cmd.startsWith(ID)) {
             id = Integer.parseInt(cmd.substring(ID.length()));
-        } else if(cmd.startsWith(AUTHORITY_LIST_PATH)){
-            authoritiesFile = Paths.get(cmd.substring(AUTHORITY_LIST_PATH.length()));
         } else if(cmd.startsWith(INTEGRATION_TEST)){
             integrationTest = Boolean.getBoolean(cmd.substring(INTEGRATION_TEST.length()));
         }  else if (!cmd.equals(SELF)) {
@@ -64,7 +57,7 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
             System.exit(-1);
         }
 
-        return new DecryptionAuthority.DecryptionAuthorityConfiguration(port, bulletinBoard, confPath, authoritiesFile, id, timeCorrupt, integrationTest);
+        return new DecryptionAuthority.DecryptionAuthorityConfiguration(port, bulletinBoard, confPath, id, timeCorrupt, integrationTest);
     }
 
     @Override
@@ -72,7 +65,6 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
         return "" +
                 "\tMODE: " + SELF.substring(2) + "\n" +
                 "\t  --" + ID + "int\t\tSpecifies the authority's ID in the system. Used in key-generation protocol\n" +
-                "\t  --" + AUTHORITY_LIST_PATH + "path\t\tPath to file containing information about authorities" +
                 "\t  --" + PORT + "int\t\tSpecifies port to be used. Standard=8081\n" +
                 "\t  --" + BULLETIN_BOARD_2 + "/" + BULLETIN_BOARD_1 + "ip:port location bulletin board to be used\n" +
                 "\t  --" + CONF + "Path\t\tRelative path to config file.\n" +

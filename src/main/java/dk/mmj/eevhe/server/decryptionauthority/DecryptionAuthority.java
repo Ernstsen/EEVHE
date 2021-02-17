@@ -1,6 +1,5 @@
 package dk.mmj.eevhe.server.decryptionauthority;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.Configuration;
@@ -22,8 +21,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -42,14 +39,14 @@ public class DecryptionAuthority extends AbstractServer {
     private final int port;
     private final Integer id;
     private final boolean integrationTest;
-    private List<DecryptionAuthorityInfo> daInfo;
+    private DecryptionAuthorityInput input;
     private boolean timeCorrupt = false;
     private PartialSecretKey sk;
     private long endTime;
     private PublicKey pk;
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    private HashMap<Integer, BigInteger[]> commitmentMap = new HashMap<>();
+    private final HashMap<Integer, BigInteger[]> commitmentMap = new HashMap<>();
 
     public DecryptionAuthority(DecryptionAuthorityConfiguration configuration) {
 
@@ -69,24 +66,11 @@ public class DecryptionAuthority extends AbstractServer {
             System.exit(-1);
         }
 
-        try (InputStream is = Files.newInputStream(configuration.authoritiesFile)) {
-            daInfo = mapper.readValue(is, new TypeReference<List<DecryptionAuthorityInfo>>() {
-            });
-        } catch (IOException e) {
-            logger.error("Failed to read authorities configuration file", e);
-            System.exit(-1);
-        }
 
-        try (FileInputStream ous = new FileInputStream(conf)) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(ous));
+        try {
+            input = mapper.readValue(conf, DecryptionAuthorityInput.class);
 
-            int id_ = Integer.parseInt(reader.readLine()); //No longer relevant - is param
-            BigInteger secretValue_ = new BigInteger(reader.readLine());
-            BigInteger p_ = new BigInteger(reader.readLine());
-            String publicKeyString_ = reader.readLine();
-            String endTimeString = reader.readLine();
-
-            endTime = Long.parseLong(endTimeString);
+            endTime = input.getEndTime();
             long relativeEndTime = endTime - new Date().getTime();
 
             if (timeCorrupt) {
@@ -94,15 +78,8 @@ public class DecryptionAuthority extends AbstractServer {
             }
 
             scheduler.schedule(this::terminateVoting, relativeEndTime, TimeUnit.MILLISECONDS);
-
-        } catch (JsonProcessingException e) {
-            logger.error("Unable to deserialize public key. Terminating", e);
-            System.exit(-1);
-        } catch (FileNotFoundException e) {
-            logger.error("Configuration file not found. Terminating", e);
-            System.exit(-1);
         } catch (IOException e) {
-            logger.error("Unable to read configuration file. Terminating", e);
+            logger.error("Failed to read authorities input file", e);
             System.exit(-1);
         }
     }
@@ -121,7 +98,8 @@ public class DecryptionAuthority extends AbstractServer {
             integrationTestStateWorkaround();
         }
 
-        Map<Integer, String> daInfos = daInfo.stream().collect(Collectors.toMap(DecryptionAuthorityInfo::getId, DecryptionAuthorityInfo::getAddress));
+        Map<Integer, String> daInfos = input.getInfos()
+                .stream().collect(Collectors.toMap(DecryptionAuthorityInfo::getId, DecryptionAuthorityInfo::getAddress));
         daInfos.remove(id);//We remove ourself, to be able to iterate without
 
         //We chose our polynomial
@@ -158,7 +136,7 @@ public class DecryptionAuthority extends AbstractServer {
      */
     private void verifyReceivedValues() {
         boolean hasReceivedFromAll = true;
-        List<Integer> ids = daInfo.stream()
+        List<Integer> ids = input.getInfos().stream()
                 .map(DecryptionAuthorityInfo::getId)
                 .filter(i -> i != id.intValue())
                 .collect(Collectors.toList());
@@ -456,14 +434,12 @@ public class DecryptionAuthority extends AbstractServer {
         private final String bulletinBoard;
         private final String confPath;
         private final int timeCorrupt;
-        private final Path authoritiesFile;
         private final Integer id;
         private final boolean integrationTest;
 
-        DecryptionAuthorityConfiguration(int port, String bulletinBoard, String confPath, Path authoritiesFile, Integer id, int timeCorrupt, boolean integrationTest) {
+        DecryptionAuthorityConfiguration(int port, String bulletinBoard, String confPath, Integer id, int timeCorrupt, boolean integrationTest) {
             this.port = port;
             this.bulletinBoard = bulletinBoard;
-            this.authoritiesFile = authoritiesFile;
             this.id = id;
             this.confPath = confPath;
             this.timeCorrupt = timeCorrupt;
