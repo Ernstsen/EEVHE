@@ -92,6 +92,8 @@ public class TestSerialization {
         serializables.add(new ComplaintDTO(69849684));
         serializables.add(new ComplaintResolveDTO(5874767, new BigInteger("6519841354")));
         serializables.add(new DecryptionAuthorityInput("wiughweiugnwe", "woegnweoginw", 54684654, Arrays.asList(daInfo1, daInfo2)));
+
+        serializables.add(new PartialKeyPair(new BigInteger("123456789"), new BigInteger("123456789"), publicKey));
     }
 
 

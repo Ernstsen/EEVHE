@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static dk.mmj.eevhe.crypto.TestUtils.*;
+import static java.math.BigInteger.valueOf;
 import static org.junit.Assert.*;
 
 public class TestSecurityUtils {
@@ -115,27 +116,27 @@ public class TestSecurityUtils {
     public void shouldReturn3AsLagrangeCoefficientForIndex1WithSParams() {
         int[] authorityIndexes = new int[]{1, 2, 3};
 
-        BigInteger lagrangeCoefficient = SecurityUtils.generateLagrangeCoefficient(authorityIndexes, 1, BigInteger.valueOf(5));
+        BigInteger lagrangeCoefficient = SecurityUtils.generateLagrangeCoefficient(authorityIndexes, 1, valueOf(5));
 
-        assertEquals("Lagrange coefficient incorrect", BigInteger.valueOf(3), lagrangeCoefficient);
+        assertEquals("Lagrange coefficient incorrect", valueOf(3), lagrangeCoefficient);
     }
 
     @Test
     public void shouldReturn2AsLagrangeCoefficientForIndex2WithSParams() {
         int[] authorityIndexes = new int[]{1, 2, 3};
 
-        BigInteger lagrangeCoefficient = SecurityUtils.generateLagrangeCoefficient(authorityIndexes, 2, BigInteger.valueOf(5));
+        BigInteger lagrangeCoefficient = SecurityUtils.generateLagrangeCoefficient(authorityIndexes, 2, valueOf(5));
 
-        assertEquals("Lagrange coefficient incorrect", BigInteger.valueOf(2), lagrangeCoefficient);
+        assertEquals("Lagrange coefficient incorrect", valueOf(2), lagrangeCoefficient);
     }
 
     @Test
     public void shouldReturn1AsLagrangeCoefficientForIndex3WithSParams() {
         int[] authorityIndexes = new int[]{1, 2, 3};
 
-        BigInteger lagrangeCoefficient = SecurityUtils.generateLagrangeCoefficient(authorityIndexes, 3, BigInteger.valueOf(5));
+        BigInteger lagrangeCoefficient = SecurityUtils.generateLagrangeCoefficient(authorityIndexes, 3, valueOf(5));
 
-        assertEquals("Lagrange coefficient incorrect", BigInteger.valueOf(1), lagrangeCoefficient);
+        assertEquals("Lagrange coefficient incorrect", valueOf(1), lagrangeCoefficient);
     }
 
     private void testRecoveringOfSecretKey(KeyGenerationParameters params, int[] authorityIndexes, int excludedIndex) {
@@ -217,6 +218,17 @@ public class TestSecurityUtils {
         } else {
             assertNotEquals("Public keys match; they should not match", h, hFromPartials);
         }
+    }
+
+    @Test
+    public void testEvaluatePolynomial() {
+        BigInteger[] polynomial = new BigInteger[]{valueOf(11), valueOf(2), valueOf(2)};
+        int x = 5;
+        BigInteger actualResult = SecurityUtils.evaluatePolynomial(polynomial, x);
+        BigInteger expectedResult = polynomial[0].add(valueOf(x).multiply(polynomial[1]))
+                                                 .add(valueOf(x).pow(2).multiply(polynomial[2]));
+
+        assertEquals("Evaluation of polynomial failed", expectedResult, actualResult);
     }
 
     @Test
@@ -322,10 +334,10 @@ public class TestSecurityUtils {
             BigInteger r = SecurityUtils.getRandomNumModN(publicKey.getQ());
             rVals[i] = r;
 
-            CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, BigInteger.valueOf(isYes), r);
+            CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, valueOf(isYes), r);
             cipherTexts.add(ciphertext);
 
-            Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, BigInteger.valueOf(isYes));
+            Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, valueOf(isYes));
 
             votes.add(new CandidateVoteDTO(ciphertext, id, proof));
         }
