@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
@@ -128,7 +129,7 @@ public class DecryptionAuthority extends AbstractServer {
         //Calculates commitments
         BigInteger[] commitments = new BigInteger[]{BigInteger.valueOf(2), BigInteger.valueOf(3)};//TODO
 
-        Entity<BigInteger[]> commitmentsEntity = Entity.entity(commitments, MediaType.APPLICATION_JSON);
+        Entity<CommitmentDTO> commitmentsEntity = Entity.entity(new CommitmentDTO(commitments, id), MediaType.APPLICATION_JSON);
         Response postCommitments = bulletinBoard.path("postCommitments").request().post(commitmentsEntity);
         if (!(postCommitments.getStatus() == 200)) {
             logger.error("failed to post commitments to bulletin board. Terminating. Status: " + postCommitments.getStatus());
@@ -177,6 +178,37 @@ public class DecryptionAuthority extends AbstractServer {
         }
 
         //TODO: Check partial secrets, and potentially send complaint to BB
+        //TODO: BB fetch of commitments, and compare with secret values
+        String commitmentsString = bulletinBoard.path("commitments").request().get(String.class);
+        TypeReference<List<CommitmentDTO>> commitmentListType = new TypeReference<List<CommitmentDTO>>() {
+        };
+        List<CommitmentDTO> commitments;
+
+        try {
+            commitments = new ObjectMapper().readValue(commitmentsString, commitmentListType);
+        } catch (IOException e) {
+            logger.error("Failed to read commitments from BulletinBoard! Failing.", e);
+            System.exit(-1);
+            return;
+        }
+
+        HashMap<Integer, BigInteger[]> commitmentMap = new HashMap<>();
+
+        for (CommitmentDTO commitment : commitments) {
+            int id = commitment.getId();
+
+            PartialSecretMessage partialSecretMessage = secrets.get(id);
+            if (partialSecretMessage == null) {
+                logger.error("Commitment with id=" + id + ", had no corresponding secret! Ignoring");
+                continue;
+            }
+
+            Predicate<CommitmentDTO> verifier = (m) -> m.getCommitment() != null;//TODO: Placeholder for actual verifier!
+
+            if (!verifier.test(commitment)) {
+                //TODO: Post complaint!
+            }
+        }
 
         BigInteger g = BigInteger.ONE;//TODO - where will we get this? Common input?
         BigInteger q = BigInteger.ONE;//TODO - where will we get this? Common input?

@@ -86,6 +86,7 @@ public class TestSerialization {
 
         serializables.add(new ResultList(Arrays.asList(partialResultList, partialResultList2)));
         serializables.add(new DecryptionAuthorityInfo(0, "127.0.0.1"));
+        serializables.add(new CommitmentDTO(new BigInteger[]{new BigInteger("5464"), new BigInteger("641349+646")}, 56));
     }
 
 

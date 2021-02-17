@@ -3,6 +3,7 @@ package dk.mmj.eevhe.server.bulletinboard;
 
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.server.ServerState;
+import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -137,6 +138,25 @@ public class BulletinBoardResource {
         }
 
         return new BallotList(list);
+    }
+
+    @POST
+    @Path("commitments")
+    public void postCommitments(BigInteger[] commitment){
+        addToList(COEFFICIENT_COMMITMENT, commitment);
+    }
+
+    @SuppressWarnings("unchecked")
+    @POST
+    @Path("postCommitments")
+    public List<BigInteger[]> getCommitments(){
+        List<BigInteger[]> list = state.get(COEFFICIENT_COMMITMENT, List.class);
+
+        if (list == null) {
+            throw new NotFoundException("Voting has not been initialized");
+        }
+
+        return list;
     }
 
 
