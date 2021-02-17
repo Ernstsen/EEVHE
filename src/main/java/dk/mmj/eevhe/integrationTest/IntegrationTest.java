@@ -121,7 +121,7 @@ public class IntegrationTest implements Application {
      * @param duration duration of vote
      */
     private void runTrustedDealer(int duration) {
-        String params = "--dealer --servers=3 --degree=1 --root=initFiles --keyPath=rsa --time -min=" + duration;
+        String params = "--addresses -1_localhost:8081 -2_localhost:8082 -3_localhost:8083 --outputFolder=conf --time -min=" + duration;
         CommandLineParser parser = new SingletonCommandLineParser(new SystemConfigurerConfigBuilder());
 
         Configuration conf;
@@ -135,7 +135,7 @@ public class IntegrationTest implements Application {
     }
 
     private void launchDecryptionAuthority(Integer id) {
-        String params = "--authority integrationTest=True --conf=initFiles/" + id + " --port=808" + id;
+        String params = "--authority --integrationTest=True --conf=conf/common_input.json --port=808" + id + " --id=" + id;
         SingletonCommandLineParser parser = new SingletonCommandLineParser(new DecryptionAuthorityConfigBuilder());
         Configuration conf;
         try {
