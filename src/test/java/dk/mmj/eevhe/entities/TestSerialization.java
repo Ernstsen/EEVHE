@@ -8,7 +8,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,12 +15,13 @@ import java.util.List;
 
 import static junit.framework.TestCase.fail;
 
+@SuppressWarnings("deprecation")
 public class TestSerialization {
     private List<Object> serializables;
 
     @Before
     public void setup() {
-        List<Object> serializables = this.serializables = new ArrayList<>();
+        this.serializables = new ArrayList<>();
         CipherText cipherText = new CipherText(new BigInteger("13524651410"), new BigInteger("846021531684652196874"));
         serializables.add(cipherText);
 
@@ -86,7 +86,9 @@ public class TestSerialization {
 
         serializables.add(new ResultList(Arrays.asList(partialResultList, partialResultList2)));
         serializables.add(new DecryptionAuthorityInfo(0, "127.0.0.1"));
-        serializables.add(new CommitmentDTO(new BigInteger[]{new BigInteger("5464"), new BigInteger("641349+646")}, 56));
+        serializables.add(new CommitmentDTO(new BigInteger[]{new BigInteger("5464"), new BigInteger("641349646")}, 56));
+        serializables.add(new ComplaintDTO(69849684));
+        serializables.add(new ComplaintResolveDTO(5874767, new BigInteger("6519841354")));
     }
 
 
@@ -101,7 +103,7 @@ public class TestSerialization {
                 String serialized = mapper.writeValueAsString(serializable);
                 Object deserialize = mapper.readValue(serialized, serializable.getClass());
 
-                if(!deserialize.equals(serializable)){
+                if (!deserialize.equals(serializable)) {
                     errors.add("deserialized did not match original. Serialized: " + serialized + ", Original: " + serializable.toString());
                 }
 
@@ -112,7 +114,7 @@ public class TestSerialization {
             }
         }
 
-        if(!errors.isEmpty()){
+        if (!errors.isEmpty()) {
             System.out.println("Failed " + errors.size() + "/" + serializables.size());
             for (String error : errors) {
                 System.out.println(error);
