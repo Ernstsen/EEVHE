@@ -4,8 +4,8 @@ import dk.eSoftware.commandLineParser.*;
 import dk.mmj.eevhe.client.ClientConfigBuilder;
 import dk.mmj.eevhe.client.ResultFetcher;
 import dk.mmj.eevhe.client.Voter;
-import dk.mmj.eevhe.initialization.TrustedDealer;
-import dk.mmj.eevhe.initialization.TrustedDealerConfigBuilder;
+import dk.mmj.eevhe.initialization.SystemConfigurer;
+import dk.mmj.eevhe.initialization.SystemConfigurerConfigBuilder;
 import dk.mmj.eevhe.integrationTest.IntegrationTest;
 import dk.mmj.eevhe.integrationTest.IntegrationTestConfigBuilder;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoard;
@@ -59,8 +59,8 @@ public class Main {
             return new DecryptionAuthority((DecryptionAuthority.DecryptionAuthorityConfiguration) parse);
         } else if (parse instanceof BulletinBoard.BulletinBoardConfiguration) {
             return new BulletinBoard((BulletinBoard.BulletinBoardConfiguration) parse);
-        } else if (parse instanceof TrustedDealer.TrustedDealerConfiguration) {
-            return new TrustedDealer((TrustedDealer.TrustedDealerConfiguration) parse);
+        } else if (parse instanceof SystemConfigurer.SystemConfiguration) {
+            return new SystemConfigurer((SystemConfigurer.SystemConfiguration) parse);
         } else if (parse instanceof IntegrationTest.IntegrationTestConfiguration) {
             return new IntegrationTest((IntegrationTest.IntegrationTestConfiguration) parse);
         } else {
@@ -80,7 +80,7 @@ public class Main {
         mapping.put("--client", new ClientConfigBuilder());
         mapping.put("--authority", new DecryptionAuthorityConfigBuilder());
         mapping.put("--bulletinBoard", new BulletinBoardConfigBuilder());
-        mapping.put("--dealer", new TrustedDealerConfigBuilder());
+        mapping.put("--configuration", new SystemConfigurerConfigBuilder());
         mapping.put("--integrationTest", new IntegrationTestConfigBuilder());
         return new MultiParser(mapping);
     }

@@ -5,8 +5,8 @@ import dk.mmj.eevhe.Application;
 import dk.mmj.eevhe.client.ClientConfigBuilder;
 import dk.mmj.eevhe.client.ResultFetcher;
 import dk.mmj.eevhe.client.Voter;
-import dk.mmj.eevhe.initialization.TrustedDealer;
-import dk.mmj.eevhe.initialization.TrustedDealerConfigBuilder;
+import dk.mmj.eevhe.initialization.SystemConfigurer;
+import dk.mmj.eevhe.initialization.SystemConfigurerConfigBuilder;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoard;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoardConfigBuilder;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority;
@@ -20,7 +20,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * IntegrationTest runs a {@link BulletinBoard}, {@link dk.mmj.eevhe.initialization.TrustedDealer} and a number of
+ * IntegrationTest runs a {@link BulletinBoard}, {@link SystemConfigurer} and a number of
  * {@link dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority}s, as honest participants of the system.
  * <p>
  * Using the configuration it is possible to determine which ones should be executed and whether votes should
@@ -122,7 +122,7 @@ public class IntegrationTest implements Application {
      */
     private void runTrustedDealer(int duration) {
         String params = "--dealer --servers=3 --degree=1 --root=initFiles --keyPath=rsa --time -min=" + duration;
-        CommandLineParser parser = new SingletonCommandLineParser(new TrustedDealerConfigBuilder());
+        CommandLineParser parser = new SingletonCommandLineParser(new SystemConfigurerConfigBuilder());
 
         Configuration conf;
         try {
@@ -131,7 +131,7 @@ public class IntegrationTest implements Application {
             throw new RuntimeException("Failed parsing trusted dealer conf.", e);
         }
 
-        new TrustedDealer((TrustedDealer.TrustedDealerConfiguration) conf).run();
+        new SystemConfigurer((SystemConfigurer.SystemConfiguration) conf).run();
     }
 
     private void launchDecryptionAuthority(Integer id) {
