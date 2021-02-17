@@ -157,54 +157,6 @@ public class SecurityUtils {
     }
 
     /**
-     * @param g          The generator
-     * @param p          The prime modulus
-     * @param polynomial The polynomial
-     * @return
-     */
-    static BigInteger[] computeCoefficientCommitments(BigInteger g, BigInteger p, BigInteger[] polynomial) {
-        BigInteger[] coefficientCommitments = new BigInteger[polynomial.length];
-
-        for (int i = 0; i < polynomial.length; i++) {
-            coefficientCommitments[i] = g.modPow(polynomial[i], p);
-        }
-
-        return coefficientCommitments;
-    }
-
-    /**
-     * @param coefficientCommitments Coefficient commitments
-     * @param j                      DA id > 0
-     * @return g^f_i(j)
-     */
-    static BigInteger combineCoefficientCommitments(BigInteger[] coefficientCommitments, BigInteger j, BigInteger p, BigInteger q) {
-        BigInteger acc = BigInteger.ONE;
-
-        for (int t = 0; t < coefficientCommitments.length; t++) {
-            BigInteger jExp = j.modPow(valueOf(t), q);
-            acc = acc.multiply(coefficientCommitments[t].modPow(jExp, p));
-        }
-
-        return acc.mod(p);
-    }
-
-    /**
-     * Verifies that g^u_i equals g^combinedCoefficientCommitments
-     *
-     * @param g                              generator
-     * @param u                              u_i, which is equal to f_i(j)
-     * @param p                              prime modulus
-     * @param combinedCoefficientCommitments combined coefficient commitments
-     * @return whether g^u_i equals g^combinedCoefficientCommitments or not
-     */
-    static boolean verifyEvaluatedPolynomial(BigInteger g, BigInteger u,
-                                             BigInteger p, BigInteger combinedCoefficientCommitments) {
-        BigInteger gU = g.modPow(u, p);
-
-        return gU.equals(combinedCoefficientCommitments);
-    }
-
-    /**
      * Generates the public values for each authority
      *
      * @param secretValuesMap The secret values

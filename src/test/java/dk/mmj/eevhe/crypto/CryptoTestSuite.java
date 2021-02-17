@@ -11,7 +11,8 @@ import org.junit.runners.Suite;
         TestDLogProofUtils.class,
         TestElGamal.class,
         TestVoteProofUtils.class,
-        TestSecurityUtils.class
+        TestSecurityUtils.class,
+        TestSecretSharingUtils.class
 })
 public class CryptoTestSuite {
 }

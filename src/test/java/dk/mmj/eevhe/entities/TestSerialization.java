@@ -85,6 +85,8 @@ public class TestSerialization {
         serializables.add(new PublicInfoList(Arrays.asList(publicInfo1, publicInfo2)));
 
         serializables.add(new ResultList(Arrays.asList(partialResultList, partialResultList2)));
+
+        serializables.add(new PartialKeyPair(new BigInteger("123456789"), new BigInteger("123456789"), publicKey));
     }
 
 
