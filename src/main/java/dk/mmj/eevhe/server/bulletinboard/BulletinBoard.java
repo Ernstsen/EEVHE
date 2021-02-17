@@ -19,6 +19,7 @@ public class BulletinBoard extends AbstractServer {
     static final String COEFFICIENT_COMMITMENT = "coefficient commitment";
     static final String COMPLAINTS = "complaints";
     static final String RESOLVED_COMPLAINTS = "resolved complaints";
+    static final String PUBLIC_INFO = "public info";
 
     private final BulletinBoardConfiguration configuration;
 

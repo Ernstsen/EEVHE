@@ -54,7 +54,7 @@ public class IntegrationTest implements Application {
         runTrustedDealer(duration);
 
         for (Integer id : decryptionAuthorities) {
-            logger.info("Launching decryption with id=" + id);
+            logger.info("Launching authority decryption with id=" + id);
             launchDecryptionAuthority(id);
         }
 

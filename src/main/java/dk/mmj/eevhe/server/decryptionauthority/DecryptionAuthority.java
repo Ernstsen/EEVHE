@@ -53,6 +53,7 @@ public class DecryptionAuthority extends AbstractServer {
     private BigInteger g;
     private BigInteger q;
     private BigInteger[] pol;
+    private List<Candidate> candidates;
 
     public DecryptionAuthority(DecryptionAuthorityConfiguration configuration) {
 
@@ -65,13 +66,20 @@ public class DecryptionAuthority extends AbstractServer {
         }
 
         bulletinBoard = configureWebTarget(logger, configuration.bulletinBoard);
+        try {
+            candidates = mapper.readValue(new File("conf/testing_candidates.json"), new TypeReference<List<Candidate>>() {
+            });
+        } catch (IOException e) {
+            logger.error("You moved the file, and are yet to do this properly!");
+            System.exit(-1);
+            return;
+        }
 
         File conf = new File(configuration.confPath);
         if (!conf.exists() || !conf.isFile()) {
             logger.error("Configuration file either did not exists or were not a file. Path: " + conf.getAbsolutePath() + "\nTerminating");
             System.exit(-1);
         }
-
 
         try {
             input = mapper.readValue(conf, DecryptionAuthorityInput.class);
@@ -280,6 +288,9 @@ public class DecryptionAuthority extends AbstractServer {
         PartialKeyPair partialKeyPair = SecretSharingUtils.generateKeyPair(g, q, us, firstCommits);
         pk = partialKeyPair.getPublicKey();
         sk = new PartialSecretKey(partialKeyPair.getPartialSecretKey(), p);
+        PartialPublicInfo partialInfo = new PartialPublicInfo(id, pk, partialKeyPair.getPartialPublicKey(), candidates, endTime);
+        bulletinBoard.path("publicInfo").request()
+                .post(Entity.entity(partialInfo, MediaType.APPLICATION_JSON));
     }
 
     private String partialSecretKey(Integer id) {
@@ -303,7 +314,7 @@ public class DecryptionAuthority extends AbstractServer {
 
     private void terminateVoting() {
         Long bulletinBoardTime = new Long(bulletinBoard.path("getCurrentTime").request().get(String.class));
-        PublicInformationEntity pi = FetchingUtilities.fetchPublicInfo(logger, RSA_PUBLIC_KEY_NAME, bulletinBoard);
+        PartialPublicInfo pi = FetchingUtilities.fetchPublicInfo(logger, RSA_PUBLIC_KEY_NAME, bulletinBoard);
         List<Candidate> candidates = pi.getCandidates();
 
         long remainingTime = endTime - bulletinBoardTime;

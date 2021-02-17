@@ -188,6 +188,20 @@ public class BulletinBoardResource {
         return list != null ? list : new ArrayList<>();
     }
 
+    @POST
+    @Path("publicInfo")
+    public void postPublicInfo(PartialPublicInfo info){
+        addToList(PUBLIC_INFO, info);
+    }
+
+    @GET
+    @Path("publicInfo")
+    public List<PartialPublicInfo> getPublicInfo(){
+        List<PartialPublicInfo> list = state.get(PUBLIC_INFO, List.class);
+
+        return list != null ? list : new ArrayList<>();
+    }
+
 
     @GET
     @Path("getCurrentTime")

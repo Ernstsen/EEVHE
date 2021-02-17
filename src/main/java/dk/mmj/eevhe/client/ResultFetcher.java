@@ -33,7 +33,7 @@ public class ResultFetcher extends Client {
         PublicKey publicKey = getPublicKey();
 
         logger.info("Fetching public information");
-        PublicInformationEntity publicInformationEntity = fetchPublicInfo();
+        PartialPublicInfo publicInformationEntity = fetchPublicInfo();
         long endTime = publicInformationEntity.getEndTime();
         if (new Date().getTime() < endTime) {
             long diff = (endTime - new Date().getTime()) / 60_000;
@@ -64,10 +64,11 @@ public class ResultFetcher extends Client {
                 PartialResult result = partialResultList.getResults().get(candIdx);
 
                 CipherText partialDecryption = new CipherText(result.getResult(), sumCiphertext.getD());
+                List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, target);
                 PublicKey partialPublicKey = new PublicKey(
-                        publicInformationEntity.getPublicKeys().get(result.getId()),
-                        publicInformationEntity.getG(),
-                        publicInformationEntity.getQ());
+                        publicInfos.get(result.getId()).getPartialPublicKey(),
+                        publicInfos.get(result.getId()).getPublicKey().getG(),
+                        publicInfos.get(result.getId()).getPublicKey().getQ());
                 boolean validProof = DLogProofUtils.verifyProof(sumCiphertext, partialDecryption, partialPublicKey, result.getProof(), result.getId());
 
                 if (validProof) {

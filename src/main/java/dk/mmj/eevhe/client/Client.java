@@ -2,15 +2,13 @@ package dk.mmj.eevhe.client;
 
 import dk.eSoftware.commandLineParser.Configuration;
 import dk.mmj.eevhe.Application;
-import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.entities.Candidate;
-import dk.mmj.eevhe.entities.PublicInformationEntity;
+import dk.mmj.eevhe.entities.PartialPublicInfo;
 import dk.mmj.eevhe.entities.PublicKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
-import java.math.BigInteger;
 import java.util.List;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
@@ -20,7 +18,7 @@ public abstract class Client implements Application {
     private static final Logger logger = LogManager.getLogger(Client.class);
     protected JerseyWebTarget target;
     private PublicKey publicKey;
-    private PublicInformationEntity publicInfo;
+    private PartialPublicInfo publicInfo;
 
     public Client(ClientConfiguration configuration) {
         target = configureWebTarget(logger, configuration.targetUrl);
@@ -35,23 +33,24 @@ public abstract class Client implements Application {
         if (publicKey != null) {
             return publicKey;
         }
-        PublicInformationEntity info = fetchPublicInfo();
+        PartialPublicInfo info = fetchPublicInfo();
 
-        BigInteger h = SecurityUtils.combinePartials(info.getPublicKeys(), info.getP());
+//        BigInteger h = SecurityUtils.combinePartials(info.getPublicKeys(), info.getP());
 
-        return publicKey = new PublicKey(h, info.getG(), info.getQ());
+//        return publicKey = new PublicKey(h, info.getG(), info.getQ());
+        return publicKey = info.getPublicKey();
     }
 
     /**
      * @return the list of candidates in the election
      */
     protected List<Candidate> getCandidates() {
-        PublicInformationEntity info = fetchPublicInfo();
+        PartialPublicInfo info = fetchPublicInfo();
 
         return info.getCandidates();
     }
 
-    protected PublicInformationEntity fetchPublicInfo() {
+    protected PartialPublicInfo fetchPublicInfo() {
         if (publicInfo != null) {
             return publicInfo;
         }

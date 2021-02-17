@@ -1,13 +1,12 @@
 package dk.mmj.eevhe.client;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dk.mmj.eevhe.entities.PublicInfoList;
+import dk.mmj.eevhe.entities.PartialPublicInfo;
 import dk.mmj.eevhe.entities.PublicInformationEntity;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
-import org.bouncycastle.crypto.signers.RSADigestSigner;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.util.encoders.Base64;
 
@@ -18,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -36,20 +36,11 @@ public class FetchingUtilities {
      * @param target        webTarget pointing at the <i>BulletinBoard</i>
      * @return a public information signed by the Trusted Dealer, if any is found. Null otherwise
      */
-    public static PublicInformationEntity fetchPublicInfo(Logger logger, String publicKeyName, WebTarget target) {
-        Response response = target.path("getPublicInfo").request().buildGet().invoke();
-        String responseString = response.readEntity(String.class);
+    public static PartialPublicInfo fetchPublicInfo(Logger logger, String publicKeyName, WebTarget target) {
+        List<PartialPublicInfo> publicInfoList = getPublicInfos(logger, target);
+        if (publicInfoList == null) return null;//Never happens
 
-        PublicInfoList publicInfoList;
-        try {
-            publicInfoList = new ObjectMapper().readValue(responseString, PublicInfoList.class);
-        } catch (IOException e) {
-            logger.error("Failed to deserialize public informations list retrieved from bulletin board", e);
-            System.exit(-1);
-            return null;//Never happens
-        }
-
-        Optional<PublicInformationEntity> any = publicInfoList.getInformationEntities().stream()
+        Optional<PartialPublicInfo> any = publicInfoList.stream()
                 .filter(getVerifier(logger, publicKeyName))
                 .findAny();
 
@@ -61,6 +52,22 @@ public class FetchingUtilities {
         return any.get();
     }
 
+    static List<PartialPublicInfo> getPublicInfos(Logger logger, WebTarget target) {
+        Response response = target.path("publicInfo").request().buildGet().invoke();
+        String responseString = response.readEntity(String.class);
+
+        List<PartialPublicInfo> publicInfoList;
+        try {
+            publicInfoList = new ObjectMapper().readValue(responseString, new TypeReference<List<PartialPublicInfo>>() {
+            });
+        } catch (IOException e) {
+            logger.error("FetchingUtilities: Failed to deserialize public informations list retrieved from bulletin board", e);
+            System.exit(-1);
+            return null;
+        }
+        return publicInfoList;
+    }
+
     /**
      * Creates a predicate, returning true if the public keys loads without error,
      * and a given {@link PublicInformationEntity} is signed with the corresponding secret-key
@@ -69,21 +76,22 @@ public class FetchingUtilities {
      * @param publicKeyName name of the file in the <i>RSA</i> folder, containing the public-key
      * @return Predicate returning true if a publicInformationEntity is verified, false otherwise
      */
-    private static Predicate<PublicInformationEntity> getVerifier(Logger logger, String publicKeyName) {
-        AsymmetricKeyParameter pk = loadPublicKey(logger, publicKeyName);
-
-        if (pk == null) {
-            return (info) -> false;
-        }
-
-        return informationEntity -> {
-            RSADigestSigner digest = new RSADigestSigner(new SHA256Digest());
-            digest.init(false, pk);
-            informationEntity.updateSigner(digest);
-            byte[] encodedSignature = informationEntity.getSignature().getBytes();
-
-            return digest.verifySignature(Base64.decode(encodedSignature));
-        };
+    private static Predicate<PartialPublicInfo> getVerifier(Logger logger, String publicKeyName) {
+//        AsymmetricKeyParameter pk = loadPublicKey(logger, publicKeyName);
+//
+//        if (pk == null) {
+//            return (info) -> false;
+//        }
+//
+//        return informationEntity -> {
+//            RSADigestSigner digest = new RSADigestSigner(new SHA256Digest());
+//            digest.init(false, pk);
+//            informationEntity.updateSigner(digest);
+//            byte[] encodedSignature = informationEntity.getSignature().getBytes();
+//
+//            return digest.verifySignature(Base64.decode(encodedSignature));
+//        };
+        return (i) -> true;
     }
 
     /**
