@@ -16,7 +16,7 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
     //Configuration options
     private static final String SELF = "--dealer";
     private static final String OUTPUT_FOLDER_PATH = "outputFolder=";
-    private static final String DA_ADDRESSES = "addresses";
+    private static final String DA_ADDRESSES = "--addresses";
     private static final String TIME = "time";
     private static final String TIME_DAY = "day=";
     private static final String TIME_HR = "hour=";

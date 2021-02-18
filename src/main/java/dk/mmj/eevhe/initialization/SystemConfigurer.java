@@ -40,7 +40,7 @@ public class SystemConfigurer implements Application {
     @Override
     public void run() {
         ObjectMapper mapper = new ObjectMapper();
-        logger.info("Starting key generation");
+        logger.info("Starting key-param generation");
         KeyGenerationParametersImpl params = new KeyGenerationParametersImpl(1024, 50);
         String gHex = new String(Hex.encode(params.getGenerator().toByteArray()));
         String pHex = new String(Hex.encode(params.getPrimePair().getP().toByteArray()));

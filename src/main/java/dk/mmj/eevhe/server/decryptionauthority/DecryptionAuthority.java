@@ -36,7 +36,7 @@ import static dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthorityResourc
 public class DecryptionAuthority extends AbstractServer {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthority.class);
     private static final String RSA_PUBLIC_KEY_NAME = "rsa";
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final JerseyWebTarget bulletinBoard;
     private final int port;
     private final Integer id;
@@ -86,7 +86,7 @@ public class DecryptionAuthority extends AbstractServer {
 
             p = new BigInteger(Hex.decode(input.getpHex()));
             g = new BigInteger(Hex.decode(input.getgHex()));
-            q = p.min(BigInteger.ONE).divide(BigInteger.valueOf(2));
+            q = p.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2));
 
             endTime = input.getEndTime();
             long relativeEndTime = endTime - new Date().getTime();
@@ -112,6 +112,7 @@ public class DecryptionAuthority extends AbstractServer {
         if (integrationTest) {
             integrationTestStateWorkaround();
         }
+        logger.info("Starting keyGeneration protocol for DA id=" + id);
         scheduler.execute(this::startKeyGenProtocol);
     }
 
@@ -120,14 +121,16 @@ public class DecryptionAuthority extends AbstractServer {
      * and awaiting input from the other authorities
      */
     private void startKeyGenProtocol() {
+        logger.info("Started keygen protocol for DA with id=" + id);
         Map<Integer, String> daInfos = input.getInfos()
                 .stream().collect(Collectors.toMap(DecryptionAuthorityInfo::getId, DecryptionAuthorityInfo::getAddress));
         daInfos.remove(id);//We remove ourself, to be able to iterate without
 
         //We chose our polynomial
-        int t = ((daInfos.size() - 1) / 2);
+        int t = ((daInfos.size()) / 2);
         pol = SecurityUtils.generatePolynomial(t, q);
 
+        logger.info("Calculating coefficient commitments for DA with id=" + id);
         //Calculates commitments
         BigInteger[] commitments = SecretSharingUtils.computeCoefficientCommitments(g, p, pol);
 
