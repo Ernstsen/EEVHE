@@ -141,15 +141,15 @@ public class BulletinBoardResource {
 
     @POST
     @Path("commitments")
-    public void postCommitments(BigInteger[] commitment) {
+    public void postCommitments(CommitmentDTO commitment) {
         addToList(COEFFICIENT_COMMITMENT, commitment);
     }
 
     @SuppressWarnings("unchecked")
-    @POST
-    @Path("postCommitments")
-    public List<BigInteger[]> getCommitments() {
-        List<BigInteger[]> list = state.get(COEFFICIENT_COMMITMENT, List.class);
+    @GET
+    @Path("commitments")
+    public List<CommitmentDTO> getCommitments() {
+        List<CommitmentDTO> list = state.get(COEFFICIENT_COMMITMENT, List.class);
 
         if (list == null) {
             throw new NotFoundException("Voting has not been initialized");

@@ -39,7 +39,7 @@ public class DecryptionAuthorityResource {
     }
 
     @POST
-    @Path("postPartialSecret")
+    @Path("partialSecret")
     public void postPartialSecret(DecryptionAuthority.PartialSecretMessage partialSecret) {
         ServerState state = ServerState.getInstance();
         state.put(partialSecretKey(partialSecret.getId()), partialSecret);

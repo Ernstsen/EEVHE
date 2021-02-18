@@ -136,8 +136,8 @@ public class DecryptionAuthority extends AbstractServer {
 
         logger.info("Posting commitments to Bulletin Board");
         Entity<CommitmentDTO> commitmentsEntity = Entity.entity(new CommitmentDTO(commitments, id), MediaType.APPLICATION_JSON);
-        Response postCommitments = bulletinBoard.path("postCommitments").request().post(commitmentsEntity);
-        if (!(postCommitments.getStatus() == 200)) {
+        Response postCommitments = bulletinBoard.path("commitments").request().post(commitmentsEntity);
+        if (!(postCommitments.getStatus() == 204)) {
             logger.error("failed to post commitments to bulletin board. Terminating. Status: " + postCommitments.getStatus());
             System.exit(-1);
         }
@@ -148,8 +148,8 @@ public class DecryptionAuthority extends AbstractServer {
 
             BigInteger fij = SecurityUtils.evaluatePolynomial(pol, daId);
             Entity<PartialSecretMessage> partialSecretEntity = Entity.entity(new PartialSecretMessage(fij, id), MediaType.APPLICATION_JSON);
-            Response resp = da.path("postPartialSecret").request().post(partialSecretEntity);
-            if (!(resp.getStatus() == 200)) {
+            Response resp = da.path("partialSecret").request().post(partialSecretEntity);
+            if (!(resp.getStatus() == 204)) {
                 logger.error("failed to post f_i(j) to DA with id=" + da + ". Terminating. Status: " + resp.getStatus());
             }
         }
