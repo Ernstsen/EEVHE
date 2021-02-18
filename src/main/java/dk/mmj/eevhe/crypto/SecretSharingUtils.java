@@ -63,7 +63,7 @@ public class SecretSharingUtils {
      * @param g                      generator
      * @param u                      u_i, which is equal to f_i(j)
      * @param coefficientCommitments Coefficient commitments
-     * @param j                      DA id > 0
+     * @param j                      DA id &#62; 0
      * @param p                      Prime modulus p
      * @param q                      Prime modulus q = (p-1)/2
      * @return whether g^u_i equals g^combinedCoefficientCommitments or not
