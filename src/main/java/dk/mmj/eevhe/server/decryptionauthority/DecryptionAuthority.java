@@ -130,15 +130,15 @@ public class DecryptionAuthority extends AbstractServer {
         int t = ((daInfos.size()) / 2);
         pol = SecurityUtils.generatePolynomial(t, q);
 
-        logger.info("Calculating coefficient commitments for DA with id=" + id);
+        logger.info("Calculating coefficient commitments for DA with id=" + id + ". Params: g=" + g + ", p=" + p + ", pol=" + Arrays.asList(pol));
         //Calculates commitments
         BigInteger[] commitments = SecretSharingUtils.computeCoefficientCommitments(g, p, pol);
 
-        logger.info("Posting commitments to Bulletin Board");
+        logger.info("Posting commitments to Bulletin Board, for DA with id=" + id);
         Entity<CommitmentDTO> commitmentsEntity = Entity.entity(new CommitmentDTO(commitments, id), MediaType.APPLICATION_JSON);
         Response postCommitments = bulletinBoard.path("commitments").request().post(commitmentsEntity);
         if (!(postCommitments.getStatus() == 204)) {
-            logger.error("failed to post commitments to bulletin board. Terminating. Status: " + postCommitments.getStatus());
+            logger.error("failed to post commitments to bulletin board. Terminating. Status: " + postCommitments.getStatus() + ", id=" + id);
             System.exit(-1);
         }
 
@@ -157,7 +157,7 @@ public class DecryptionAuthority extends AbstractServer {
             }
         }
 
-        logger.info("scheduling verification of received values");
+        logger.info("scheduling verification of received values. DA with id=" + id);
         scheduler.schedule(this::verifyReceivedValues, 20, TimeUnit.SECONDS);
     }
 
@@ -165,6 +165,7 @@ public class DecryptionAuthority extends AbstractServer {
      * Verifies received secret-values as part of the key-generation protocol
      */
     private void verifyReceivedValues() {
+        logger.info("Checking received secret values, for DA with id=" + id);
         boolean hasReceivedFromAll = true;
         List<Integer> ids = input.getInfos().stream()
                 .map(DecryptionAuthorityInfo::getId)

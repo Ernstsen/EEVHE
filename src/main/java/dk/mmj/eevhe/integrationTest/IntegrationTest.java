@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class IntegrationTest implements Application {
     private static final Logger logger = LogManager.getLogger(IntegrationTest.class);
-    private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
     private final List<Integer> decryptionAuthorities;
     private final List<Integer> voteDelays;
     private final int duration;
@@ -50,8 +50,8 @@ public class IntegrationTest implements Application {
         logger.info("Launching bulletinboard");
         startBulletinBoard();
 
-        logger.info("Executing trusted dealer");
-        runTrustedDealer(duration);
+        logger.info("Configuring system");
+        runSystemConfiguration(duration);
 
         for (Integer id : decryptionAuthorities) {
             logger.info("Launching authority decryption with id=" + id);
@@ -111,8 +111,8 @@ public class IntegrationTest implements Application {
         } catch (NoSuchBuilderException | WrongFormatException e) {
             throw new RuntimeException("Failed parsing bulletin board conf", e);
         }
-
-        new Thread(new BulletinBoard((BulletinBoard.BulletinBoardConfiguration) conf)).start();
+        scheduler.execute(new BulletinBoard((BulletinBoard.BulletinBoardConfiguration) conf));
+//        new Thread(new BulletinBoard((BulletinBoard.BulletinBoardConfiguration) conf)).start();
     }
 
     /**
@@ -120,7 +120,7 @@ public class IntegrationTest implements Application {
      *
      * @param duration duration of vote
      */
-    private void runTrustedDealer(int duration) {
+    private void runSystemConfiguration(int duration) {
         String params = "--addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 --outputFolder=conf --time -min=" + duration;
         CommandLineParser parser = new SingletonCommandLineParser(new SystemConfigurerConfigBuilder());
 
@@ -143,8 +143,8 @@ public class IntegrationTest implements Application {
         } catch (NoSuchBuilderException | WrongFormatException e) {
             throw new RuntimeException("Failed parsing decryption authority conf.", e);
         }
-
-        new Thread(new DecryptionAuthority((DecryptionAuthority.DecryptionAuthorityConfiguration) conf)).start();
+        scheduler.execute(new DecryptionAuthority((DecryptionAuthority.DecryptionAuthorityConfiguration) conf));
+//        new Thread(new DecryptionAuthority((DecryptionAuthority.DecryptionAuthorityConfiguration) conf)).start();
     }
 
     public static class IntegrationTestConfiguration implements Configuration {

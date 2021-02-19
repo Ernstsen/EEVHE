@@ -15,7 +15,7 @@ public class SecretSharingUtils {
      * @param polynomial The polynomial
      * @return g^coeff for all coefficients in polynomial
      */
-    public static BigInteger[] computeCoefficientCommitments(BigInteger g, BigInteger p, BigInteger[] polynomial) {
+    public static synchronized BigInteger[] computeCoefficientCommitments(BigInteger g, BigInteger p, BigInteger[] polynomial) {
         BigInteger[] coefficientCommitments = new BigInteger[polynomial.length];
 
         for (int i = 0; i < polynomial.length; i++) {
