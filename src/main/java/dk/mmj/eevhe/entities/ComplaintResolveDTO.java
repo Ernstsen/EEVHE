@@ -54,4 +54,13 @@ public class ComplaintResolveDTO {
     public int hashCode() {
         return Objects.hash(complaintSenderId, complaintResolverId, value);
     }
+
+    @Override
+    public String toString() {
+        return "ComplaintResolveDTO{" +
+                "complaintSenderId=" + complaintSenderId +
+                ", complaintResolverId=" + complaintResolverId +
+                ", value=" + value +
+                '}';
+    }
 }

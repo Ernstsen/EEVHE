@@ -208,12 +208,13 @@ public class DecryptionAuthority extends AbstractServer {
 
             BigInteger partialSecret = partialSecretMap.get(id);
             if (partialSecret == null) {
-                logger.error("Commitment with id=" + id + ", had no corresponding secret! Ignoring");
+                logger.error("" + this.id + ": Commitment with id=" + id + ", had no corresponding secret! Ignoring");
                 continue;
             }
 
             boolean matches = SecretSharingUtils.verifyCommitmentRespected(g, partialSecret, commitment.getCommitment(), BigInteger.valueOf(id), p, q);
             if (!matches) {
+                logger.info("" + this.id + ": Sending complaint about DA=" + id);
                 Entity<ComplaintDTO> entity = Entity.entity(new ComplaintDTO(this.id, commitment.getId()), MediaType.APPLICATION_JSON);
                 bulletinBoard.path("complain").request().post(entity);
             } else {
@@ -221,7 +222,7 @@ public class DecryptionAuthority extends AbstractServer {
             }
         }
 
-        scheduler.schedule(this::handleComplaints, 20, TimeUnit.SECONDS);
+        scheduler.schedule(this::handleComplaints, 10, TimeUnit.SECONDS);
     }
 
     /**
@@ -240,7 +241,7 @@ public class DecryptionAuthority extends AbstractServer {
             return;
         }
 
-        logger.debug("#complaints=" + complaints.size());
+        logger.debug("" + id + ": reading complaints. #complaints=" + complaints.size());
         for (ComplaintDTO complaint : complaints) {
             if (complaint.getTargetId() == id) {
                 logger.info("Found complaint about self. Resolving.");
@@ -250,7 +251,7 @@ public class DecryptionAuthority extends AbstractServer {
             }
         }
 
-        scheduler.schedule(this::checkIfComplaintsAreResolved, 20, TimeUnit.SECONDS);
+        scheduler.schedule(this::checkIfComplaintsAreResolved, 10, TimeUnit.SECONDS);
     }
 
     /**
@@ -259,7 +260,8 @@ public class DecryptionAuthority extends AbstractServer {
      * Part of the key-generation protocol
      */
     private void checkIfComplaintsAreResolved() {
-        String complaintResolvesString = bulletinBoard.request("complaintResolves").get(String.class);
+        logger.info("" + id + ": checking for complaint resolves");
+        String complaintResolvesString = bulletinBoard.path("complaintResolves").request().get(String.class);
         List<ComplaintResolveDTO> resolves;
         try {
             resolves = mapper.readValue(complaintResolvesString, new TypeReference<List<ComplaintResolveDTO>>() {
@@ -277,13 +279,14 @@ public class DecryptionAuthority extends AbstractServer {
             boolean resolveIsVerifiable = SecretSharingUtils.verifyCommitmentRespected(g, resolve.getValue(), commit, BigInteger.valueOf(resolverId), p, q);
             if (resolveIsVerifiable) {
                 partialSecretMap.put(resolverId, resolve.getValue());
+                logger.debug("Resolve was applied: " + resolve);
             } else {
                 logger.warn("Resolve from id=" + resolverId + " could not be verified. Disqualifying and using ID instead");
                 partialSecretMap.put(resolverId, BigInteger.valueOf(resolverId));//TODO: Can we do this? Is this the right form?
             }
         }
 
-        scheduler.schedule(this::combineKeys, 20, TimeUnit.SECONDS);
+        scheduler.schedule(this::combineKeys, 1, TimeUnit.SECONDS);
     }
 
     /**

@@ -65,15 +65,15 @@ public class BulletinBoardResource {
     @Path("getPublicInfo")
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
-    public PublicInfoList getPublicInfos() {
-        List<PublicInformationEntity> list = state.get(PUBLIC_INFO, List.class);
+    public List<PartialPublicInfo> getPublicInfos() {
+        List<PartialPublicInfo> list = state.get(PUBLIC_INFO, List.class);
 
         if (list == null) {
             logger.warn("Attempt to fetch public infos before they were created");
             throw new NotFoundException();
         }
 
-        return new PublicInfoList(list);
+        return list;
     }
 
     @POST
@@ -141,6 +141,7 @@ public class BulletinBoardResource {
 
     @POST
     @Path("commitments")
+    @Consumes(MediaType.APPLICATION_JSON)
     public void postCommitments(CommitmentDTO commitment) {
         addToList(COEFFICIENT_COMMITMENT, commitment);
     }
@@ -148,6 +149,7 @@ public class BulletinBoardResource {
     @SuppressWarnings("unchecked")
     @GET
     @Path("commitments")
+    @Produces(MediaType.APPLICATION_JSON)
     public List<CommitmentDTO> getCommitments() {
         List<CommitmentDTO> list = state.get(COEFFICIENT_COMMITMENT, List.class);
 
@@ -160,6 +162,7 @@ public class BulletinBoardResource {
 
     @POST
     @Path("complain")
+    @Consumes(MediaType.APPLICATION_JSON)
     public void postComplaint(ComplaintDTO complaint) {
         addToList(COMPLAINTS, complaint);
     }
@@ -167,7 +170,8 @@ public class BulletinBoardResource {
     @SuppressWarnings("unchecked")
     @GET
     @Path("complaints")
-    public List<ComplaintDTO> getComplaints(){
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<ComplaintDTO> getComplaints() {
         List<ComplaintDTO> list = state.get(COMPLAINTS, List.class);
 
         return list != null ? list : new ArrayList<>();
@@ -175,6 +179,7 @@ public class BulletinBoardResource {
 
     @POST
     @Path("resolveComplaint")
+    @Consumes(MediaType.APPLICATION_JSON)
     public void resolveComplaint(ComplaintResolveDTO resolveDTO) {
         addToList(RESOLVED_COMPLAINTS, resolveDTO);
     }
@@ -182,7 +187,8 @@ public class BulletinBoardResource {
     @SuppressWarnings("unchecked")
     @GET
     @Path("complaintResolves")
-    public List<ComplaintResolveDTO> getComplaintResolves(){
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<ComplaintResolveDTO> getComplaintResolves() {
         List<ComplaintResolveDTO> list = state.get(RESOLVED_COMPLAINTS, List.class);
 
         return list != null ? list : new ArrayList<>();
@@ -190,13 +196,15 @@ public class BulletinBoardResource {
 
     @POST
     @Path("publicInfo")
-    public void postPublicInfo(PartialPublicInfo info){
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void postPublicInfo(PartialPublicInfo info) {
         addToList(PUBLIC_INFO, info);
     }
 
     @GET
     @Path("publicInfo")
-    public List<PartialPublicInfo> getPublicInfo(){
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<PartialPublicInfo> getPublicInfo() {
         List<PartialPublicInfo> list = state.get(PUBLIC_INFO, List.class);
 
         return list != null ? list : new ArrayList<>();

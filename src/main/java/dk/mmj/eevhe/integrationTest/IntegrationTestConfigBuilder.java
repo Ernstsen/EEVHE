@@ -102,7 +102,7 @@ public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBui
     private List<Integer> getVoteDelays() {
         ArrayList<Integer> voteDelays = new ArrayList<>();
         if (voteStart) {
-            voteDelays.add(2 * 60_000);
+            voteDelays.add(4 * 60_000);
         }
         if (voteEnd) {
             voteDelays.add((duration * 60_000) - 15_000);//approx. 15. sec before termination
