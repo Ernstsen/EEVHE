@@ -41,6 +41,7 @@ public class DecryptionAuthorityResource {
     @POST
     @Path("partialSecret")
     public void postPartialSecret(DecryptionAuthority.PartialSecretMessage partialSecret) {
+        logger.debug("Received DA partial secret: " + partialSecret.toString());
         ServerState state = ServerState.getInstance();
         state.put(partialSecretKey(partialSecret.getId()), partialSecret);
     }

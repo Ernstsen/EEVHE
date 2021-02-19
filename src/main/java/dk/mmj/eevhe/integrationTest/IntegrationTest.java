@@ -121,7 +121,7 @@ public class IntegrationTest implements Application {
      * @param duration duration of vote
      */
     private void runTrustedDealer(int duration) {
-        String params = "--addresses -1_localhost:8081 -2_localhost:8082 -3_localhost:8083 --outputFolder=conf --time -min=" + duration;
+        String params = "--addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 --outputFolder=conf --time -min=" + duration;
         CommandLineParser parser = new SingletonCommandLineParser(new SystemConfigurerConfigBuilder());
 
         Configuration conf;

@@ -143,17 +143,21 @@ public class DecryptionAuthority extends AbstractServer {
         }
 
         logger.info("Sending partial secrets to DA peers");
+        logger.debug("" + id + ": has " + daInfos.size() + " peers");
         for (Integer daId : daInfos.keySet()) {
             JerseyWebTarget da = configureWebTarget(logger, daInfos.get(daId));
+            logger.debug("" + id + ": webtarget configured. Evalating polynomial: " + Arrays.toString(pol) + " with x=" + daId);
 
             BigInteger fij = SecurityUtils.evaluatePolynomial(pol, daId);
             Entity<PartialSecretMessage> partialSecretEntity = Entity.entity(new PartialSecretMessage(fij, id), MediaType.APPLICATION_JSON);
+            logger.debug("" + id + ": dispatching partial secret for peer: " + daId + " on address: " + daInfos.get(daId));
             Response resp = da.path("partialSecret").request().post(partialSecretEntity);
             if (!(resp.getStatus() == 204)) {
                 logger.error("failed to post f_i(j) to DA with id=" + da + ". Terminating. Status: " + resp.getStatus());
             }
         }
 
+        logger.info("scheduling verification of received values");
         scheduler.schedule(this::verifyReceivedValues, 20, TimeUnit.SECONDS);
     }
 
@@ -235,6 +239,7 @@ public class DecryptionAuthority extends AbstractServer {
             return;
         }
 
+        logger.debug("#complaints=" + complaints.size());
         for (ComplaintDTO complaint : complaints) {
             if (complaint.getTargetId() == id) {
                 logger.info("Found complaint about self. Resolving.");
@@ -457,6 +462,14 @@ public class DecryptionAuthority extends AbstractServer {
 
         public void setId(Integer id) {
             this.id = id;
+        }
+
+        @Override
+        public String toString() {
+            return "PartialSecretMessage{" +
+                    "partialSecret=" + partialSecret +
+                    ", id=" + id +
+                    '}';
         }
     }
 
