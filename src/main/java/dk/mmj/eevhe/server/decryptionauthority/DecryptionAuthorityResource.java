@@ -1,5 +1,6 @@
 package dk.mmj.eevhe.server.decryptionauthority;
 
+import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,12 +10,19 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
 @Path("/")
 public class DecryptionAuthorityResource {
     private static Logger logger = LogManager.getLogger(DecryptionAuthorityResource.class);
     private Integer id;
+
+    public static String statePrefix(Integer id) {
+        if (id != null) {
+            return id.toString() + ":";
+        } else {
+            return "";
+        }
+    }
 
     /**
      * Endpoint to be used in integrationTest to separate the state of the DA instances. Does not affect behaviour
@@ -40,21 +48,13 @@ public class DecryptionAuthorityResource {
 
     @POST
     @Path("partialSecret")
-    public void postPartialSecret(DecryptionAuthority.PartialSecretMessage partialSecret) {
+    public void postPartialSecret(PartialSecretMessageDTO partialSecret) {
         logger.debug("Received DA partial secret: " + partialSecret.toString());
         ServerState state = ServerState.getInstance();
-        state.put(partialSecretKey(partialSecret.getId()), partialSecret);
+        state.put(partialSecretKey(partialSecret.getSender()), partialSecret);
     }
 
     private String partialSecretKey(Integer id) {
         return statePrefix(this.id) + "secret:" + id;
-    }
-
-    public static String statePrefix(Integer id) {
-        if (id != null) {
-            return id.toString() + ":";
-        } else {
-            return "";
-        }
     }
 }

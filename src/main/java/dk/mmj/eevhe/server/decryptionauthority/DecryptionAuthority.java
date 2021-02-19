@@ -149,7 +149,7 @@ public class DecryptionAuthority extends AbstractServer {
             logger.debug("" + id + ": webtarget configured. Evalating polynomial: " + Arrays.toString(pol) + " with x=" + daId);
 
             BigInteger fij = SecurityUtils.evaluatePolynomial(pol, daId);
-            Entity<PartialSecretMessage> partialSecretEntity = Entity.entity(new PartialSecretMessage(fij, id), MediaType.APPLICATION_JSON);
+            Entity<PartialSecretMessageDTO> partialSecretEntity = Entity.entity(new PartialSecretMessageDTO(fij, daId, id), MediaType.APPLICATION_JSON);
             logger.debug("" + id + ": dispatching partial secret for peer: " + daId + " on address: " + daInfos.get(daId));
             Response resp = da.path("partialSecret").request().post(partialSecretEntity);
             if (!(resp.getStatus() == 204)) {
@@ -174,7 +174,7 @@ public class DecryptionAuthority extends AbstractServer {
 
         ServerState state = ServerState.getInstance();
         for (Integer integer : ids) {
-            PartialSecretMessage ps = state.get(partialSecretKey(integer), PartialSecretMessage.class);
+            PartialSecretMessageDTO ps = state.get(partialSecretKey(integer), PartialSecretMessageDTO.class);
             if (ps != null) {
                 partialSecretMap.put(integer, ps.getPartialSecret());
             } else {
@@ -437,44 +437,6 @@ public class DecryptionAuthority extends AbstractServer {
     @Override
     protected int getPort() {
         return port;
-    }
-
-    @SuppressWarnings("unused")
-    public static class PartialSecretMessage {
-        private BigInteger partialSecret;
-        private Integer id;
-
-        public PartialSecretMessage(BigInteger partialSecret, Integer id) {
-            this.partialSecret = partialSecret;
-            this.id = id;
-        }
-
-        public PartialSecretMessage() {
-        }
-
-        public BigInteger getPartialSecret() {
-            return partialSecret;
-        }
-
-        public void setPartialSecret(BigInteger partialSecret) {
-            this.partialSecret = partialSecret;
-        }
-
-        public Integer getId() {
-            return id;
-        }
-
-        public void setId(Integer id) {
-            this.id = id;
-        }
-
-        @Override
-        public String toString() {
-            return "PartialSecretMessage{" +
-                    "partialSecret=" + partialSecret +
-                    ", id=" + id +
-                    '}';
-        }
     }
 
     /**
