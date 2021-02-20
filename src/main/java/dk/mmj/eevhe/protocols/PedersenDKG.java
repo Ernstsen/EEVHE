@@ -55,7 +55,7 @@ public class PedersenDKG implements DKG {
         int t = ((peerMap.size()) / 2);
         pol = SecurityUtils.generatePolynomial(t, q);
 
-        logger.debug("Calculating coefficient commitments. Params: g=" + g + ", p=" + p + ", pol=" + Arrays.asList(pol));
+        logger.debug("Calculating coefficient commitments.");
         //Calculates commitments
         BigInteger[] commitment = SecretSharingUtils.computeCoefficientCommitments(g, p, pol);
 

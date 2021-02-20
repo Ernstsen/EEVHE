@@ -1,7 +1,6 @@
 package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.crypto.ElGamal;
-import dk.mmj.eevhe.crypto.SecretSharingUtils;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.exceptions.UnableToDecryptException;
 import dk.mmj.eevhe.crypto.keygeneration.PersistedKeyParameters;
@@ -18,7 +17,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class TestPedersenDKG {
 
@@ -60,28 +60,6 @@ public class TestPedersenDKG {
         final List<PedersenDKG> players = Arrays.asList(player1, player2, player3);
 
         players.forEach(DKG::startProtocol);
-
-//        {//BEGIN: verifying that all values are consistent with commitments
-//            final HashMap<Integer, BigInteger[]> commitmentMap = new HashMap<>();
-//            for (CommitmentDTO commitment : testBroadcaster.commitments) {
-//                commitmentMap.put(commitment.getId(), commitment.getCommitment());
-//            }
-//
-//            final BigInteger g = params.getGenerator();
-//            final BigInteger p = params.getPrimePair().getP();
-//            final BigInteger q = params.getPrimePair().getQ();
-//
-//            PrivateCommunicationChannel[] channels = new PrivateCommunicationChannel[]{channel1, channel2, channel3};
-//            for (int id = 1; id < 4; id++) {
-//
-//                for (PartialSecretMessageDTO val : channels[id - 1].messages) {
-//                    final BigInteger[] commitment = commitmentMap.get(val.getSender());
-//                    final boolean b = SecretSharingUtils.verifyCommitmentRespected(g, val.getPartialSecret(), commitment, BigInteger.valueOf(val.getTarget()), p, q);
-//                    assertTrue("Shared value were inconsistent with commitment, for id=" + id, b);
-//                }
-//            }
-//        }//END value verification
-
 
         assertEquals("All players should have broadcasted their commitments", 3, testBroadcaster.commitments.size());
 
