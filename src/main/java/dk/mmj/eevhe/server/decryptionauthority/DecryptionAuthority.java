@@ -5,13 +5,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.Configuration;
 import dk.mmj.eevhe.client.FetchingUtilities;
 import dk.mmj.eevhe.crypto.ElGamal;
-import dk.mmj.eevhe.crypto.SecretSharingUtils;
 import dk.mmj.eevhe.crypto.SecurityUtils;
+import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.protocols.PedersenDKG;
+import dk.mmj.eevhe.protocols.connectors.BulletinBoardBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.RestPeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.ServerStateIncomingChannel;
+import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
 import dk.mmj.eevhe.server.AbstractServer;
-import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
@@ -42,17 +46,13 @@ public class DecryptionAuthority extends AbstractServer {
     private final Integer id;
     private final boolean integrationTest;
     private final ObjectMapper mapper = new ObjectMapper();
-    private final HashMap<Integer, BigInteger[]> commitmentMap = new HashMap<>();
-    private final HashMap<Integer, BigInteger> partialSecretMap = new HashMap<>();
+    private KeyGenParams params;
+    private PedersenDKG dkg;
     private DecryptionAuthorityInput input;
     private boolean timeCorrupt = false;
     private PartialSecretKey sk;
     private long endTime;
     private PublicKey pk;
-    private BigInteger p;
-    private BigInteger g;
-    private BigInteger q;
-    private BigInteger[] pol;
     private List<Candidate> candidates;
 
     public DecryptionAuthority(DecryptionAuthorityConfiguration configuration) {
@@ -84,10 +84,10 @@ public class DecryptionAuthority extends AbstractServer {
         try {
             input = mapper.readValue(conf, DecryptionAuthorityInput.class);
 
-            p = new BigInteger(Hex.decode(input.getpHex()));
-            g = new BigInteger(Hex.decode(input.getgHex()));
-            q = p.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2));
-
+            BigInteger p = new BigInteger(Hex.decode(input.getpHex()));
+            BigInteger g = new BigInteger(Hex.decode(input.getgHex()));
+            BigInteger q = p.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2));
+            params = new KeyGenParams(p, q, g);
             endTime = input.getEndTime();
             long relativeEndTime = endTime - new Date().getTime();
 
@@ -122,40 +122,18 @@ public class DecryptionAuthority extends AbstractServer {
      */
     private void startKeyGenProtocol() {
         logger.info("Started keygen protocol for DA with id=" + id);
-        Map<Integer, String> daInfos = input.getInfos()
-                .stream().collect(Collectors.toMap(DecryptionAuthorityInfo::getId, DecryptionAuthorityInfo::getAddress));
-        daInfos.remove(id);//We remove ourself, to be able to iterate without
-
-        //We chose our polynomial
-        int t = ((daInfos.size()) / 2);
-        pol = SecurityUtils.generatePolynomial(t, q);
-
-        logger.info("Calculating coefficient commitments for DA with id=" + id + ". Params: g=" + g + ", p=" + p + ", pol=" + Arrays.asList(pol));
-        //Calculates commitments
-        BigInteger[] commitments = SecretSharingUtils.computeCoefficientCommitments(g, p, pol);
-
-        logger.info("Posting commitments to Bulletin Board, for DA with id=" + id);
-        Entity<CommitmentDTO> commitmentsEntity = Entity.entity(new CommitmentDTO(commitments, id), MediaType.APPLICATION_JSON);
-        Response postCommitments = bulletinBoard.path("commitments").request().post(commitmentsEntity);
-        if (!(postCommitments.getStatus() == 204)) {
-            logger.error("failed to post commitments to bulletin board. Terminating. Status: " + postCommitments.getStatus() + ", id=" + id);
-            System.exit(-1);
-        }
-
-        logger.info("Sending partial secrets to DA peers");
-        logger.debug("" + id + ": has " + daInfos.size() + " peers");
-        for (Integer daId : daInfos.keySet()) {
-            JerseyWebTarget da = configureWebTarget(logger, daInfos.get(daId));
-            logger.debug("" + id + ": webtarget configured. Evalating polynomial: " + Arrays.toString(pol) + " with x=" + daId);
-
-            BigInteger fij = SecurityUtils.evaluatePolynomial(pol, daId);
-            Entity<PartialSecretMessageDTO> partialSecretEntity = Entity.entity(new PartialSecretMessageDTO(fij, daId, id), MediaType.APPLICATION_JSON);
-            logger.debug("" + id + ": dispatching partial secret for peer: " + daId + " on address: " + daInfos.get(daId));
-            Response resp = da.path("partialSecret").request().post(partialSecretEntity);
-            if (!(resp.getStatus() == 204)) {
-                logger.error("failed to post f_i(j) to DA with id=" + da + ". Terminating. Status: " + resp.getStatus());
-            }
-        }
+        Map<Integer, PeerCommunicator> communicators = input.getInfos()
+                .stream()
+                .collect(Collectors.toMap(DecryptionAuthorityInfo::getId, inf -> new RestPeerCommunicator(configureWebTarget(logger, inf.getAddress()))));
+        communicators.remove(id);//We remove ourself, to be able to iterate without
+        final ServerStateIncomingChannel incoming = new ServerStateIncomingChannel(
+                input.getInfos().stream()
+                        .map(DecryptionAuthorityInfo::getId)
+                        .map(this::partialSecretKey)
+                        .collect(Collectors.toList())
+        );
+        dkg = new PedersenDKG(new BulletinBoardBroadcaster(bulletinBoard), incoming, communicators, id, params, "ID: " + id);
+        dkg.startProtocol();
 
         logger.info("scheduling verification of received values. DA with id=" + id);
         scheduler.schedule(this::verifyReceivedValues, 20, TimeUnit.SECONDS);
@@ -166,60 +144,12 @@ public class DecryptionAuthority extends AbstractServer {
      */
     private void verifyReceivedValues() {
         logger.info("Checking received secret values, for DA with id=" + id);
-        boolean hasReceivedFromAll = true;
-        List<Integer> ids = input.getInfos().stream()
-                .map(DecryptionAuthorityInfo::getId)
-                .filter(i -> i != id.intValue())
-                .collect(Collectors.toList());
+        final boolean cont = dkg.handleReceivedValues();
 
-        ServerState state = ServerState.getInstance();
-        for (Integer integer : ids) {
-            PartialSecretMessageDTO ps = state.get(partialSecretKey(integer), PartialSecretMessageDTO.class);
-            if (ps != null) {
-                partialSecretMap.put(integer, ps.getPartialSecret());
-            } else {
-                hasReceivedFromAll = false;
-            }
-        }
-
-        if (!hasReceivedFromAll) {//TODO: When should we just ignore the missing value(s)? Otherwise risk corruption killing election by non-participation
+        if (!cont) {//TODO: When should we just ignore the missing value(s)? Otherwise risk corruption killing election by non-participation
             logger.info("Has not received all commitments - retrying later");
             scheduler.schedule(this::verifyReceivedValues, 10, TimeUnit.SECONDS);
             return;
-        }
-
-        logger.info("Loading commitments from Bulletin Board");
-        String commitmentsString = bulletinBoard.path("commitments").request().get(String.class);
-        TypeReference<List<CommitmentDTO>> commitmentListType = new TypeReference<List<CommitmentDTO>>() {
-        };
-        List<CommitmentDTO> commitments;
-
-        try {
-            commitments = mapper.readValue(commitmentsString, commitmentListType);
-        } catch (IOException e) {
-            logger.error("Failed to read commitments from BulletinBoard! Failing.", e);
-            System.exit(-1);
-            return;
-        }
-
-        logger.info("Comparing secret shares with commitments");
-        for (CommitmentDTO commitment : commitments) {
-            int id = commitment.getId();
-
-            BigInteger partialSecret = partialSecretMap.get(id);
-            if (partialSecret == null) {
-                logger.error("" + this.id + ": Commitment with id=" + id + ", had no corresponding secret! Ignoring");
-                continue;
-            }
-
-            boolean matches = SecretSharingUtils.verifyCommitmentRespected(g, partialSecret, commitment.getCommitment(), BigInteger.valueOf(id), p, q);
-            if (!matches) {
-                logger.info("" + this.id + ": Sending complaint about DA=" + id);
-                Entity<ComplaintDTO> entity = Entity.entity(new ComplaintDTO(this.id, commitment.getId()), MediaType.APPLICATION_JSON);
-                bulletinBoard.path("complain").request().post(entity);
-            } else {
-                commitmentMap.put(id, commitment.getCommitment());
-            }
         }
 
         scheduler.schedule(this::handleComplaints, 10, TimeUnit.SECONDS);
@@ -230,27 +160,7 @@ public class DecryptionAuthority extends AbstractServer {
      */
     private void handleComplaints() {
         logger.info("Fetching complaints from Bulletin Board");
-        String complaintsString = bulletinBoard.path("complaints").request().get(String.class);
-        List<ComplaintDTO> complaints;
-        try {
-            complaints = mapper.readValue(complaintsString, new TypeReference<List<ComplaintDTO>>() {
-            });
-        } catch (IOException e) {
-            logger.error("Failed to read complaint list from Bulletin Board", e);
-            System.exit(-1);
-            return;
-        }
-
-        logger.debug("" + id + ": reading complaints. #complaints=" + complaints.size());
-        for (ComplaintDTO complaint : complaints) {
-            if (complaint.getTargetId() == id) {
-                logger.info("Found complaint about self. Resolving.");
-                BigInteger complaintValue = SecurityUtils.evaluatePolynomial(pol, complaint.getSenderId());
-                ComplaintResolveDTO complaintResolveDTO = new ComplaintResolveDTO(complaint.getSenderId(), this.id, complaintValue);
-                bulletinBoard.path("resolveComplaint").request().post(Entity.entity(complaintResolveDTO, MediaType.APPLICATION_JSON));
-            }
-        }
-
+        dkg.handleComplaints();
         scheduler.schedule(this::checkIfComplaintsAreResolved, 10, TimeUnit.SECONDS);
     }
 
@@ -261,30 +171,7 @@ public class DecryptionAuthority extends AbstractServer {
      */
     private void checkIfComplaintsAreResolved() {
         logger.info("" + id + ": checking for complaint resolves");
-        String complaintResolvesString = bulletinBoard.path("complaintResolves").request().get(String.class);
-        List<ComplaintResolveDTO> resolves;
-        try {
-            resolves = mapper.readValue(complaintResolvesString, new TypeReference<List<ComplaintResolveDTO>>() {
-            });
-        } catch (IOException e) {
-            logger.error("Failed to read resolved complaints from Bulletin Board. Terminating", e);
-            System.exit(-1);
-            return;
-        }
-
-        for (ComplaintResolveDTO resolve : resolves) {
-            logger.info("Applying resolve: " + resolve);
-            int resolverId = resolve.getComplaintResolverId();
-            BigInteger[] commit = commitmentMap.get(resolverId);
-            boolean resolveIsVerifiable = SecretSharingUtils.verifyCommitmentRespected(g, resolve.getValue(), commit, BigInteger.valueOf(resolverId), p, q);
-            if (resolveIsVerifiable) {
-                partialSecretMap.put(resolverId, resolve.getValue());
-                logger.debug("Resolve was applied: " + resolve);
-            } else {
-                logger.warn("Resolve from id=" + resolverId + " could not be verified. Disqualifying and using ID instead");
-                partialSecretMap.put(resolverId, BigInteger.valueOf(resolverId));//TODO: Can we do this? Is this the right form?
-            }
-        }
+        dkg.applyResolves();
 
         scheduler.schedule(this::combineKeys, 1, TimeUnit.SECONDS);
     }
@@ -294,12 +181,9 @@ public class DecryptionAuthority extends AbstractServer {
      */
     private void combineKeys() {
         logger.info("Combining values, to make keys");
-        BigInteger[] us = partialSecretMap.values().toArray(new BigInteger[0]);
-        BigInteger[] firstCommits = commitmentMap.values().stream().map(arr -> arr[0]).toArray(BigInteger[]::new);
-
-        PartialKeyPair partialKeyPair = SecretSharingUtils.generateKeyPair(g, q, us, firstCommits);
+        PartialKeyPair partialKeyPair = dkg.createKeys();
         pk = partialKeyPair.getPublicKey();
-        sk = new PartialSecretKey(partialKeyPair.getPartialSecretKey(), p);
+        sk = new PartialSecretKey(partialKeyPair.getPartialSecretKey(), pk.getP());
         PartialPublicInfo partialInfo = new PartialPublicInfo(id, pk, partialKeyPair.getPartialPublicKey(), candidates, endTime);
         bulletinBoard.path("publicInfo").request()
                 .post(Entity.entity(partialInfo, MediaType.APPLICATION_JSON));
@@ -457,6 +341,26 @@ public class DecryptionAuthority extends AbstractServer {
             this.confPath = confPath;
             this.timeCorrupt = timeCorrupt;
             this.integrationTest = integrationTest;
+        }
+    }
+
+    public static class KeyGenParams implements KeyGenerationParameters {
+        private final PrimePair pair;
+        private final BigInteger generator;
+
+        public KeyGenParams(BigInteger p, BigInteger q, BigInteger generator) {
+            this.pair = new PrimePair(p, q);
+            this.generator = generator;
+        }
+
+        @Override
+        public PrimePair getPrimePair() {
+            return pair;
+        }
+
+        @Override
+        public BigInteger getGenerator() {
+            return generator;
         }
     }
 }
