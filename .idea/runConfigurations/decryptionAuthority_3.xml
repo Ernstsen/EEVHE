@@ -3,7 +3,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="dk.mmj.eevhe.Main" />
     <module name="eevhe" />
-    <option name="PROGRAM_PARAMETERS" value="--authority --conf=initFiles/3 --port=8083" />
+    <option name="PROGRAM_PARAMETERS" value="--authority --conf=conf/common_input.json --port=8083 --id=3" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
