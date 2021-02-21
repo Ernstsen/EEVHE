@@ -19,8 +19,7 @@ import java.net.URI;
 import java.util.*;
 
 import static java.math.BigInteger.valueOf;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
@@ -30,6 +29,15 @@ public class TestBulletinBoardBroadcaster {
     private final HashMap<String, WebTarget> targets = new HashMap<>();
     private WebTarget target;
     private Broadcaster broadcaster;
+
+    private static void assertException(Runnable runnable) {
+        try {
+            runnable.run();
+            fail("Expected exception was not thrown");
+        } catch (Exception expected) {
+
+        }
+    }
 
     @Before
     public void setUp() {
@@ -69,6 +77,18 @@ public class TestBulletinBoardBroadcaster {
         assertTrue("Second commitment not properly handled", commitments.contains(c2));
     }
 
+    @Test
+    public void commitError() {
+        final WebTarget commitTarget = targets.get("commitments");
+        final Invocation.Builder commitBuilder = mock(Invocation.Builder.class);
+        when(commitTarget.request()).thenReturn(commitBuilder);
+
+        when(target.path("commitments").request().post(any()))
+                .thenReturn(new SimpleResponse(500));
+
+        broadcaster.commit(new CommitmentDTO(new BigInteger[]{valueOf(5), valueOf(654)}, 65));
+        broadcaster.commit(new CommitmentDTO(new BigInteger[]{valueOf(85), valueOf(65)}, 66));
+    }
 
     @Test
     public void getCommitments() throws JsonProcessingException {
@@ -87,6 +107,19 @@ public class TestBulletinBoardBroadcaster {
         assertArrayEquals("Commitments were not equal to those sent through webTarget",
                 expected.toArray(),
                 commitments.toArray());
+    }
+
+    @Test
+    public void getCommitmentsError() {
+
+        final String commitsString = "stringWithError";
+
+        final WebTarget webTarget = targets.get("commitments");
+        final Invocation.Builder builder = mock(Invocation.Builder.class);
+        when(webTarget.request()).thenReturn(builder);
+        when(target.path("commitments").request().get(String.class)).thenReturn(commitsString);
+
+        assertException(broadcaster::getCommitments);
     }
 
     @Test
@@ -113,6 +146,20 @@ public class TestBulletinBoardBroadcaster {
     }
 
     @Test
+    public void complainError() {
+        final WebTarget commitTarget = targets.get("complain");
+        final Invocation.Builder commitBuilder = mock(Invocation.Builder.class);
+        when(commitTarget.request()).thenReturn(commitBuilder);
+
+        when(target.path("complain").request().post(any()))
+                .thenReturn(new SimpleResponse(500));
+
+
+        broadcaster.complain(new ComplaintDTO(2, 65));
+        broadcaster.complain(new ComplaintDTO(2, 66));
+    }
+
+    @Test
     public void getComplaints() throws JsonProcessingException {
         final List<ComplaintDTO> expected = Arrays.asList(
                 new ComplaintDTO(2, 65),
@@ -129,6 +176,18 @@ public class TestBulletinBoardBroadcaster {
         assertArrayEquals("Commitments were not equal to those sent through webTarget",
                 expected.toArray(),
                 commitments.toArray());
+    }
+
+    @Test
+    public void getComplaintsError() {
+        final String commitsString = "stringWithError";
+
+        final WebTarget webTarget = targets.get("complaints");
+        final Invocation.Builder builder = mock(Invocation.Builder.class);
+        when(webTarget.request()).thenReturn(builder);
+        when(target.path("complaints").request().get(String.class)).thenReturn(commitsString);
+
+        assertException(broadcaster::getComplaints);
     }
 
     @Test
@@ -155,6 +214,19 @@ public class TestBulletinBoardBroadcaster {
     }
 
     @Test
+    public void resolveComplaintError() {
+        final WebTarget commitTarget = targets.get("resolveComplaint");
+        final Invocation.Builder commitBuilder = mock(Invocation.Builder.class);
+        when(commitTarget.request()).thenReturn(commitBuilder);
+
+        when(target.path("resolveComplaint").request().post(any()))
+                .thenReturn(new SimpleResponse(500));
+
+        broadcaster.resolveComplaint(new ComplaintResolveDTO(2, 65, valueOf(165)));
+        broadcaster.resolveComplaint(new ComplaintResolveDTO(2, 66, valueOf(161)));
+    }
+
+    @Test
     public void getResolves() throws JsonProcessingException {
         final List<ComplaintResolveDTO> expected = Arrays.asList(
                 new ComplaintResolveDTO(2, 65, valueOf(165)),
@@ -171,6 +243,19 @@ public class TestBulletinBoardBroadcaster {
         assertArrayEquals("Commitments were not equal to those sent through webTarget",
                 expected.toArray(),
                 commitments.toArray());
+    }
+
+    @Test
+    public void getResolvesError() {
+        final String commitsString = "stringWithError";
+
+        final WebTarget webTarget = targets.get("complaintResolves");
+        final Invocation.Builder builder = mock(Invocation.Builder.class);
+        when(webTarget.request()).thenReturn(builder);
+        when(target.path("complaintResolves").request().get(String.class)).thenReturn(commitsString);
+
+        assertException(broadcaster::getResolves);
+
     }
 
     private static class SimpleResponse extends Response {
