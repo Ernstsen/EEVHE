@@ -14,6 +14,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class BulletinBoardBroadcaster implements Broadcaster {
@@ -44,9 +45,8 @@ public class BulletinBoardBroadcaster implements Broadcaster {
         try {
             return mapper.readValue(commitmentsString, commitmentListType);
         } catch (IOException e) {
-            logger.error("Failed to read commitments from BulletinBoard! Failing.", e);
-            System.exit(-1);
-            return null;
+            logger.error("Failed to read commitments from BulletinBoard!", e);
+            return new ArrayList<>();
         }
     }
 
@@ -68,8 +68,7 @@ public class BulletinBoardBroadcaster implements Broadcaster {
             });
         } catch (IOException e) {
             logger.error("Failed to read complaint list from Bulletin Board", e);
-            System.exit(-1);
-            return null;
+            return new ArrayList<>();
         }
     }
 
@@ -89,8 +88,7 @@ public class BulletinBoardBroadcaster implements Broadcaster {
             });
         } catch (IOException e) {
             logger.error("Failed to read resolved complaints from Bulletin Board. Terminating", e);
-            System.exit(-1);
-            return null;
+            return new ArrayList<>();
         }
     }
 }
