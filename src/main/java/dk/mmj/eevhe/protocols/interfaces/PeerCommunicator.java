@@ -10,6 +10,8 @@ public interface PeerCommunicator {
 
     /**
      * Sends a secret value to the communicator
+     *
+     * @param message secret to be sent to peer
      */
     void sendSecret(PartialSecretMessageDTO message);
 
