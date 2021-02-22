@@ -80,41 +80,6 @@ public class TestFeldmanVSSUtils {
         assertEquals("Combining coefficient commitments failed", expectedResult, actualResult);
     }
 
-    @Test
-    public void shouldBeAbleToVerifyEvaluatedPolynomial() {
-        BigInteger g = valueOf(2);
-        BigInteger q = valueOf(7919);
-        BigInteger p = q.multiply(valueOf(2)).add(valueOf(1));
-        BigInteger j = valueOf(1);
-
-        BigInteger[] polynomial = new BigInteger[]{valueOf(11), valueOf(2), valueOf(2)};
-        BigInteger[] coefficientCommitments = FeldmanVSSUtils.computeCoefficientCommitments(g, p, polynomial);
-
-        BigInteger combinedCoefficientCommitments = FeldmanVSSUtils.combineCoefficientCommitments(coefficientCommitments, j, p, q);
-        BigInteger u = SecurityUtils.evaluatePolynomial(polynomial, j.intValue());
-
-        boolean actualResult = FeldmanVSSUtils.verifyEvaluatedPolynomial(g, u, p, combinedCoefficientCommitments);
-
-        assertTrue(actualResult);
-    }
-
-    @Test
-    public void shouldBeAbleToVerifyEvaluatedPolynomialBig() {
-        BigInteger g = valueOf(2);
-        BigInteger q = valueOf(7919);
-        BigInteger p = q.multiply(valueOf(2)).add(valueOf(1));
-        BigInteger j = valueOf(3);
-
-        BigInteger[] polynomial = new BigInteger[]{valueOf(3000), valueOf(100), valueOf(2)};
-        BigInteger[] coefficientCommitments = FeldmanVSSUtils.computeCoefficientCommitments(g, p, polynomial);
-
-        BigInteger combinedCoefficientCommitments = FeldmanVSSUtils.combineCoefficientCommitments(coefficientCommitments, j, p, q);
-        BigInteger u = SecurityUtils.evaluatePolynomial(polynomial, j.intValue());
-
-        boolean actualResult = FeldmanVSSUtils.verifyEvaluatedPolynomial(g, u, p, combinedCoefficientCommitments);
-
-        assertTrue(actualResult);
-    }
 
     @Test
     public void testVerifyCommitmentRespected() {
