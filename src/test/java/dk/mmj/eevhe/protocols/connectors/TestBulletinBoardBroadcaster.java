@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.entities.CommitmentDTO;
 import dk.mmj.eevhe.entities.ComplaintDTO;
 import dk.mmj.eevhe.entities.ComplaintResolveDTO;
+import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.protocols.interfaces.Broadcaster;
 import org.junit.Before;
 import org.junit.Test;
@@ -204,8 +205,10 @@ public class TestBulletinBoardBroadcaster {
                     return new SimpleResponse(204);
                 });
 
-        final ComplaintResolveDTO c1 = new ComplaintResolveDTO(2, 65, valueOf(165));
-        final ComplaintResolveDTO c2 = new ComplaintResolveDTO(2, 66, valueOf(161));
+        PartialSecretMessageDTO res1 = new PartialSecretMessageDTO(new BigInteger("56138131"), new BigInteger("2342429"), 65, 2);
+        PartialSecretMessageDTO res2 = new PartialSecretMessageDTO(new BigInteger("56138131"), new BigInteger("2342429"), 66, 2);
+        final ComplaintResolveDTO c1 = new ComplaintResolveDTO(2, 65, res1);
+        final ComplaintResolveDTO c2 = new ComplaintResolveDTO(2, 66, res2);
 
         broadcaster.resolveComplaint(c1);
         broadcaster.resolveComplaint(c2);
@@ -222,15 +225,19 @@ public class TestBulletinBoardBroadcaster {
         when(target.path("resolveComplaint").request().post(any()))
                 .thenReturn(new SimpleResponse(500));
 
-        broadcaster.resolveComplaint(new ComplaintResolveDTO(2, 65, valueOf(165)));
-        broadcaster.resolveComplaint(new ComplaintResolveDTO(2, 66, valueOf(161)));
+        PartialSecretMessageDTO res1 = new PartialSecretMessageDTO(new BigInteger("56138131"), new BigInteger("2342429"), 65, 2);
+        PartialSecretMessageDTO res2 = new PartialSecretMessageDTO(new BigInteger("56138131"), new BigInteger("2342429"), 66, 2);
+        broadcaster.resolveComplaint(new ComplaintResolveDTO(2, 65, res1));
+        broadcaster.resolveComplaint(new ComplaintResolveDTO(2, 66, res2));
     }
 
     @Test
     public void getResolves() throws JsonProcessingException {
+        PartialSecretMessageDTO res1 = new PartialSecretMessageDTO(new BigInteger("56138131"), new BigInteger("2342429"), 65, 2);
+        PartialSecretMessageDTO res2 = new PartialSecretMessageDTO(new BigInteger("56138131"), new BigInteger("2342429"), 66, 2);
         final List<ComplaintResolveDTO> expected = Arrays.asList(
-                new ComplaintResolveDTO(2, 65, valueOf(165)),
-                new ComplaintResolveDTO(2, 66, valueOf(161)));
+                new ComplaintResolveDTO(2, 65, res1),
+                new ComplaintResolveDTO(2, 66, res2));
 
         final String commitsString = new ObjectMapper().writeValueAsString(expected);
 

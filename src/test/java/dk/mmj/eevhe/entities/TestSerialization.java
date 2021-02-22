@@ -76,12 +76,13 @@ public class TestSerialization {
         serializables.add(daInfo1);
         serializables.add(new CommitmentDTO(new BigInteger[]{new BigInteger("5464"), new BigInteger("641349646")}, 56));
         serializables.add(new ComplaintDTO(69849684, 12378612));
-        serializables.add(new ComplaintResolveDTO(5874767, 1298376192, new BigInteger("6519841354")));
+        PartialSecretMessageDTO partialSecretMessageDTO = new PartialSecretMessageDTO(new BigInteger("56138131"), new BigInteger("2342429"), 1123, 12412);
+        serializables.add(partialSecretMessageDTO);
+        serializables.add(new ComplaintResolveDTO(5874767, 1298376192, partialSecretMessageDTO));
         serializables.add(new DecryptionAuthorityInput("wiughweiugnwe", "woegnweoginw", 54684654, Arrays.asList(daInfo1, daInfo2)));
 
         serializables.add(new PartialKeyPair(new BigInteger("123456789"), new BigInteger("123456789"), publicKey));
         serializables.add(new PartialPublicInfo(1, publicKey, new BigInteger("6513894"), Arrays.asList(cand1, cand2), 16318));
-        serializables.add(new PartialSecretMessageDTO(new BigInteger("56138131"), new BigInteger("2342429"), 1123, 12412));
     }
 
 
