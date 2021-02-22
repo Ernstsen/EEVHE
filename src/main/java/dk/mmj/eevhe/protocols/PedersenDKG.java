@@ -66,7 +66,7 @@ public class PedersenDKG implements DKG {
         secrets.put(id, SecurityUtils.evaluatePolynomial(pol, id));
 
         logger.info("Sending partial secrets to peers");
-        logger.debug("" + id + ": has " + peerMap.size() + " peers");
+        logger.debug("Has " + peerMap.size() + " peers");
         for (Integer target : peerMap.keySet()) {
             BigInteger val = SecurityUtils.evaluatePolynomial(pol, target);
             PeerCommunicator communicator = this.peerMap.get(target);

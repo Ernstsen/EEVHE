@@ -2,7 +2,7 @@ package dk.mmj.eevhe.crypto;
 
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
-import jersey.repackaged.com.google.common.collect.Lists;
+import org.apache.commons.collections4.ListUtils;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
 import java.math.BigInteger;
@@ -285,7 +285,7 @@ public class SecurityUtils {
         if (cipherTexts.size() > 2 * partitionSize) {
             List<Thread> threads = new ArrayList<>();
 
-            List<List<CipherText>> partitions = Lists.partition(cipherTexts, partitionSize);
+            List<List<CipherText>> partitions = ListUtils.partition(cipherTexts, partitionSize);
             for (List<CipherText> partition : partitions) {
                 Thread thread = new Thread(new VoteSummer(result, partition));
                 thread.start();

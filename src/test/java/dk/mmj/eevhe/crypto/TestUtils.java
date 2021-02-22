@@ -6,7 +6,7 @@ import dk.mmj.eevhe.entities.KeyPair;
 import dk.mmj.eevhe.entities.PersistedVote;
 import dk.mmj.eevhe.entities.PrimePair;
 import dk.mmj.eevhe.entities.PublicKey;
-import jersey.repackaged.com.google.common.collect.Lists;
+import org.apache.commons.collections4.ListUtils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -76,7 +76,7 @@ class TestUtils {
             ids.add("ID" + i);
         }
 
-        List<List<String>> partitions = Lists.partition(ids, amount / 20);
+        List<List<String>> partitions = ListUtils.partition(ids, amount / 20);
 
         ConcurrentLinkedQueue<PersistedVote> res = new ConcurrentLinkedQueue<>();
 
