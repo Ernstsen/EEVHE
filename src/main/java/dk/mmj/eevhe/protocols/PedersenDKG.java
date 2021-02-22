@@ -146,10 +146,14 @@ public class PedersenDKG implements DKG {
         List<ComplaintResolveDTO> resolves = broadcaster.getResolves();
 
         for (ComplaintResolveDTO resolve : resolves) {
+            if(resolve.getComplaintSenderId() != id){
+                continue;
+            }
+
             logger.info("Applying resolve: " + resolve);
             int resolverId = resolve.getComplaintResolverId();
             BigInteger[] commit = commitments.get(resolverId);
-            boolean resolveIsVerifiable = FeldmanVSSUtils.verifyCommitmentRespected(g, resolve.getValue(), commit, BigInteger.valueOf(resolverId), p, q);
+            boolean resolveIsVerifiable = FeldmanVSSUtils.verifyCommitmentRespected(g, resolve.getValue(), commit, BigInteger.valueOf(id), p, q);
             if (resolveIsVerifiable) {
                 secrets.put(resolverId, resolve.getValue());
                 logger.debug("Resolve was applied: " + resolve);
