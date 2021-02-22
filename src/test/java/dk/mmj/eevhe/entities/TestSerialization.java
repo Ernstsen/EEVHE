@@ -81,7 +81,7 @@ public class TestSerialization {
 
         serializables.add(new PartialKeyPair(new BigInteger("123456789"), new BigInteger("123456789"), publicKey));
         serializables.add(new PartialPublicInfo(1, publicKey, new BigInteger("6513894"), Arrays.asList(cand1, cand2), 16318));
-        serializables.add(new PartialSecretMessageDTO(new BigInteger("56138131"), 1123, 12412));
+        serializables.add(new PartialSecretMessageDTO(new BigInteger("56138131"), new BigInteger("2342429"), 1123, 12412));
     }
 
 

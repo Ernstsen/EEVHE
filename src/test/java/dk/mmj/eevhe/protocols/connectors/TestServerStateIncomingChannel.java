@@ -23,9 +23,9 @@ public class TestServerStateIncomingChannel {
         ids.add("1");
         ids.add("2");
 
-        PartialSecretMessageDTO s1 = new PartialSecretMessageDTO(valueOf(15616), 57, 65);
-        PartialSecretMessageDTO s2 = new PartialSecretMessageDTO(valueOf(1566), 257, 66);
-        PartialSecretMessageDTO s3 = new PartialSecretMessageDTO(valueOf(156), 25, 6);
+        PartialSecretMessageDTO s1 = new PartialSecretMessageDTO(valueOf(15616), valueOf(1414), 57, 65);
+        PartialSecretMessageDTO s2 = new PartialSecretMessageDTO(valueOf(1566), valueOf(141), 257, 66);
+        PartialSecretMessageDTO s3 = new PartialSecretMessageDTO(valueOf(156), valueOf(14), 25, 6);
 
         final ServerState inst = ServerState.getInstance();
         inst.put("1", s1);

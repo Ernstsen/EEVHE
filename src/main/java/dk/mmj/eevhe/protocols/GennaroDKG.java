@@ -28,8 +28,7 @@ public class GennaroDKG implements DKG {
     private final Broadcaster broadcaster;
     private final IncomingChannel incoming;
     private final Map<Integer, PeerCommunicator> peerMap;
-    private final Map<Integer, BigInteger> secrets1 = new HashMap<>();
-    private final Map<Integer, BigInteger> secrets2 = new HashMap<>();
+    private final Map<Integer, PartialSecretMessageDTO> secrets = new HashMap<>();
     private final Map<Integer, BigInteger[]> commitments = new HashMap<>();
     private final Logger logger;
     private final int id;
@@ -72,8 +71,10 @@ public class GennaroDKG implements DKG {
         broadcaster.commit(new CommitmentDTO(commitment, id));
 
         commitments.put(id, commitment);
-        secrets1.put(id, SecurityUtils.evaluatePolynomial(pol1, id));
-        secrets2.put(id, SecurityUtils.evaluatePolynomial(pol2, id));
+        secrets.put(id,
+                new PartialSecretMessageDTO(
+                        SecurityUtils.evaluatePolynomial(pol1, id),
+                        SecurityUtils.evaluatePolynomial(pol2, id), id, id));
 
         logger.info("Sending partial secrets to peers");
         logger.debug("Has " + peerMap.size() + " peers");
@@ -95,11 +96,12 @@ public class GennaroDKG implements DKG {
         List<PartialSecretMessageDTO> incomingSecrets = incoming.receiveSecrets();
 
         for (PartialSecretMessageDTO secret : incomingSecrets) {
-            secrets1.put(secret.getSender(), secret.getPartialSecret1());
+            secrets.put(secret.getSender(), secret);
         }
 
-        boolean hasReceivedFromAll = secrets1.size() == peerMap.size() + 1;//Peers + self
-        if (!hasReceivedFromAll) {//TODO: When should we just ignore the missing value(s)? Otherwise risk corruption killing election by non-participation
+        boolean hasReceivedFromAll = secrets.size() == peerMap.size() + 1;//Peers + self
+        //TODO: When should we just ignore the missing value(s)? Otherwise risk corruption killing election by non-participation
+        if (!hasReceivedFromAll) {
             logger.info("Has not received all commitments - should retry");
             return false;
         }
@@ -113,21 +115,24 @@ public class GennaroDKG implements DKG {
         }
 
 
-        for (Map.Entry<Integer, BigInteger> entry : new ArrayList<>(secrets1.entrySet())) {
+        for (Map.Entry<Integer, PartialSecretMessageDTO> entry : new ArrayList<>(secrets.entrySet())) {
             int id = entry.getKey();
 
-            BigInteger partialSecret = entry.getValue();
+            BigInteger partialSecret1 = entry.getValue().getPartialSecret1();
+            BigInteger partialSecret2 = entry.getValue().getPartialSecret2();
+
             BigInteger[] commitment = this.commitments.get(entry.getKey());
             if (commitment == null) {
                 logger.error("Peer with id=" + id + ", had no corresponding commitment!");
                 continue;//TODO: What to do?
             }
 
-            boolean matches = FeldmanVSSUtils.verifyCommitmentRespected(g, partialSecret, commitment, BigInteger.valueOf(this.id), p, q);
+            boolean matches = PedersenVSSUtils.verifyCommitmentRespected(
+                    g, e, partialSecret1, partialSecret2, commitment, BigInteger.valueOf(this.id), p, q);
             if (!matches) {
                 logger.info("" + this.id + ": Sending complaint about DA=" + id);
                 final ComplaintDTO complaint = new ComplaintDTO(this.id, id);
-                secrets1.remove(id);//remove secret, as it's garbage
+                secrets.remove(id); //remove secret, as it's garbage
                 broadcaster.complain(complaint);
             }
         }
@@ -144,8 +149,12 @@ public class GennaroDKG implements DKG {
         for (ComplaintDTO complaint : complaints) {
             if (complaint.getTargetId() == id) {
                 logger.info("Found complaint about self. Resolving.");
-                BigInteger complaintValue = SecurityUtils.evaluatePolynomial(pol1, complaint.getSenderId());
-                ComplaintResolveDTO complaintResolveDTO = new ComplaintResolveDTO(complaint.getSenderId(), this.id, complaintValue);
+                BigInteger complaintValue1 = SecurityUtils.evaluatePolynomial(pol1, complaint.getSenderId());
+                BigInteger complaintValue2 = SecurityUtils.evaluatePolynomial(pol2, complaint.getSenderId());
+                PartialSecretMessageDTO complaintResolve = new PartialSecretMessageDTO(
+                        complaintValue1, complaintValue2, complaint.getSenderId(), id);
+                ComplaintResolveDTO complaintResolveDTO = new ComplaintResolveDTO(
+                        complaint.getSenderId(), this.id, complaintResolve);
                 broadcaster.resolveComplaint(complaintResolveDTO);
             }
         }
@@ -164,14 +173,16 @@ public class GennaroDKG implements DKG {
             logger.info("Applying resolve: " + resolve);
             int resolverId = resolve.getComplaintResolverId();
             BigInteger[] commit = commitments.get(resolverId);
-            boolean resolveIsVerifiable = FeldmanVSSUtils.verifyCommitmentRespected(g, resolve.getValue(), commit, BigInteger.valueOf(id), p, q);
+            boolean resolveIsVerifiable = PedersenVSSUtils.verifyCommitmentRespected(
+                    g, e, resolve.getValue().getPartialSecret1(), resolve.getValue().getPartialSecret2(), commit, BigInteger.valueOf(id), p, q);
             if (resolveIsVerifiable) {
-                secrets1.put(resolverId, resolve.getValue());
+                secrets.put(resolverId, resolve.getValue());
                 logger.debug("Resolve was applied: " + resolve);
             } else {
                 //Disqualify
                 logger.warn("Resolve from id=" + resolverId + " could not be verified. Disqualifying and using ID instead");
-                secrets1.put(resolverId, BigInteger.valueOf(resolverId));//TODO: Can we do this? Is this the right form?
+                //TODO: Can we do this? Is this the right form?
+                // secrets.put(resolverId, null);
             }
         }
 
@@ -180,7 +191,7 @@ public class GennaroDKG implements DKG {
     @Override
     public PartialKeyPair createKeys() {
         logger.info("Combining values, to make keys");
-        BigInteger[] uVals = secrets1.values().toArray(new BigInteger[0]);
+        BigInteger[] uVals = secrets.values().stream().map(PartialSecretMessageDTO::getPartialSecret1).toArray(BigInteger[]::new);
         BigInteger[] firstCommits = commitments.values().stream().map(arr -> arr[0]).toArray(BigInteger[]::new);
 
 

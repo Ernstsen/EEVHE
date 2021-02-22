@@ -184,9 +184,16 @@ public class TestGennaroDKG {
         final PeerCommunicator brokenChannel = (m) -> {
         };
 
-        List<PartialSecretMessageDTO> receivedPeer1 = Arrays.asList(new PartialSecretMessageDTO(BigInteger.ONE, 1, 2), new PartialSecretMessageDTO(BigInteger.ONE, 1, 3));
-        List<PartialSecretMessageDTO> receivedPeer2 = Arrays.asList(new PartialSecretMessageDTO(BigInteger.ONE, 2, 1), new PartialSecretMessageDTO(BigInteger.ONE, 2, 3));
-        List<PartialSecretMessageDTO> receivedPeer3 = Arrays.asList(new PartialSecretMessageDTO(BigInteger.ONE, 3, 1), new PartialSecretMessageDTO(BigInteger.ONE, 3, 2));
+        List<PartialSecretMessageDTO> receivedPeer1 = Arrays.asList(
+                new PartialSecretMessageDTO(BigInteger.ONE, BigInteger.ONE, 1, 2),
+                new PartialSecretMessageDTO(BigInteger.ONE, BigInteger.ONE, 1, 3));
+        List<PartialSecretMessageDTO> receivedPeer2 = Arrays.asList(
+                new PartialSecretMessageDTO(BigInteger.ONE, BigInteger.ONE, 2, 1),
+                new PartialSecretMessageDTO(BigInteger.ONE, BigInteger.ONE, 2, 3));
+        List<PartialSecretMessageDTO> receivedPeer3 = Arrays.asList(
+                new PartialSecretMessageDTO(BigInteger.ONE, BigInteger.ONE, 3, 1),
+                new PartialSecretMessageDTO(BigInteger.ONE, BigInteger.ONE, 3, 2));
+
         final IncomingChannel brokenIncoming1 = () -> receivedPeer1;
         final IncomingChannel brokenIncoming2 = () -> receivedPeer2;
         final IncomingChannel brokenIncoming3 = () -> receivedPeer3;

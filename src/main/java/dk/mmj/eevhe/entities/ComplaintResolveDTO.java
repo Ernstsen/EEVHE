@@ -1,18 +1,17 @@
 package dk.mmj.eevhe.entities;
 
-import java.math.BigInteger;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
 public class ComplaintResolveDTO {
     private int complaintSenderId;
     private int complaintResolverId;
-    private BigInteger value;
+    private PartialSecretMessageDTO value;
 
     public ComplaintResolveDTO() {
     }
 
-    public ComplaintResolveDTO(int complaintSenderId, int complaintResolverId, BigInteger value) {
+    public ComplaintResolveDTO(int complaintSenderId, int complaintResolverId, PartialSecretMessageDTO value) {
         this.complaintSenderId = complaintSenderId;
         this.complaintResolverId = complaintResolverId;
         this.value = value;
@@ -34,11 +33,11 @@ public class ComplaintResolveDTO {
         this.complaintResolverId = complaintResolverId;
     }
 
-    public BigInteger getValue() {
+    public PartialSecretMessageDTO getValue() {
         return value;
     }
 
-    public void setValue(BigInteger value) {
+    public void setValue(PartialSecretMessageDTO value) {
         this.value = value;
     }
 

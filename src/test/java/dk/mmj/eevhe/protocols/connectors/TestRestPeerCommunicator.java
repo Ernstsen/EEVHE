@@ -46,8 +46,8 @@ public class TestRestPeerCommunicator {
                     return resp;
                 });
 
-        final PartialSecretMessageDTO s1 = new PartialSecretMessageDTO(valueOf(15616), 57, 65);
-        final PartialSecretMessageDTO s2 = new PartialSecretMessageDTO(valueOf(1566), 257, 66);
+        final PartialSecretMessageDTO s1 = new PartialSecretMessageDTO(valueOf(15616), valueOf(1234), 57, 65);
+        final PartialSecretMessageDTO s2 = new PartialSecretMessageDTO(valueOf(1566), valueOf(123), 257, 66);
 
         communicator.sendSecret(s1);
         communicator.sendSecret(s2);
@@ -70,7 +70,7 @@ public class TestRestPeerCommunicator {
         when(peer.path("partialSecret").request().post(any()))
                 .thenReturn(errorResponse);
 
-        communicator.sendSecret(new PartialSecretMessageDTO(valueOf(15616), 57, 65));
-        communicator.sendSecret(new PartialSecretMessageDTO(valueOf(1566), 257, 66));
+        communicator.sendSecret(new PartialSecretMessageDTO(valueOf(15616), valueOf(1234), 57, 65));
+        communicator.sendSecret(new PartialSecretMessageDTO(valueOf(1566), valueOf(123), 257, 66));
     }
 }
