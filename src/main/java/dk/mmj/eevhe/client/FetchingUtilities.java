@@ -3,7 +3,6 @@ package dk.mmj.eevhe.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.entities.PartialPublicInfo;
-import dk.mmj.eevhe.entities.PublicInformationEntity;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
@@ -27,9 +26,7 @@ import java.util.function.Predicate;
 public class FetchingUtilities {
 
     /**
-     * Fetches a list of  {@link PublicInformationEntity}s from the BulletinBoard, supplied as a {@link WebTarget}.
-     * <br>
-     * Returns the first entity signed by the <i>Trusted Dealer</i>, null if none is found
+     * Fetches a list of  {@link PartialPublicInfo}s from the BulletinBoard, supplied as a {@link WebTarget}.
      *
      * @param logger        logger for reporting errors
      * @param publicKeyName name of the file in the <i>RSA</i> folder, containing the public-key
@@ -100,7 +97,9 @@ public class FetchingUtilities {
      * @param logger        logger for reporting errors
      * @param publicKeyName name of the file in the <i>RSA</i> folder, containing the public-key
      * @return publicKey loaded from given file
+     * @deprecated public key no longer kept at disc - to be replaced by certificate and certificate chains!
      */
+    @Deprecated
     private static AsymmetricKeyParameter loadPublicKey(Logger logger, String publicKeyName) {
         File keyFile = Paths.get("rsa").resolve(publicKeyName).toFile();
         if (!keyFile.exists()) {

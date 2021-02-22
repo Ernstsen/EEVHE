@@ -1,6 +1,7 @@
 package dk.mmj.eevhe.entities;
 
 import java.math.BigInteger;
+import java.util.Objects;
 
 @SuppressWarnings("JavaDocs, unused")
 public class CipherText {
@@ -35,11 +36,23 @@ public class CipherText {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (o instanceof CipherText) {
-            return d.equals(((CipherText) o).d) && c.equals(((CipherText) o).c);
-        }
+    public String toString() {
+        return "CipherText{" +
+                "c=" + c +
+                ", d=" + d +
+                '}';
+    }
 
-        return super.equals(o);
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CipherText that = (CipherText) o;
+        return Objects.equals(c, that.c) && Objects.equals(d, that.d);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(c, d);
     }
 }

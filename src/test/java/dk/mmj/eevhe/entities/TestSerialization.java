@@ -6,14 +6,14 @@ import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
+import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import static junit.framework.TestCase.fail;
+import static junit.framework.TestCase.*;
 
 @SuppressWarnings("deprecation")
 public class TestSerialization {
@@ -70,20 +70,6 @@ public class TestSerialization {
         serializables.add(pv1);
         serializables.add(new PrimePair(new BigInteger("3253"), new BigInteger("3298573493")));
 
-        List<Integer> ints = Arrays.asList(1, 2, 3);
-        PublicInformationEntity publicInfo1 = new PublicInformationEntity(
-                ints, map,
-                new BigInteger("3498534"), new BigInteger("35983493"), new BigInteger("344598343"),
-                2378462384623L, Arrays.asList(cand1, cand2)
-        );
-        PublicInformationEntity publicInfo2 = new PublicInformationEntity(
-                ints, map,
-                new BigInteger("23498534"), new BigInteger("359283493"), new BigInteger("3445983432"),
-                22378462384623L, Arrays.asList(cand2, cand1)
-        );
-        serializables.add(publicInfo1);
-        serializables.add(new PublicInfoList(Arrays.asList(publicInfo1, publicInfo2)));
-
         serializables.add(new ResultList(Arrays.asList(partialResultList, partialResultList2)));
         DecryptionAuthorityInfo daInfo1 = new DecryptionAuthorityInfo(0, "127.0.0.1:8080");
         DecryptionAuthorityInfo daInfo2 = new DecryptionAuthorityInfo(1, "127.0.0.1:8081");
@@ -94,6 +80,8 @@ public class TestSerialization {
         serializables.add(new DecryptionAuthorityInput("wiughweiugnwe", "woegnweoginw", 54684654, Arrays.asList(daInfo1, daInfo2)));
 
         serializables.add(new PartialKeyPair(new BigInteger("123456789"), new BigInteger("123456789"), publicKey));
+        serializables.add(new PartialPublicInfo(1, publicKey, new BigInteger("6513894"), Arrays.asList(cand1, cand2), 16318));
+        serializables.add(new PartialSecretMessageDTO(new BigInteger("56138131"), 1123, 12412));
     }
 
 
@@ -110,12 +98,13 @@ public class TestSerialization {
 
                 if (!deserialize.equals(serializable)) {
                     errors.add("deserialized did not match original. Serialized: " + serialized + ", Original: " + serializable.toString());
+                } else { //Do more checks, which only makes sense if the the objects are equal
+                    assertEquals("toString must be the same", serializable.toString(), deserialize.toString());
+                    assertEquals("hashCode must be the same", serializable.hashCode(), deserialize.hashCode());
                 }
 
             } catch (JsonProcessingException e) {
                 errors.add("Unable to serialize object of type: " + serializable.getClass().getName() + " with error: " + e.getMessage());
-            } catch (IOException e) {
-                errors.add("Unable to deserialize object of type: " + serializable.getClass().getName() + " with error: " + e.getMessage());
             }
         }
 
@@ -129,4 +118,21 @@ public class TestSerialization {
 
     }
 
+    @Test
+    public void testToString() {
+        for (Object serializable : serializables) {
+            Class<?> serializableClass = serializable.getClass();
+            String str = serializable.toString();
+            for (Field field : serializableClass.getFields()) {
+                field.setAccessible(true);
+                try {
+                    Object val = field.get(serializableClass);
+                    assertTrue("toString for DTO must contain all ", str.contains(val.toString()));
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                    fail();
+                }
+            }
+        }
+    }
 }

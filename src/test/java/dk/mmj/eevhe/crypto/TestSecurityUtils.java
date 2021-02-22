@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static dk.mmj.eevhe.crypto.TestUtils.*;
+import static java.math.BigInteger.ONE;
 import static java.math.BigInteger.valueOf;
 import static org.junit.Assert.*;
 
@@ -91,6 +92,35 @@ public class TestSecurityUtils {
             BallotDTO ballotDTO = generateBallot(5, list, keyPair.getPublicKey(), id);
 
             boolean verified = VoteProofUtils.verifyBallot(ballotDTO, keyPair.getPublicKey());
+            assertFalse("Verified invalidly generated vote", verified);
+        }
+    }
+
+    @Test
+    public void ballotHasInvalidCiphertextProof() {
+        KeyPair keyPair = generateKeysFromP2048bitsG2();
+        String id = "TESTID";
+        for (List<Integer> list : Arrays.asList(
+                Arrays.asList(2, 3),
+                Arrays.asList(1, 4),
+                Arrays.asList(3, 4),
+                Arrays.asList(2, 4))) {
+
+            BallotDTO ballotDTO = generateBallot(5, list, keyPair.getPublicKey(), id);
+
+            List<CandidateVoteDTO> candidates = ballotDTO.getCandidateVotes();
+
+            CandidateVoteDTO cand0 = candidates.get(0);
+            Proof proof = cand0.getProof();
+            cand0.setProof(new Proof(proof.getE0(), proof.getE1(), proof.getZ0(), proof.getZ1().add(ONE)));
+
+            BallotDTO ballot = new BallotDTO(
+                    candidates,
+                    id,
+                    ballotDTO.getSumIsOneProof()
+            );
+
+            boolean verified = VoteProofUtils.verifyBallot(ballot, keyPair.getPublicKey());
             assertFalse("Verified invalidly generated vote", verified);
         }
     }
@@ -226,7 +256,7 @@ public class TestSecurityUtils {
         int x = 5;
         BigInteger actualResult = SecurityUtils.evaluatePolynomial(polynomial, x);
         BigInteger expectedResult = polynomial[0].add(valueOf(x).multiply(polynomial[1]))
-                                                 .add(valueOf(x).pow(2).multiply(polynomial[2]));
+                .add(valueOf(x).pow(2).multiply(polynomial[2]));
 
         assertEquals("Evaluation of polynomial failed", expectedResult, actualResult);
     }
