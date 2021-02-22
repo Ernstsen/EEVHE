@@ -6,10 +6,10 @@ import java.util.Objects;
 @SuppressWarnings("unused")
 public class PartialSecretMessageDTO {
     private BigInteger partialSecret;
-    private Integer target;
-    private Integer sender;
+    private int target;
+    private int sender;
 
-    public PartialSecretMessageDTO(BigInteger partialSecret, Integer target, Integer sender) {
+    public PartialSecretMessageDTO(BigInteger partialSecret, int target, int sender) {
         this.partialSecret = partialSecret;
         this.target = target;
         this.sender = sender;
@@ -26,19 +26,19 @@ public class PartialSecretMessageDTO {
         this.partialSecret = partialSecret;
     }
 
-    public Integer getTarget() {
+    public int getTarget() {
         return target;
     }
 
-    public void setTarget(Integer target) {
+    public void setTarget(int target) {
         this.target = target;
     }
 
-    public Integer getSender() {
+    public int getSender() {
         return sender;
     }
 
-    public void setSender(Integer sender) {
+    public void setSender(int sender) {
         this.sender = sender;
     }
 

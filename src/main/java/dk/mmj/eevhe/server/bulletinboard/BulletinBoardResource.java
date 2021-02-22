@@ -54,13 +54,6 @@ public class BulletinBoardResource {
         state.put(PUBLIC_KEY, publicKey);
     }
 
-    @POST
-    @Path("postPublicInfo")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public void initialize(PublicInformationEntity info) {
-        addToList(PUBLIC_INFO, info);
-    }
-
     @GET
     @Path("getPublicInfo")
     @Produces(MediaType.APPLICATION_JSON)

@@ -310,8 +310,8 @@ public class SecurityUtils {
     }
 
     private static class VoteSummer implements Runnable {
-        private Collection<CipherText> resultRef;
-        private List<CipherText> values;
+        private final Collection<CipherText> resultRef;
+        private final List<CipherText> values;
 
         VoteSummer(Collection<CipherText> resultRef, List<CipherText> values) {
             this.resultRef = resultRef;
