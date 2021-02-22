@@ -3,7 +3,7 @@ package dk.mmj.eevhe;
 import dk.mmj.eevhe.crypto.CryptoTestSuite;
 import dk.mmj.eevhe.entities.TestSerialization;
 import dk.mmj.eevhe.protocols.ProtocolTestSuite;
-import dk.mmj.eevhe.protocols.TestPedersenDKG;
+import dk.mmj.eevhe.server.ServerTestSuite;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -12,7 +12,8 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
         CryptoTestSuite.class,
         TestSerialization.class,
-        ProtocolTestSuite.class
+        ProtocolTestSuite.class,
+        ServerTestSuite.class,
 })
 public class TestSuite {
 }
