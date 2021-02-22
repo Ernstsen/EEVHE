@@ -1,6 +1,6 @@
 package dk.mmj.eevhe.protocols;
 
-import dk.mmj.eevhe.crypto.SecretSharingUtils;
+import dk.mmj.eevhe.crypto.FeldmanVSSUtils;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
 import dk.mmj.eevhe.entities.*;
@@ -57,7 +57,7 @@ public class PedersenDKG implements DKG {
 
         logger.debug("Calculating coefficient commitments.");
         //Calculates commitments
-        BigInteger[] commitment = SecretSharingUtils.computeCoefficientCommitments(g, p, pol);
+        BigInteger[] commitment = FeldmanVSSUtils.computeCoefficientCommitments(g, p, pol);
 
         logger.info("Broadcasting commitments");
         broadcaster.commit(new CommitmentDTO(commitment, id));
@@ -112,7 +112,7 @@ public class PedersenDKG implements DKG {
                 continue;//TODO: What to do?
             }
 
-            boolean matches = SecretSharingUtils.verifyCommitmentRespected(g, partialSecret, commitment, BigInteger.valueOf(this.id), p, q);
+            boolean matches = FeldmanVSSUtils.verifyCommitmentRespected(g, partialSecret, commitment, BigInteger.valueOf(this.id), p, q);
             if (!matches) {
                 logger.info("" + this.id + ": Sending complaint about DA=" + id);
                 final ComplaintDTO complaint = new ComplaintDTO(this.id, id);
@@ -149,7 +149,7 @@ public class PedersenDKG implements DKG {
             logger.info("Applying resolve: " + resolve);
             int resolverId = resolve.getComplaintResolverId();
             BigInteger[] commit = commitments.get(resolverId);
-            boolean resolveIsVerifiable = SecretSharingUtils.verifyCommitmentRespected(g, resolve.getValue(), commit, BigInteger.valueOf(resolverId), p, q);
+            boolean resolveIsVerifiable = FeldmanVSSUtils.verifyCommitmentRespected(g, resolve.getValue(), commit, BigInteger.valueOf(resolverId), p, q);
             if (resolveIsVerifiable) {
                 secrets.put(resolverId, resolve.getValue());
                 logger.debug("Resolve was applied: " + resolve);
@@ -169,6 +169,6 @@ public class PedersenDKG implements DKG {
         BigInteger[] firstCommits = commitments.values().stream().map(arr -> arr[0]).toArray(BigInteger[]::new);
 
 
-        return SecretSharingUtils.generateKeyPair(g, q, uVals, firstCommits);
+        return FeldmanVSSUtils.generateKeyPair(g, q, uVals, firstCommits);
     }
 }

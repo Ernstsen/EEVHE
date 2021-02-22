@@ -12,7 +12,7 @@ import org.junit.runners.Suite;
         TestElGamal.class,
         TestVoteProofUtils.class,
         TestSecurityUtils.class,
-        TestSecretSharingUtils.class
+        TestFeldmanVSSUtils.class
 })
 public class CryptoTestSuite {
 }

@@ -8,7 +8,7 @@ import java.util.Arrays;
 
 import static java.math.BigInteger.valueOf;
 
-public class SecretSharingUtils {
+public class FeldmanVSSUtils {
     /**
      * @param g          The generator
      * @param p          The prime modulus
@@ -88,7 +88,7 @@ public class SecretSharingUtils {
         BigInteger h = Arrays.stream(gV).reduce(BigInteger::multiply).orElse(BigInteger.ZERO).mod(p);
         PublicKey publicKey = new PublicKey(h, g, q);
 
-        BigInteger partialSecretKey = Arrays.stream(u).reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(p);
+        BigInteger partialSecretKey = Arrays.stream(u).reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
         BigInteger partialPublicKey = g.modPow(partialSecretKey, p);
 
         return new PartialKeyPair(partialSecretKey, partialPublicKey, publicKey);
