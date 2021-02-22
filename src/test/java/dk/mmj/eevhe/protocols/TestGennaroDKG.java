@@ -21,7 +21,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class TestPedersenDKG {
+public class TestGennaroDKG {
     private PersistedKeyParameters params;
 
     @Before
@@ -57,11 +57,11 @@ public class TestPedersenDKG {
         commMap3.put(2, channel2);
 
         //Creating players
-        final PedersenDKG player1 = new PedersenDKG(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1);
-        final PedersenDKG player2 = new PedersenDKG(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2);
-        final PedersenDKG player3 = new PedersenDKG(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3);
+        final GennaroDKG player1 = new GennaroDKG(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1);
+        final GennaroDKG player2 = new GennaroDKG(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2);
+        final GennaroDKG player3 = new GennaroDKG(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3);
 
-        final List<PedersenDKG> players = Arrays.asList(player1, player2, player3);
+        final List<GennaroDKG> players = Arrays.asList(player1, player2, player3);
 
         players.forEach(DKG::startProtocol);
 
@@ -129,10 +129,10 @@ public class TestPedersenDKG {
         commMap3.put(2, channel2);
 
         //Creating players
-        final PedersenDKG player1 = new PedersenDKG(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1);
-        final PedersenDKG player3 = new PedersenDKG(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3);
+        final GennaroDKG player1 = new GennaroDKG(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1);
+        final GennaroDKG player3 = new GennaroDKG(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3);
 
-        final List<PedersenDKG> players = Arrays.asList(player1, player3);
+        final List<GennaroDKG> players = Arrays.asList(player1, player3);
 
         players.forEach(DKG::startProtocol);
 
@@ -205,11 +205,11 @@ public class TestPedersenDKG {
         commMap3.put(2, brokenChannel);
 
         //Creating players
-        final PedersenDKG player1 = new PedersenDKG(testBroadcaster, brokenIncoming1, commMap1, 1, params, "ID=" + 1);
-        final PedersenDKG player2 = new PedersenDKG(testBroadcaster, brokenIncoming2, commMap2, 2, params, "ID=" + 2);
-        final PedersenDKG player3 = new PedersenDKG(testBroadcaster, brokenIncoming3, commMap3, 3, params, "ID=" + 3);
+        final GennaroDKG player1 = new GennaroDKG(testBroadcaster, brokenIncoming1, commMap1, 1, params, "ID=" + 1);
+        final GennaroDKG player2 = new GennaroDKG(testBroadcaster, brokenIncoming2, commMap2, 2, params, "ID=" + 2);
+        final GennaroDKG player3 = new GennaroDKG(testBroadcaster, brokenIncoming3, commMap3, 3, params, "ID=" + 3);
 
-        final List<PedersenDKG> players = Arrays.asList(player1, player2, player3);
+        final List<GennaroDKG> players = Arrays.asList(player1, player2, player3);
 
         players.forEach(DKG::startProtocol);
 

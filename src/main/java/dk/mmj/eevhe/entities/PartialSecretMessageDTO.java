@@ -5,12 +5,14 @@ import java.util.Objects;
 
 @SuppressWarnings("unused")
 public class PartialSecretMessageDTO {
-    private BigInteger partialSecret;
+    private BigInteger partialSecret1;
+    private BigInteger partialSecret2;
     private int target;
     private int sender;
 
-    public PartialSecretMessageDTO(BigInteger partialSecret, int target, int sender) {
-        this.partialSecret = partialSecret;
+    public PartialSecretMessageDTO(BigInteger val1, BigInteger val2, int target, int sender) {
+        this.partialSecret1 = val1;
+        this.partialSecret2 = val2;
         this.target = target;
         this.sender = sender;
     }
@@ -18,12 +20,20 @@ public class PartialSecretMessageDTO {
     public PartialSecretMessageDTO() {
     }
 
-    public BigInteger getPartialSecret() {
-        return partialSecret;
+    public BigInteger getPartialSecret1() {
+        return partialSecret1;
     }
 
-    public void setPartialSecret(BigInteger partialSecret) {
-        this.partialSecret = partialSecret;
+    public void setPartialSecret1(BigInteger partialSecret) {
+        this.partialSecret1 = partialSecret;
+    }
+
+    public BigInteger getPartialSecret2() {
+        return partialSecret2;
+    }
+
+    public void setPartialSecret2(BigInteger partialSecret) {
+        this.partialSecret2 = partialSecret;
     }
 
     public int getTarget() {
@@ -47,20 +57,22 @@ public class PartialSecretMessageDTO {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PartialSecretMessageDTO that = (PartialSecretMessageDTO) o;
-        return Objects.equals(partialSecret, that.partialSecret) &&
+        return Objects.equals(partialSecret1, that.partialSecret1) &&
+                Objects.equals(partialSecret2, that.partialSecret2) &&
                 Objects.equals(target, that.target) &&
                 Objects.equals(sender, that.sender);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(partialSecret, target, sender);
+        return Objects.hash(partialSecret1, partialSecret2, target, sender);
     }
 
     @Override
     public String toString() {
         return "PartialSecretMessageDTO{" +
-                "partialSecret=" + partialSecret +
+                "partialSecret1=" + partialSecret1 +
+                "partialSecret2=" + partialSecret1 +
                 ", target=" + target +
                 ", sender=" + sender +
                 '}';

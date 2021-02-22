@@ -3,7 +3,6 @@ package dk.mmj.eevhe;
 import dk.mmj.eevhe.crypto.CryptoTestSuite;
 import dk.mmj.eevhe.entities.TestSerialization;
 import dk.mmj.eevhe.protocols.ProtocolTestSuite;
-import dk.mmj.eevhe.protocols.TestPedersenDKG;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
