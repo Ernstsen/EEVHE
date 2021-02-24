@@ -2,12 +2,15 @@ package dk.mmj.eevhe.client;
 
 import dk.eSoftware.commandLineParser.CommandLineParser;
 import dk.eSoftware.commandLineParser.Configuration;
+import dk.mmj.eevhe.TestableConfigurationBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
-public class ClientConfigBuilder implements CommandLineParser.ConfigBuilder {
+public class ClientConfigBuilder implements CommandLineParser.ConfigBuilder, TestableConfigurationBuilder {
     private static final Logger logger = LogManager.getLogger(ClientConfigBuilder.class);
     private static final String SELF = "--client";
 
@@ -81,5 +84,17 @@ public class ClientConfigBuilder implements CommandLineParser.ConfigBuilder {
                 "\t  --" + READ + "boolean\t Default=false. If true, all params except " + TARGET_URL.substring(0, TARGET_URL.length() - 1) +
                 "are ignored. Fetches poll results from bulletin board.\n" +
                 "\t  --" + FORCE_CALCULATIONS + "boolean\t\t Forces client to calculate sum of votes.\n";
+    }
+
+    @Override
+    public List<String> getParameters() {
+        return Arrays.asList(
+                TARGET_URL,
+                ID,
+                VOTE,
+                MULTI,
+                READ,
+                FORCE_CALCULATIONS
+        );
     }
 }

@@ -228,6 +228,10 @@ public class ResultFetcher extends Client {
             super(targetUrl);
             this.forceCalculations = forceCalculations;
         }
+
+        boolean isForceCalculations() {
+            return forceCalculations;
+        }
     }
 
     public static class MinimalPartialResult {

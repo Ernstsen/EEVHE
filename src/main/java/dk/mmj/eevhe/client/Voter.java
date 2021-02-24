@@ -185,5 +185,17 @@ public class Voter extends Client {
             this.vote = vote;
             this.multi = multi;
         }
+
+        String getId() {
+            return id;
+        }
+
+        Integer getVote() {
+            return vote;
+        }
+
+        Integer getMulti() {
+            return multi;
+        }
     }
 }

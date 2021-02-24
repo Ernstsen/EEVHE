@@ -65,5 +65,9 @@ public abstract class Client implements Application {
         ClientConfiguration(String targetUrl) {
             this.targetUrl = targetUrl;
         }
+
+        public String getTargetUrl() {
+            return targetUrl;
+        }
     }
 }
