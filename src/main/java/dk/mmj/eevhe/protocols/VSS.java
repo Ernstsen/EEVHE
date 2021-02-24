@@ -9,7 +9,7 @@ import dk.mmj.eevhe.entities.PartialKeyPair;
  * All methods must be called in the proper order,
  * however they are split into different steps as to allow waiting time, and let other players act/react between steps.
  */
-public interface DKG {
+public interface VSS {
 
     /**
      * Initializes protocol

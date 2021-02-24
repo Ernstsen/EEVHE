@@ -10,7 +10,7 @@ import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.protocols.GennaroDKG;
+import dk.mmj.eevhe.protocols.PedersenVSS;
 import dk.mmj.eevhe.protocols.connectors.BulletinBoardBroadcaster;
 import dk.mmj.eevhe.protocols.connectors.RestPeerCommunicator;
 import dk.mmj.eevhe.protocols.connectors.ServerStateIncomingChannel;
@@ -47,7 +47,7 @@ public class DecryptionAuthority extends AbstractServer {
     private final boolean integrationTest;
     private final ObjectMapper mapper = new ObjectMapper();
     private KeyGenParams params;
-    private GennaroDKG dkg;
+    private PedersenVSS dkg;
     private DecryptionAuthorityInput input;
     private boolean timeCorrupt = false;
     private PartialSecretKey sk;
@@ -132,7 +132,9 @@ public class DecryptionAuthority extends AbstractServer {
                         .map(this::partialSecretKey)
                         .collect(Collectors.toList())
         );
-        dkg = new GennaroDKG(new BulletinBoardBroadcaster(bulletinBoard), incoming, communicators, id, params, "ID: " + id);
+        // TODO: use GennaroDKG instead of PedersenVSS
+        dkg = new PedersenVSS(new BulletinBoardBroadcaster(bulletinBoard), incoming,
+                communicators, id, params, "ID: " + id, null, null);
         dkg.startProtocol();
 
         logger.info("scheduling verification of received values. DA with id=" + id);
