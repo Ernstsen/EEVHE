@@ -1,7 +1,6 @@
 package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.crypto.FeldmanVSSUtils;
-import dk.mmj.eevhe.crypto.PedersenVSSUtils;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
 import dk.mmj.eevhe.entities.*;
@@ -12,10 +11,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static dk.mmj.eevhe.crypto.PedersenVSSUtils.*;
 
 /**
  * Pedersen-DKG protocol
@@ -24,24 +22,26 @@ import java.util.Map;
  * Gennaro, R., Jarecki, S., Krawczyk, H. et al. Secure Distributed Key Generation for Discrete-Log Based Cryptosystems.
  * J Cryptology 20, 51–83 (2007). <a href="https://doi.org/10.1007/s00145-006-0347-3">https://doi.org/10.1007/s00145-006-0347-3</a>
  */
-public class GennaroDKG implements DKG {
+public class PedersenVSS implements VSS {
     private final Broadcaster broadcaster;
     private final IncomingChannel incoming;
     private final Map<Integer, PeerCommunicator> peerMap;
     private final Map<Integer, PartialSecretMessageDTO> secrets = new HashMap<>();
     private final Map<Integer, BigInteger[]> commitments = new HashMap<>();
+    private final Set<Integer> honestParties = new HashSet<>();
     private final Logger logger;
     private final int id;
     private final BigInteger g;
     private final BigInteger q;
     private final BigInteger p;
     private final BigInteger e;
+    private final int t;
     private BigInteger[] pol1;
     private BigInteger[] pol2;
 
-    public GennaroDKG(Broadcaster broadcaster, IncomingChannel incoming,
-                      Map<Integer, PeerCommunicator> peerCommunicatorMap,
-                      int id, KeyGenerationParameters params, String logPrefix) {
+    public PedersenVSS(Broadcaster broadcaster, IncomingChannel incoming,
+                       Map<Integer, PeerCommunicator> peerCommunicatorMap,
+                       int id, KeyGenerationParameters params, String logPrefix) {
         this.broadcaster = broadcaster;
         this.incoming = incoming;
         this.peerMap = peerCommunicatorMap;
@@ -49,23 +49,25 @@ public class GennaroDKG implements DKG {
         this.g = params.getGenerator();
         this.q = params.getPrimePair().getQ();
         this.p = params.getPrimePair().getP();
-        this.e = PedersenVSSUtils.generateElementInSubgroup(g, p);
+        this.e = generateElementInSubgroup(g, p);
+        this.t = ((peerMap.size()) / 2);
 
-        logger = LogManager.getLogger(GennaroDKG.class.getName() + ". " + logPrefix + ":");
+        logger = LogManager.getLogger(PedersenVSS.class.getName() + ". " + logPrefix + ":");
     }
 
     @Override
     public void startProtocol() {
-        logger.info("Initialized PedersenDKG");
+        logger.info("Initialized PedersenVSS");
 
         //We chose our polynomials
-        int t = ((peerMap.size()) / 2);
         pol1 = SecurityUtils.generatePolynomial(t, q);
         pol2 = SecurityUtils.generatePolynomial(t, q);
 
+        honestParties.addAll(peerMap.keySet());
+
         logger.debug("Calculating coefficient commitments.");
         //Calculates commitments
-        BigInteger[] commitment = PedersenVSSUtils.computeCoefficientCommitments(g, e, p, pol1, pol2);
+        BigInteger[] commitment = computeCoefficientCommitments(g, e, p, pol1, pol2);
 
         logger.info("Broadcasting commitments");
         broadcaster.commit(new CommitmentDTO(commitment, id));
@@ -91,7 +93,7 @@ public class GennaroDKG implements DKG {
 
     @Override
     public boolean handleReceivedValues() {
-        logger.info("Checking received secret values, for DA with id=" + id);
+        logger.info("Checking received secret values");
 
         List<PartialSecretMessageDTO> incomingSecrets = incoming.receiveSecrets();
 
@@ -106,7 +108,7 @@ public class GennaroDKG implements DKG {
             return false;
         }
 
-        logger.info("reading commitments");
+        logger.info("Reading commitments");
         final List<CommitmentDTO> commitments = broadcaster.getCommitments();
 
         logger.info("Verifying secret shares, using commitments");
@@ -127,7 +129,7 @@ public class GennaroDKG implements DKG {
                 continue;//TODO: What to do?
             }
 
-            boolean matches = PedersenVSSUtils.verifyCommitmentRespected(
+            boolean matches = verifyCommitmentRespected(
                     g, e, partialSecret1, partialSecret2, commitment, BigInteger.valueOf(this.id), p, q);
             if (!matches) {
                 logger.info("" + this.id + ": Sending complaint about DA=" + id);
@@ -144,9 +146,12 @@ public class GennaroDKG implements DKG {
     public void handleComplaints() {
         logger.info("Fetching complaints");
         List<ComplaintDTO> complaints = broadcaster.getComplaints();
+        Map<Integer, Integer> complaintCountMap = new HashMap<>();
 
         logger.debug("Received " + complaints.size() + " complaints");
         for (ComplaintDTO complaint : complaints) {
+            complaintCountMap.compute(complaint.getTargetId(), (key, val) -> val != null ? val + 1 : 1);
+
             if (complaint.getTargetId() == id) {
                 logger.info("Found complaint about self. Resolving.");
                 BigInteger complaintValue1 = SecurityUtils.evaluatePolynomial(pol1, complaint.getSenderId());
@@ -158,6 +163,9 @@ public class GennaroDKG implements DKG {
                 broadcaster.resolveComplaint(complaintResolveDTO);
             }
         }
+        complaintCountMap.entrySet().stream()
+                .filter(e -> e.getValue() > t)
+                .forEach(e -> honestParties.remove(e.getKey()));
     }
 
     @Override
@@ -166,26 +174,20 @@ public class GennaroDKG implements DKG {
         List<ComplaintResolveDTO> resolves = broadcaster.getResolves();
 
         for (ComplaintResolveDTO resolve : resolves) {
-            if (resolve.getComplaintSenderId() != id) {
-                continue;
-            }
-
-            logger.info("Applying resolve: " + resolve);
             int resolverId = resolve.getComplaintResolverId();
             BigInteger[] commit = commitments.get(resolverId);
-            boolean resolveIsVerifiable = PedersenVSSUtils.verifyCommitmentRespected(
-                    g, e, resolve.getValue().getPartialSecret1(), resolve.getValue().getPartialSecret2(), commit, BigInteger.valueOf(id), p, q);
-            if (resolveIsVerifiable) {
+            boolean resolveIsVerifiable = verifyCommitmentRespected(
+                    g, e, resolve.getValue().getPartialSecret1(), resolve.getValue().getPartialSecret2(),
+                    commit, BigInteger.valueOf(id), p, q);
+
+            if (resolveIsVerifiable && resolve.getComplaintSenderId() == id) {
+                logger.info("Applying resolve: " + resolve);
                 secrets.put(resolverId, resolve.getValue());
-                logger.debug("Resolve was applied: " + resolve);
-            } else {
-                //Disqualify
-                logger.warn("Resolve from id=" + resolverId + " could not be verified. Disqualifying and using ID instead");
-                //TODO: Can we do this? Is this the right form?
-                // secrets.put(resolverId, null);
+            } else if (!resolveIsVerifiable) {
+                logger.warn("Resolve from id=" + resolverId + " could not be verified. Party is being disqualified.");
+                honestParties.remove(resolverId);
             }
         }
-
     }
 
     @Override
@@ -193,7 +195,6 @@ public class GennaroDKG implements DKG {
         logger.info("Combining values, to make keys");
         BigInteger[] uVals = secrets.values().stream().map(PartialSecretMessageDTO::getPartialSecret1).toArray(BigInteger[]::new);
         BigInteger[] firstCommits = commitments.values().stream().map(arr -> arr[0]).toArray(BigInteger[]::new);
-
 
         return FeldmanVSSUtils.generateKeyPair(g, q, uVals, firstCommits);
     }
