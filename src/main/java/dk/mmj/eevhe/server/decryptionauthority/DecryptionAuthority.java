@@ -327,20 +327,44 @@ public class DecryptionAuthority extends AbstractServer {
      * Configuration for a DecryptionAuthority
      */
     public static class DecryptionAuthorityConfiguration implements Configuration {
-        private final Integer port;
+        private final int port;
         private final String bulletinBoard;
         private final String confPath;
         private final int timeCorrupt;
-        private final Integer id;
+        private final int id;
         private final boolean integrationTest;
 
-        DecryptionAuthorityConfiguration(int port, String bulletinBoard, String confPath, Integer id, int timeCorrupt, boolean integrationTest) {
+        DecryptionAuthorityConfiguration(int port, String bulletinBoard, String confPath, int id, int timeCorrupt, boolean integrationTest) {
             this.port = port;
             this.bulletinBoard = bulletinBoard;
             this.id = id;
             this.confPath = confPath;
             this.timeCorrupt = timeCorrupt;
             this.integrationTest = integrationTest;
+        }
+
+        public int getPort() {
+            return port;
+        }
+
+        public String getBulletinBoard() {
+            return bulletinBoard;
+        }
+
+        public String getConfPath() {
+            return confPath;
+        }
+
+        public int getTimeCorrupt() {
+            return timeCorrupt;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public boolean isIntegrationTest() {
+            return integrationTest;
         }
     }
 

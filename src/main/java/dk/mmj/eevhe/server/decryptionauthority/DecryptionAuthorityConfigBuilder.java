@@ -2,10 +2,15 @@ package dk.mmj.eevhe.server.decryptionauthority;
 
 import dk.eSoftware.commandLineParser.CommandLineParser;
 import dk.eSoftware.commandLineParser.Configuration;
+import dk.mmj.eevhe.TestableConfigurationBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class DecryptionAuthorityConfigBuilder implements CommandLineParser.ConfigBuilder {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class DecryptionAuthorityConfigBuilder implements CommandLineParser.ConfigBuilder, TestableConfigurationBuilder {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthorityConfigBuilder.class);
     private static final String SELF = "--authority";
 
@@ -44,7 +49,7 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
         } else if (cmd.startsWith(ID)) {
             id = Integer.parseInt(cmd.substring(ID.length()));
         } else if(cmd.startsWith(INTEGRATION_TEST)){
-            integrationTest = Boolean.getBoolean(cmd.substring(INTEGRATION_TEST.length()));
+            integrationTest = Boolean.parseBoolean(cmd.substring(INTEGRATION_TEST.length()));
         }  else if (!cmd.equals(SELF)) {
             logger.warn("Did not recognize command " + command.getCommand());
         }
@@ -54,7 +59,7 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
     public Configuration build() {
         if (id == null) {
             logger.error("id must be supplied. Use -h for help");
-            System.exit(-1);
+            return null;
         }
 
         return new DecryptionAuthority.DecryptionAuthorityConfiguration(port, bulletinBoard, confPath, id, timeCorrupt, integrationTest);
@@ -69,5 +74,18 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
                 "\t  --" + BULLETIN_BOARD_2 + "/" + BULLETIN_BOARD_1 + "ip:port location bulletin board to be used\n" +
                 "\t  --" + CONF + "Path\t\tRelative path to config file.\n" +
                 "\t  --" + CORRUPT + "int\t\tInteger specifying with what offset a timeCorrupt DA tries to decrypt with.";
+    }
+
+    @Override
+    public List<String> getParameters() {
+        return new ArrayList<>(Arrays.asList(
+                ID,
+                PORT,
+                BULLETIN_BOARD_1,
+                BULLETIN_BOARD_2,
+                CONF,
+                CORRUPT,
+                INTEGRATION_TEST
+        ));
     }
 }

@@ -42,11 +42,6 @@ public class DistKeyGenResult {
         return p;
     }
 
-    @JsonIgnore
-    public List<Integer> getAuthorityIds() {
-        return new ArrayList<>(secretValues.keySet());
-    }
-
     public Map<Integer, BigInteger> getSecretValues() {
         return secretValues;
     }
