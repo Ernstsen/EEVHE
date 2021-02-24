@@ -1,5 +1,6 @@
 package dk.mmj.eevhe.protocols;
 
+import dk.mmj.eevhe.crypto.FeldmanVSSUtils;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
 import dk.mmj.eevhe.entities.*;
@@ -170,6 +171,14 @@ public class FeldmanVSS implements VSS {
 
     @Override
     public PartialKeyPair createKeys() {
-        return null;
+        logger.info("Combining values, to make keys");
+        BigInteger[] uVals = secrets.values().stream().map(PartialSecretMessageDTO::getPartialSecret1).toArray(BigInteger[]::new);
+        BigInteger[] firstCommits = commitments.values().stream().map(arr -> arr[0]).toArray(BigInteger[]::new);
+
+        return FeldmanVSSUtils.generateKeyPair(g, q, uVals, firstCommits);
+    }
+
+    public Map<Integer, PartialSecretMessageDTO> getSecrets() {
+        return secrets;
     }
 }

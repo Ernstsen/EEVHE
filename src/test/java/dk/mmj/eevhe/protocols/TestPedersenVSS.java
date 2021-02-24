@@ -56,10 +56,10 @@ public class TestPedersenVSS {
         commMap3.put(1, channel1);
         commMap3.put(2, channel2);
 
-        //Creating players
-        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1);
-        final PedersenVSS player2 = new PedersenVSS(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2);
-        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3);
+        //Creating players TODO: use GennaroDKG instead
+        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
+        final PedersenVSS player2 = new PedersenVSS(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2, null, null);
+        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
 
         final List<PedersenVSS> players = Arrays.asList(player1, player2, player3);
 
@@ -128,9 +128,9 @@ public class TestPedersenVSS {
         commMap3.put(1, channel1);
         commMap3.put(2, channel2);
 
-        //Creating players
-        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1);
-        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3);
+        //Creating players TODO: use Gennaro DKG instead
+        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
+        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
 
         final List<PedersenVSS> players = Arrays.asList(player1, player3);
 
@@ -212,9 +212,9 @@ public class TestPedersenVSS {
         commMap3.put(2, brokenChannel);
 
         //Creating players
-        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, brokenIncoming1, commMap1, 1, params, "ID=" + 1);
-        final PedersenVSS player2 = new PedersenVSS(testBroadcaster, brokenIncoming2, commMap2, 2, params, "ID=" + 2);
-        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, brokenIncoming3, commMap3, 3, params, "ID=" + 3);
+        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, brokenIncoming1, commMap1, 1, params, "ID=" + 1, null, null);
+        final PedersenVSS player2 = new PedersenVSS(testBroadcaster, brokenIncoming2, commMap2, 2, params, "ID=" + 2, null, null);
+        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, brokenIncoming3, commMap3, 3, params, "ID=" + 3, null, null);
 
         final List<PedersenVSS> players = Arrays.asList(player1, player2, player3);
 

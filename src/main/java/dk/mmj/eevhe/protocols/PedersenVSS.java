@@ -41,7 +41,7 @@ public class PedersenVSS implements VSS {
 
     public PedersenVSS(Broadcaster broadcaster, IncomingChannel incoming,
                        Map<Integer, PeerCommunicator> peerCommunicatorMap,
-                       int id, KeyGenerationParameters params, String logPrefix) {
+                       int id, KeyGenerationParameters params, String logPrefix, BigInteger[] pol1, BigInteger[] pol2) {
         this.broadcaster = broadcaster;
         this.incoming = incoming;
         this.peerMap = peerCommunicatorMap;
@@ -51,6 +51,8 @@ public class PedersenVSS implements VSS {
         this.p = params.getPrimePair().getP();
         this.e = generateElementInSubgroup(g, p);
         this.t = ((peerMap.size()) / 2);
+        this.pol1 = pol1 == null ? SecurityUtils.generatePolynomial(t, q) : pol1;
+        this.pol2 = pol2 == null ? SecurityUtils.generatePolynomial(t, q) : pol2;
 
         logger = LogManager.getLogger(PedersenVSS.class.getName() + ". " + logPrefix + ":");
     }
@@ -58,10 +60,6 @@ public class PedersenVSS implements VSS {
     @Override
     public void startProtocol() {
         logger.info("Initialized PedersenVSS");
-
-        //We chose our polynomials
-        pol1 = SecurityUtils.generatePolynomial(t, q);
-        pol2 = SecurityUtils.generatePolynomial(t, q);
 
         honestParties.addAll(peerMap.keySet());
 
@@ -197,5 +195,13 @@ public class PedersenVSS implements VSS {
         BigInteger[] firstCommits = commitments.values().stream().map(arr -> arr[0]).toArray(BigInteger[]::new);
 
         return FeldmanVSSUtils.generateKeyPair(g, q, uVals, firstCommits);
+    }
+
+    public Set<Integer> getHonestParties() {
+        return honestParties;
+    }
+
+    public Map<Integer, PartialSecretMessageDTO> getSecrets() {
+        return secrets;
     }
 }

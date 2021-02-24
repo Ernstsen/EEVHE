@@ -132,7 +132,9 @@ public class DecryptionAuthority extends AbstractServer {
                         .map(this::partialSecretKey)
                         .collect(Collectors.toList())
         );
-        dkg = new PedersenVSS(new BulletinBoardBroadcaster(bulletinBoard), incoming, communicators, id, params, "ID: " + id);
+        // TODO: use GennaroDKG instead of PedersenVSS
+        dkg = new PedersenVSS(new BulletinBoardBroadcaster(bulletinBoard), incoming,
+                communicators, id, params, "ID: " + id, null, null);
         dkg.startProtocol();
 
         logger.info("scheduling verification of received values. DA with id=" + id);
