@@ -32,7 +32,7 @@ public class SSLHelper {
      */
     private static SSLContext initializeSSL() throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, KeyManagementException {
         // Needed for localhost testing.
-        HttpsURLConnection.setDefaultHostnameVerifier((hostname, sslSession) -> hostname.equals("localhost"));
+        HttpsURLConnection.setDefaultHostnameVerifier((hostname, sslSession) -> hostname.equals("localhost") || hostname.equalsIgnoreCase("127.0.0.1"));
 
         KeyStore keyStore = KeyStore.getInstance("jceks");
         keyStore.load(new FileInputStream(CERTIFICATE_PATH), CERTIFICATE_PASSWORD.toCharArray());

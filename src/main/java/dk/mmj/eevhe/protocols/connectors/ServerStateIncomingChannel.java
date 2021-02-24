@@ -6,6 +6,7 @@ import dk.mmj.eevhe.server.ServerState;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Reads {@link ServerState} to determine incoming messages
@@ -26,6 +27,7 @@ public class ServerStateIncomingChannel implements IncomingChannel {
         final ArrayList<PartialSecretMessageDTO> res = new ArrayList<>();
         ids.stream()
                 .map(id -> instance.get(id, PartialSecretMessageDTO.class))
+                .filter(Objects::nonNull)
                 .forEach(res::add);
         return res;
     }

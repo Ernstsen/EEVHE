@@ -12,7 +12,7 @@ import java.util.UUID;
 
 public class ClientConfigBuilder implements CommandLineParser.ConfigBuilder, TestableConfigurationBuilder {
     private static final Logger logger = LogManager.getLogger(ClientConfigBuilder.class);
-    private static final String SELF = "--client";
+    private static final String SELF = "client";
 
     //Configuration options
     private static final String TARGET_URL = "server=";

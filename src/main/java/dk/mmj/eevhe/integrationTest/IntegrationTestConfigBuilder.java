@@ -10,7 +10,7 @@ import java.util.List;
 
 public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBuilder {
     private static final Logger logger = LogManager.getLogger(IntegrationTestConfigBuilder.class);
-    private static final String SELF = "--integrationTest";
+    private static final String SELF = "integrationTest";
 
     //Configuration options
     private static final String DURATION = "duration=";

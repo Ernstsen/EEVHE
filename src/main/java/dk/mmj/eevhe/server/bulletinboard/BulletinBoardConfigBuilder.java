@@ -13,7 +13,7 @@ public class BulletinBoardConfigBuilder implements CommandLineParser.ConfigBuild
     private static final Logger logger = LogManager.getLogger(BulletinBoardConfigBuilder.class);
 
     //Configuration options
-    private static final String SELF = "--bulletinBoard";
+    private static final String SELF = "bulletinBoard";
     private static final String PORT = "port=";
 
     //State

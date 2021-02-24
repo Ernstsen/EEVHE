@@ -14,28 +14,6 @@ import javax.ws.rs.core.MediaType;
 @Path("/")
 public class DecryptionAuthorityResource {
     private static Logger logger = LogManager.getLogger(DecryptionAuthorityResource.class);
-    private Integer id;
-
-    public static String statePrefix(Integer id) {
-        if (id != null) {
-            return id.toString() + ":";
-        } else {
-            return "";
-        }
-    }
-
-    /**
-     * Endpoint to be used in integrationTest to separate the state of the DA instances. Does not affect behaviour
-     *
-     * @param id id of server
-     */
-    @POST
-    @Path("identity")
-    public void identity(Integer id) {
-        if (id != null) {
-            this.id = id;
-        }
-    }
 
     @GET
     @Path("type")
@@ -51,10 +29,10 @@ public class DecryptionAuthorityResource {
     public void postPartialSecret(PartialSecretMessageDTO partialSecret) {
         logger.debug("Received DA partial secret: " + partialSecret.toString());
         ServerState state = ServerState.getInstance();
-        state.put(partialSecretKey(partialSecret.getSender()), partialSecret);
+        state.put(partialSecretKey(partialSecret), partialSecret);
     }
 
-    private String partialSecretKey(Integer id) {
-        return statePrefix(this.id) + "secret:" + id;
+    private String partialSecretKey(PartialSecretMessageDTO message) {
+        return message.getTarget() + "secret:" + message.getSender();
     }
 }

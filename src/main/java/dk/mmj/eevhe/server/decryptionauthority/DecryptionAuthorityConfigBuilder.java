@@ -12,7 +12,7 @@ import java.util.List;
 
 public class DecryptionAuthorityConfigBuilder implements CommandLineParser.ConfigBuilder, TestableConfigurationBuilder {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthorityConfigBuilder.class);
-    private static final String SELF = "--authority";
+    private static final String SELF = "authority";
 
     //Configuration options
     private static final String ID = "id=";
@@ -21,7 +21,6 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
     private static final String BULLETIN_BOARD_2 = "bulletinBoard=";
     private static final String CONF = "conf=";
     private static final String CORRUPT = "timeCorrupt=";
-    private static final String INTEGRATION_TEST = "integrationTest=";
 
     //State
     private Integer port = 8080;
@@ -29,7 +28,6 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
     private String bulletinBoard = "https://localhost:8080";
     private String confPath = "";
     private Integer timeCorrupt = 0;
-    private boolean integrationTest = false;
 
     @Override
     public void applyCommand(CommandLineParser.Command command) {
@@ -48,9 +46,7 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
             timeCorrupt = Integer.parseInt(cmd.substring(CORRUPT.length()));
         } else if (cmd.startsWith(ID)) {
             id = Integer.parseInt(cmd.substring(ID.length()));
-        } else if(cmd.startsWith(INTEGRATION_TEST)){
-            integrationTest = Boolean.parseBoolean(cmd.substring(INTEGRATION_TEST.length()));
-        }  else if (!cmd.equals(SELF)) {
+        } else if (!cmd.equals(SELF)) {
             logger.warn("Did not recognize command " + command.getCommand());
         }
     }
@@ -62,7 +58,7 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
             return null;
         }
 
-        return new DecryptionAuthority.DecryptionAuthorityConfiguration(port, bulletinBoard, confPath, id, timeCorrupt, integrationTest);
+        return new DecryptionAuthority.DecryptionAuthorityConfiguration(port, bulletinBoard, confPath, id, timeCorrupt);
     }
 
     @Override
@@ -84,8 +80,7 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
                 BULLETIN_BOARD_1,
                 BULLETIN_BOARD_2,
                 CONF,
-                CORRUPT,
-                INTEGRATION_TEST
+                CORRUPT
         ));
     }
 }

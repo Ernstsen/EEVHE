@@ -28,7 +28,6 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
         }
     }
 
-    @SuppressWarnings("ConstantConditions")
     @Test
     public void parametersAreRespected() {
         Random rand = new Random();
@@ -36,14 +35,13 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
         int id = rand.nextInt();
         String bulletinBoard = "BBPath";
         String confPath = "ConfigPath";
-        boolean integrationTest = true;//As standard is false
         int corrupt = rand.nextInt();
 
         DecryptionAuthorityConfigBuilder builder = new DecryptionAuthorityConfigBuilder();
 
         try {
             String args = "--port=" + port + " --id=" + id + " --bb=" + bulletinBoard + " --conf="
-                    + confPath + " --timeCorrupt=" + corrupt + " --integrationTest=" + integrationTest;
+                    + confPath + " --timeCorrupt=" + corrupt;
             DecryptionAuthority.DecryptionAuthorityConfiguration config = (DecryptionAuthority.DecryptionAuthorityConfiguration)
                     new SingletonCommandLineParser(builder).parse(args.split(" "));
 
@@ -51,7 +49,6 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
             assertEquals("Id parameter not respected", id, config.getId());
             assertEquals("BulletinBoard not respected", bulletinBoard, config.getBulletinBoard());
             assertEquals("ConfPath not respected", confPath, config.getConfPath());
-            assertTrue("IntegrationTest not respected", config.isIntegrationTest());
             assertEquals("TimeCorrupt not respected", corrupt, config.getTimeCorrupt());
 
         } catch (NoSuchBuilderException | WrongFormatException e) {

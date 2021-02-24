@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
-import static dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthorityResource.statePrefix;
 
 public class DecryptionAuthority extends AbstractServer {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthority.class);
@@ -44,7 +43,6 @@ public class DecryptionAuthority extends AbstractServer {
     private final JerseyWebTarget bulletinBoard;
     private final int port;
     private final Integer id;
-    private final boolean integrationTest;
     private final ObjectMapper mapper = new ObjectMapper();
     private KeyGenParams params;
     private PedersenVSS dkg;
@@ -59,7 +57,6 @@ public class DecryptionAuthority extends AbstractServer {
 
         port = configuration.port;
         id = configuration.id;
-        integrationTest = configuration.integrationTest;
 
         if (configuration.timeCorrupt > 0) {
             timeCorrupt = true;
@@ -109,9 +106,6 @@ public class DecryptionAuthority extends AbstractServer {
 
     @Override
     protected void afterStart() {
-        if (integrationTest) {
-            integrationTestStateWorkaround();
-        }
         logger.info("Starting keyGeneration protocol for DA id=" + id);
         scheduler.execute(this::startKeyGenProtocol);
     }
@@ -192,23 +186,8 @@ public class DecryptionAuthority extends AbstractServer {
     }
 
     private String partialSecretKey(Integer id) {
-        return statePrefix(integrationTest ? this.id : null) + "secret:" + id;
+        return this.id + "secret:" + id;
     }
-
-    /**
-     * Posts id to self.
-     * <br>
-     * Workaround as static vars are not respected in the integrationTest setup
-     */
-    private void integrationTestStateWorkaround() {
-        JerseyWebTarget me = configureWebTarget(logger, "127.0.0.1:" + getPort());
-        Response idResponse = me.path("id").request().post(Entity.entity(this.id, MediaType.APPLICATION_JSON));
-        if (idResponse.getStatus() != 200) {
-            logger.error("Failed to write id to own state for integration test work-around. Failing. Status: " + idResponse.getStatus());
-            System.exit(-1);
-        }
-    }
-
 
     private void terminateVoting() {
         Long bulletinBoardTime = new Long(bulletinBoard.path("getCurrentTime").request().get(String.class));
@@ -334,15 +313,13 @@ public class DecryptionAuthority extends AbstractServer {
         private final String confPath;
         private final int timeCorrupt;
         private final int id;
-        private final boolean integrationTest;
 
-        DecryptionAuthorityConfiguration(int port, String bulletinBoard, String confPath, int id, int timeCorrupt, boolean integrationTest) {
+        DecryptionAuthorityConfiguration(int port, String bulletinBoard, String confPath, int id, int timeCorrupt) {
             this.port = port;
             this.bulletinBoard = bulletinBoard;
             this.id = id;
             this.confPath = confPath;
             this.timeCorrupt = timeCorrupt;
-            this.integrationTest = integrationTest;
         }
 
         public int getPort() {
@@ -365,9 +342,6 @@ public class DecryptionAuthority extends AbstractServer {
             return id;
         }
 
-        public boolean isIntegrationTest() {
-            return integrationTest;
-        }
     }
 
     public static class KeyGenParams implements KeyGenerationParameters {
