@@ -12,7 +12,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 @SuppressWarnings("WeakerAccess")
 public abstract class AbstractServer implements Application {
-    private Logger logger = LogManager.getLogger(AbstractServer.class);
+    private final Logger logger = LogManager.getLogger(AbstractServer.class);
     private Server server;
 
     public void run() {
@@ -24,18 +24,15 @@ public abstract class AbstractServer implements Application {
             afterStart();
             server.join();
         } catch (Exception e) {
-            //noinspection finally
             try {
                 logger.warn("Server threw exception while starting or joining:", e);
                 server.stop();
                 server.destroy();
-                System.exit(0);
             } catch (Exception e1) {
                 logger.warn("Server threw exception while stopping or destroying:", e1);
             } finally {
                 server.destroy();
                 logger.info("Server has been destroyed");
-                System.exit(0);
             }
         }
     }
@@ -43,7 +40,7 @@ public abstract class AbstractServer implements Application {
     /**
      * Stops and destroys the server
      */
-    protected void terminate() {
+    public void terminate() {
         logger.info("Terminating server instance");
 
         try {
@@ -59,8 +56,6 @@ public abstract class AbstractServer implements Application {
         } finally {
             server.destroy();
         }
-
-        System.exit(0);
     }
 
     /**

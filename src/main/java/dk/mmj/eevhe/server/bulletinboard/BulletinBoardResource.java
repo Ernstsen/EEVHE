@@ -125,7 +125,7 @@ public class BulletinBoardResource {
     public BallotList getBallots() {
         List<PersistedBallot> list = state.get(BALLOTS, List.class);
 
-        if (list == null) {
+        if (list == null || list.isEmpty()) {
             throw new NotFoundException("Voting has not been initialized");
         }
 

@@ -19,7 +19,6 @@ public class BulletinBoard extends AbstractServer {
     static final String COEFFICIENT_COMMITMENT = "coefficient commitment";
     static final String COMPLAINTS = "complaints";
     static final String RESOLVED_COMPLAINTS = "resolved complaints";
-    static final String PUBLIC_INFO = "public info";
 
     private final BulletinBoardConfiguration configuration;
 
@@ -47,10 +46,14 @@ public class BulletinBoard extends AbstractServer {
     }
 
     public static class BulletinBoardConfiguration implements Configuration {
-        private final Integer port;
+        private final int port;
 
-        BulletinBoardConfiguration(Integer port) {
+        BulletinBoardConfiguration(int port) {
             this.port = port;
+        }
+
+        public int getPort() {
+            return port;
         }
     }
 }
