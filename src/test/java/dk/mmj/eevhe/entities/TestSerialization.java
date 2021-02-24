@@ -6,6 +6,7 @@ import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -98,7 +99,7 @@ public class TestSerialization {
                 Object deserialize = mapper.readValue(serialized, serializable.getClass());
 
                 if (!deserialize.equals(serializable)) {
-                    errors.add("deserialized did not match original. Serialized: " + serialized + ", Original: " + serializable.toString());
+                    errors.add("deserialized did not match original. Serialized: " + deserialize.toString() + ", Original: " + serializable.toString());
                 } else { //Do more checks, which only makes sense if the the objects are equal
                     assertEquals("toString must be the same", serializable.toString(), deserialize.toString());
                     assertEquals("hashCode must be the same", serializable.hashCode(), deserialize.hashCode());
@@ -124,16 +125,25 @@ public class TestSerialization {
         for (Object serializable : serializables) {
             Class<?> serializableClass = serializable.getClass();
             String str = serializable.toString();
-            for (Field field : serializableClass.getFields()) {
+            for (Field field : serializableClass.getDeclaredFields()) {
                 field.setAccessible(true);
                 try {
-                    Object val = field.get(serializableClass);
-                    assertTrue("toString for DTO must contain all ", str.contains(val.toString()));
-                } catch (IllegalAccessException e) {
+                    Object val = field.get(serializable);
+                    String valueString = val.getClass().isArray() ? Arrays.toString(toObjectArray(val)) : val.toString();
+                    assertTrue(serializableClass.getName() + ": toString for DTO must contain all fields", str.contains(valueString));
+                } catch (IllegalAccessException | IllegalArgumentException e) {
                     e.printStackTrace();
                     fail();
                 }
             }
         }
+    }
+
+    private static Object[] toObjectArray(Object val){
+        Object[] res = new Object[Array.getLength(val)];
+        for (int i = 0; i < Array.getLength(val); i++) {
+            res[i] = Array.get(val, i);
+        }
+        return res;
     }
 }

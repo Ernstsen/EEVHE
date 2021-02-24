@@ -39,4 +39,12 @@ public class KeyPair {
     public int hashCode() {
         return Objects.hash(secretKey, publicKey);
     }
+
+    @Override
+    public String toString() {
+        return "KeyPair{" +
+                "secretKey=" + secretKey +
+                ", publicKey=" + publicKey +
+                '}';
+    }
 }

@@ -47,4 +47,12 @@ public class CommitmentDTO {
         result = 31 * result + Arrays.hashCode(commitment);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "CommitmentDTO{" +
+                "commitment=" + Arrays.toString(commitment) +
+                ", id=" + id +
+                '}';
+    }
 }

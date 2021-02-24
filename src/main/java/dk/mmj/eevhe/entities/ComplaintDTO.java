@@ -43,4 +43,12 @@ public class ComplaintDTO {
     public int hashCode() {
         return Objects.hash(senderId, targetId);
     }
+
+    @Override
+    public String toString() {
+        return "ComplaintDTO{" +
+                "senderId=" + senderId +
+                ", targetId=" + targetId +
+                '}';
+    }
 }

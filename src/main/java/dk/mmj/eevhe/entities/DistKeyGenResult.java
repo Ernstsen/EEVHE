@@ -1,5 +1,7 @@
 package dk.mmj.eevhe.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +12,6 @@ public class DistKeyGenResult {
     private BigInteger g;
     private BigInteger q;
     private BigInteger p;
-    private List<Integer> authorityIds;
     private Map<Integer, BigInteger> secretValues;
     private Map<Integer, BigInteger> publicValues;
 
@@ -27,7 +28,6 @@ public class DistKeyGenResult {
         this.p = q.multiply(BigInteger.valueOf(2)).add(BigInteger.ONE);
         this.secretValues = secretValues;
         this.publicValues = publicValues;
-        authorityIds = new ArrayList<>(secretValues.keySet());
     }
 
     public BigInteger getG() {
@@ -42,8 +42,9 @@ public class DistKeyGenResult {
         return p;
     }
 
+    @JsonIgnore
     public List<Integer> getAuthorityIds() {
-        return authorityIds;
+        return new ArrayList<>(secretValues.keySet());
     }
 
     public Map<Integer, BigInteger> getSecretValues() {
@@ -62,13 +63,23 @@ public class DistKeyGenResult {
         return Objects.equals(g, that.g) &&
                 Objects.equals(q, that.q) &&
                 Objects.equals(p, that.p) &&
-                Objects.equals(authorityIds, that.authorityIds) &&
                 Objects.equals(secretValues, that.secretValues) &&
                 Objects.equals(publicValues, that.publicValues);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(g, q, p, authorityIds, secretValues, publicValues);
+        return Objects.hash(g, q, p, secretValues, publicValues);
+    }
+
+    @Override
+    public String toString() {
+        return "DistKeyGenResult{" +
+                "g=" + g +
+                ", q=" + q +
+                ", p=" + p +
+                ", secretValues=" + secretValues +
+                ", publicValues=" + publicValues +
+                '}';
     }
 }

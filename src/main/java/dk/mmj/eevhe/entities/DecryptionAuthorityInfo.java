@@ -44,4 +44,12 @@ public class DecryptionAuthorityInfo {
     public int hashCode() {
         return Objects.hash(id, address);
     }
+
+    @Override
+    public String toString() {
+        return "DecryptionAuthorityInfo{" +
+                "id=" + id +
+                ", address='" + address + '\'' +
+                '}';
+    }
 }

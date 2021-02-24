@@ -63,4 +63,14 @@ public class DecryptionAuthorityInput {
     public int hashCode() {
         return Objects.hash(pHex, gHex, endTime, infos);
     }
+
+    @Override
+    public String toString() {
+        return "DecryptionAuthorityInput{" +
+                "pHex='" + pHex + '\'' +
+                ", gHex='" + gHex + '\'' +
+                ", endTime=" + endTime +
+                ", infos=" + infos +
+                '}';
+    }
 }

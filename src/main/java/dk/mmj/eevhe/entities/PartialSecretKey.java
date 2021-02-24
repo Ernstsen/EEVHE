@@ -39,4 +39,12 @@ public class PartialSecretKey {
     public int hashCode() {
         return Objects.hash(secretValue, p);
     }
+
+    @Override
+    public String toString() {
+        return "PartialSecretKey{" +
+                "secretValue=" + secretValue +
+                ", p=" + p +
+                '}';
+    }
 }

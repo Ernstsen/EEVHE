@@ -74,4 +74,15 @@ public class PartialPublicInfo {
     public int hashCode() {
         return Objects.hash(senderId, publicKey, partialPublicKey, candidates, endTime);
     }
+
+    @Override
+    public String toString() {
+        return "PartialPublicInfo{" +
+                "senderId=" + senderId +
+                ", publicKey=" + publicKey +
+                ", partialPublicKey=" + partialPublicKey +
+                ", candidates=" + candidates +
+                ", endTime=" + endTime +
+                '}';
+    }
 }

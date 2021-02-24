@@ -72,7 +72,7 @@ public class PartialSecretMessageDTO {
     public String toString() {
         return "PartialSecretMessageDTO{" +
                 "partialSecret1=" + partialSecret1 +
-                "partialSecret2=" + partialSecret1 +
+                ", partialSecret2=" + partialSecret2 +
                 ", target=" + target +
                 ", sender=" + sender +
                 '}';

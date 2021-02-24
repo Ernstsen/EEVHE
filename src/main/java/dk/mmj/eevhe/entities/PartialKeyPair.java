@@ -53,4 +53,13 @@ public class PartialKeyPair {
     public int hashCode() {
         return Objects.hash(partialSecretKey, partialPublicKey, publicKey);
     }
+
+    @Override
+    public String toString() {
+        return "PartialKeyPair{" +
+                "partialSecretKey=" + partialSecretKey +
+                ", partialPublicKey=" + partialPublicKey +
+                ", publicKey=" + publicKey +
+                '}';
+    }
 }
