@@ -19,37 +19,20 @@ import java.util.Map;
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.computeCoefficientCommitments;
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.verifyCommitmentRespected;
 
-public class FeldmanVSS implements VSS {
-    private final Broadcaster broadcaster;
-    private final IncomingChannel incoming;
-    private final Map<Integer, PeerCommunicator> peerMap;
-    private final Map<Integer, BigInteger[]> commitments = new HashMap<>();
-    private final Logger logger;
-    private final int id;
-    private final BigInteger g;
-    private final BigInteger q;
-    private final BigInteger p;
+public class FeldmanVSS extends AbstractVSS implements VSS {
     private final BigInteger[] polynomial;
-    private final Map<Integer, PartialSecretMessageDTO> secrets = new HashMap<>();
 
     public FeldmanVSS(Broadcaster broadcaster, IncomingChannel incoming,
                       Map<Integer, PeerCommunicator> peerCommunicatorMap,
                       int id, KeyGenerationParameters params, String logPrefix,
                       BigInteger[] polynomial, Map<Integer, PartialSecretMessageDTO> secrets) {
-        this.broadcaster = broadcaster;
-        this.incoming = incoming;
-        this.peerMap = peerCommunicatorMap;
-        this.id = id;
-        this.g = params.getGenerator();
-        this.q = params.getPrimePair().getQ();
-        this.p = params.getPrimePair().getP();
+        super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix, FeldmanVSS.class.getName());
+
         int t = ((peerMap.size()) / 2);
         if (secrets != null) {
             this.secrets.putAll(secrets);
         }
         this.polynomial = polynomial == null ? SecurityUtils.generatePolynomial(t, q) : polynomial;
-
-        logger = LogManager.getLogger(FeldmanVSS.class.getName() + ". " + logPrefix + ":");
     }
 
     @Override
