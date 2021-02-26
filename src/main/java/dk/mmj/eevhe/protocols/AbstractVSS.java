@@ -27,7 +27,7 @@ public class AbstractVSS {
 
     public AbstractVSS(Broadcaster broadcaster, IncomingChannel incoming,
                        Map<Integer, PeerCommunicator> peerCommunicatorMap,
-                       int id, KeyGenerationParameters params, String logPrefix, String className){
+                       int id, KeyGenerationParameters params, String logPrefix){
         this.broadcaster = broadcaster;
         this.incoming = incoming;
         this.peerMap = peerCommunicatorMap;
@@ -36,6 +36,6 @@ public class AbstractVSS {
         this.q = params.getPrimePair().getQ();
         this.p = params.getPrimePair().getP();
 
-        logger = LogManager.getLogger(className + ". " + logPrefix + ":");
+        logger = LogManager.getLogger(getClass().getName() + " " + logPrefix + ":");
     }
 }

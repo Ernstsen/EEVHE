@@ -208,13 +208,13 @@ public class SecurityUtils {
     }
 
     /**
-     * Combines partial public-keys to a public key
+     * Combines partials using Lagrange interpolation
      *
      * @param partialsMap a map where the key is an authority index and value is a corresponding partial
      * @param p           the modulus prime
      * @return the combination of the partials
      */
-    public static BigInteger combinePartialPublicKeys(Map<Integer, BigInteger> partialsMap, BigInteger p) {
+    public static BigInteger lagrangeInterpolate(Map<Integer, BigInteger> partialsMap, BigInteger p) {
         BigInteger q = p.subtract(BigInteger.ONE).divide(valueOf(2));
         Integer[] authorityIndexesInteger = partialsMap.keySet().toArray(new Integer[0]);
         int[] authorityIndexes = new int[authorityIndexesInteger.length];

@@ -166,7 +166,7 @@ public class TestElGamal {
         KeyGenerationParameters params = getKeyGenParamsFromP2048bitsG2();
         DistKeyGenResult distKeyGenResult = ElGamal.generateDistributedKeys(params, 1, 3);
 
-        BigInteger h = SecurityUtils.combinePartialPublicKeys(distKeyGenResult.getPublicValues(), distKeyGenResult.getP());
+        BigInteger h = SecurityUtils.lagrangeInterpolate(distKeyGenResult.getPublicValues(), distKeyGenResult.getP());
         PublicKey publicKey = new PublicKey(h, distKeyGenResult.getG(), distKeyGenResult.getQ());
         CipherText cipherText = ElGamal.homomorphicEncryption(publicKey, BigInteger.valueOf(message));
 
@@ -177,7 +177,7 @@ public class TestElGamal {
                         e -> SecurityUtils.computePartial(cipherText.getC(), e.getValue(), distKeyGenResult.getP())
                 ));
 
-        BigInteger combinedPartialDecryptions = SecurityUtils.combinePartialPublicKeys(partialDecryptions, distKeyGenResult.getP());
+        BigInteger combinedPartialDecryptions = SecurityUtils.lagrangeInterpolate(partialDecryptions, distKeyGenResult.getP());
 
         return ElGamal.homomorphicDecryptionFromPartials(cipherText, combinedPartialDecryptions, distKeyGenResult.getG(), distKeyGenResult.getP(), maxIterations);
     }

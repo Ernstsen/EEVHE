@@ -38,7 +38,7 @@ public class TestVoter {
         KeyGenerationParametersImpl params = new KeyGenerationParametersImpl(4, 50);
         DistKeyGenResult keygen = ElGamal.generateDistributedKeys(params, 2, 3);
 
-         h = SecurityUtils.combinePartialPublicKeys(keygen.getPublicValues(), params.getPrimePair().getP());
+         h = SecurityUtils.lagrangeInterpolate(keygen.getPublicValues(), params.getPrimePair().getP());
          pk = new PublicKey(h, keygen.getG(), keygen.getQ());
     }
 

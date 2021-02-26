@@ -6,7 +6,7 @@ import dk.eSoftware.commandLineParser.Configuration;
 import dk.mmj.eevhe.client.FetchingUtilities;
 import dk.mmj.eevhe.crypto.ElGamal;
 import dk.mmj.eevhe.crypto.SecurityUtils;
-import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
+import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
@@ -176,13 +176,14 @@ public class DecryptionAuthority extends AbstractServer {
      * Finalizes the key-generation protocol, by combining the data received to a public key, and a partial secret key
      */
     private void combineKeys() {
-        logger.info("Combining values, to make keys");
-        PartialKeyPair partialKeyPair = dkg.createKeys();
-        pk = partialKeyPair.getPublicKey();
-        sk = new PartialSecretKey(partialKeyPair.getPartialSecretKey(), pk.getP());
-        PartialPublicInfo partialInfo = new PartialPublicInfo(id, pk, partialKeyPair.getPartialPublicKey(), candidates, endTime);
-        bulletinBoard.path("publicInfo").request()
-                .post(Entity.entity(partialInfo, MediaType.APPLICATION_JSON));
+        // TODO: FIX BY IMPLEMENTING GENNARO-DKG
+//        logger.info("Combining values, to make keys");
+//        PartialKeyPair partialKeyPair = dkg.output();
+//        pk = partialKeyPair.getPublicKey();
+//        sk = new PartialSecretKey(partialKeyPair.getPartialSecretKey(), pk.getP());
+//        PartialPublicInfo partialInfo = new PartialPublicInfo(id, pk, partialKeyPair.getPartialPublicKey(), candidates, endTime);
+//        bulletinBoard.path("publicInfo").request()
+//                .post(Entity.entity(partialInfo, MediaType.APPLICATION_JSON));
     }
 
     private String partialSecretKey(Integer id) {
@@ -344,7 +345,7 @@ public class DecryptionAuthority extends AbstractServer {
 
     }
 
-    public static class KeyGenParams implements KeyGenerationParameters {
+    public static class KeyGenParams implements ExtendedKeyGenerationParameters {
         private final PrimePair pair;
         private final BigInteger generator;
 
@@ -361,6 +362,12 @@ public class DecryptionAuthority extends AbstractServer {
         @Override
         public BigInteger getGenerator() {
             return generator;
+        }
+
+        @Override
+        public BigInteger getGroupElement() {
+            // TODO: Implement this correctly. Read from file..
+            return BigInteger.ONE;
         }
     }
 }
