@@ -95,17 +95,17 @@ public class TestPedersenVSSUtils {
         BigInteger q = valueOf(7919);
         BigInteger p = q.multiply(valueOf(2)).add(valueOf(1));
         BigInteger e = generateElementInSubgroup(g, p);
-        BigInteger j = valueOf(1);
 
         BigInteger[] polynomial1 = new BigInteger[]{valueOf(11), valueOf(2), valueOf(2)};
         BigInteger[] polynomial2 = new BigInteger[]{valueOf(8), valueOf(4), valueOf(3)};
         BigInteger[] coefficientCommitments = computeCoefficientCommitments(g, e, p, polynomial1, polynomial2);
-        BigInteger u1 = SecurityUtils.evaluatePolynomial(polynomial1, j.intValue());
-        BigInteger u2 = SecurityUtils.evaluatePolynomial(polynomial2, j.intValue());
 
-        boolean actualResult = verifyCommitmentRespected(g, e, u1, u2, coefficientCommitments, j, p, q);
-
-        assertTrue(actualResult);
+        for (long i = 0; i < 20; i++) {
+            BigInteger j = valueOf(i);
+            BigInteger u1 = SecurityUtils.evaluatePolynomial(polynomial1, j.intValue());
+            BigInteger u2 = SecurityUtils.evaluatePolynomial(polynomial2, j.intValue());
+            assertTrue("Commitments should be respected ",verifyCommitmentRespected(g, e, u1, u2, coefficientCommitments, j, p, q));
+        }
     }
 
     @Test
@@ -114,16 +114,21 @@ public class TestPedersenVSSUtils {
         BigInteger q = valueOf(7919);
         BigInteger p = q.multiply(valueOf(2)).add(valueOf(1));
         BigInteger e = generateElementInSubgroup(g, p);
-        BigInteger j = valueOf(1);
 
         BigInteger[] polynomial1 = new BigInteger[]{valueOf(3000), valueOf(100), valueOf(2)};
         BigInteger[] polynomial2 = new BigInteger[]{valueOf(1773), valueOf(147), valueOf(82)};
         BigInteger[] coefficientCommitments = computeCoefficientCommitments(g, e, p, polynomial1, polynomial2);
-        BigInteger u1 = SecurityUtils.evaluatePolynomial(polynomial1, j.intValue());
-        BigInteger u2 = SecurityUtils.evaluatePolynomial(polynomial2, j.intValue());
 
-        boolean actualResult = verifyCommitmentRespected(g, e, u1, u2, coefficientCommitments, j, p, q);
 
-        assertTrue(actualResult);
+        for (int i = 0; i < 3000; i++) {
+
+            BigInteger j = valueOf(i);
+            BigInteger u1 = SecurityUtils.evaluatePolynomial(polynomial1, j.intValue());
+            BigInteger u2 = SecurityUtils.evaluatePolynomial(polynomial2, j.intValue());
+
+            boolean actualResult = verifyCommitmentRespected(g, e, u1, u2, coefficientCommitments, j, p, q);
+
+            assertTrue(actualResult);
+        }
     }
 }
