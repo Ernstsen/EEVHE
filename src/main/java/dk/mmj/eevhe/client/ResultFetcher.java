@@ -92,7 +92,7 @@ public class ResultFetcher extends Client {
                         .append(candidate.getName())
                         .append("(").append(idx).append(")")
                         .append("\nReceived :");
-                BigInteger cs = SecurityUtils.combinePartials(partialMap, publicKey.getP());
+                BigInteger cs = SecurityUtils.combinePartialPublicKeys(partialMap, publicKey.getP());
                 CipherText cipherText = minimalPartials.get(idx).getCipherText();
                 int result = ElGamal.homomorphicDecryptionFromPartials(cipherText.getD(), cs, publicKey.getG(), publicKey.getP(), amountOfVotes);
                 resBuilder.append(result).append(" votes, from ").append(amountOfVotes).append(" cast in total\n\n");

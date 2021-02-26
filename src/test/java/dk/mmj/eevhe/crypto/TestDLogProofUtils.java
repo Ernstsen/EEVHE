@@ -35,7 +35,7 @@ public class TestDLogProofUtils {
         q = distKeyGenResult.getQ();
         publicValues = distKeyGenResult.getPublicValues();
 
-        BigInteger h = SecurityUtils.combinePartials(publicValues, distKeyGenResult.getP());
+        BigInteger h = SecurityUtils.combinePartialPublicKeys(publicValues, distKeyGenResult.getP());
         PublicKey publicKey = new PublicKey(h, g, q);
         cipherText = ElGamal.homomorphicEncryption(publicKey, BigInteger.valueOf(1));
 
@@ -82,7 +82,7 @@ public class TestDLogProofUtils {
         Map<Integer, BigInteger> secretValues = SecurityUtils.generateSecretValues(polynomial, 3, q);
         Map<Integer, BigInteger> publicValues = SecurityUtils.generatePublicValues(secretValues, g, p);
 
-        BigInteger h = SecurityUtils.combinePartials(publicValues, p);
+        BigInteger h = SecurityUtils.combinePartialPublicKeys(publicValues, p);
         PublicKey publicKey = new PublicKey(h, g, q);
         CipherText cipherText = ElGamal.homomorphicEncryption(publicKey, BigInteger.valueOf(1), BigInteger.valueOf(12));
 

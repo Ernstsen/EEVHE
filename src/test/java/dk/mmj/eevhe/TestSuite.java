@@ -1,6 +1,6 @@
 package dk.mmj.eevhe;
 
-import dk.mmj.eevhe.client.TestClientConfigBuilder;
+import dk.mmj.eevhe.client.ClientTestSuite;
 import dk.mmj.eevhe.crypto.CryptoTestSuite;
 import dk.mmj.eevhe.entities.TestSerialization;
 import dk.mmj.eevhe.protocols.ProtocolTestSuite;
@@ -11,7 +11,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
-        TestClientConfigBuilder.class,
+        ClientTestSuite.class,
         CryptoTestSuite.class,
         TestSerialization.class,
         ProtocolTestSuite.class,

@@ -241,7 +241,7 @@ public class TestSecurityUtils {
                 ));
         Map<Integer, BigInteger> publicValues = SecurityUtils.generatePublicValues(secretValues, g, p);
 
-        BigInteger hFromPartials = SecurityUtils.combinePartials(publicValues, p);
+        BigInteger hFromPartials = SecurityUtils.combinePartialPublicKeys(publicValues, p);
 
         if (positiveTest) {
             assertEquals("Public keys did not match", h, hFromPartials);

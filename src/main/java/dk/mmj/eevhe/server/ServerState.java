@@ -62,7 +62,7 @@ public class ServerState {
     /**
      * Resets memory, for testing purposes only.
      */
-    void reset() {
+    public void reset() {
         state.clear();
     }
 }

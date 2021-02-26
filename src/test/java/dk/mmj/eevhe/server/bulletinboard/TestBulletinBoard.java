@@ -18,7 +18,6 @@ import javax.ws.rs.core.MediaType;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 import static java.math.BigInteger.valueOf;

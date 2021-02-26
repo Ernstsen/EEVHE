@@ -67,7 +67,7 @@ public class FetchingUtilities {
 
     /**
      * Creates a predicate, returning true if the public keys loads without error,
-     * and a given {@link PublicInformationEntity} is signed with the corresponding secret-key
+     * and a given {@link PartialPublicInfo} is signed with the corresponding secret-key
      *
      * @param logger        logger for reporting errors
      * @param publicKeyName name of the file in the <i>RSA</i> folder, containing the public-key

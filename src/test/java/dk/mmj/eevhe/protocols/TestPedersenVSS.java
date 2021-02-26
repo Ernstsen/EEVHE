@@ -97,7 +97,7 @@ public class TestPedersenVSS {
         partialsMap.put(3, ElGamal.partialDecryption(v.getCipherText().getC(), keys3.getPartialSecretKey(), params.getPrimePair().getP()));
 
         final CipherText cipherText = v.getCipherText();
-        BigInteger cs = SecurityUtils.combinePartials(partialsMap, publicKey.getP());
+        BigInteger cs = SecurityUtils.combinePartialPublicKeys(partialsMap, publicKey.getP());
         try {
             final int decrypt = ElGamal.homomorphicDecryptionFromPartials(cipherText.getD(), cs, publicKey.getG(), publicKey.getP(), 2);
             assertEquals("Decrypted value was incorrect", 1, decrypt);
@@ -165,7 +165,7 @@ public class TestPedersenVSS {
         partialsMap.put(3, ElGamal.partialDecryption(v.getCipherText().getC(), keys3.getPartialSecretKey(), params.getPrimePair().getP()));
 
         final CipherText cipherText = v.getCipherText();
-        BigInteger cs = SecurityUtils.combinePartials(partialsMap, publicKey.getP());
+        BigInteger cs = SecurityUtils.combinePartialPublicKeys(partialsMap, publicKey.getP());
         try {
             final int decrypt = ElGamal.homomorphicDecryptionFromPartials(cipherText.getD(), cs, publicKey.getG(), publicKey.getP(), 2);
             assertEquals("Decrypted value was incorrect", 1, decrypt);
@@ -252,7 +252,7 @@ public class TestPedersenVSS {
         partialsMap.put(3, ElGamal.partialDecryption(v.getCipherText().getC(), keys3.getPartialSecretKey(), params.getPrimePair().getP()));
 
         final CipherText cipherText = v.getCipherText();
-        BigInteger cs = SecurityUtils.combinePartials(partialsMap, publicKey.getP());
+        BigInteger cs = SecurityUtils.combinePartialPublicKeys(partialsMap, publicKey.getP());
         try {
             final int decrypt = ElGamal.homomorphicDecryptionFromPartials(cipherText.getD(), cs, publicKey.getG(), publicKey.getP(), 2);
             assertEquals("Decrypted value was incorrect", 1, decrypt);
