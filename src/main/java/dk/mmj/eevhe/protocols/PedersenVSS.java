@@ -22,18 +22,8 @@ import static dk.mmj.eevhe.crypto.PedersenVSSUtils.*;
  * Gennaro, R., Jarecki, S., Krawczyk, H. et al. Secure Distributed Key Generation for Discrete-Log Based Cryptosystems.
  * J Cryptology 20, 51–83 (2007). <a href="https://doi.org/10.1007/s00145-006-0347-3">https://doi.org/10.1007/s00145-006-0347-3</a>
  */
-public class PedersenVSS implements VSS {
-    private final Broadcaster broadcaster;
-    private final IncomingChannel incoming;
-    private final Map<Integer, PeerCommunicator> peerMap;
-    private final Map<Integer, PartialSecretMessageDTO> secrets = new HashMap<>();
-    private final Map<Integer, BigInteger[]> commitments = new HashMap<>();
+public class PedersenVSS extends AbstractVSS implements VSS {
     private final Set<Integer> honestParties = new HashSet<>();
-    private final Logger logger;
-    private final int id;
-    private final BigInteger g;
-    private final BigInteger q;
-    private final BigInteger p;
     private final BigInteger e;
     private final int t;
     private BigInteger[] pol1;
@@ -42,19 +32,11 @@ public class PedersenVSS implements VSS {
     public PedersenVSS(Broadcaster broadcaster, IncomingChannel incoming,
                        Map<Integer, PeerCommunicator> peerCommunicatorMap,
                        int id, KeyGenerationParameters params, String logPrefix, BigInteger[] pol1, BigInteger[] pol2) {
-        this.broadcaster = broadcaster;
-        this.incoming = incoming;
-        this.peerMap = peerCommunicatorMap;
-        this.id = id;
-        this.g = params.getGenerator();
-        this.q = params.getPrimePair().getQ();
-        this.p = params.getPrimePair().getP();
+        super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix, PedersenVSS.class.getName());
         this.e = generateElementInSubgroup(g, p);
         this.t = ((peerMap.size()) / 2);
         this.pol1 = pol1 == null ? SecurityUtils.generatePolynomial(t, q) : pol1;
         this.pol2 = pol2 == null ? SecurityUtils.generatePolynomial(t, q) : pol2;
-
-        logger = LogManager.getLogger(PedersenVSS.class.getName() + ". " + logPrefix + ":");
     }
 
     @Override
