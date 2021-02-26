@@ -32,7 +32,7 @@ public class PedersenVSS extends AbstractVSS implements VSS {
     public PedersenVSS(Broadcaster broadcaster, IncomingChannel incoming,
                        Map<Integer, PeerCommunicator> peerCommunicatorMap,
                        int id, KeyGenerationParameters params, String logPrefix, BigInteger[] pol1, BigInteger[] pol2) {
-        super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix, PedersenVSS.class.getName());
+        super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);
         this.e = generateElementInSubgroup(g, p);
         this.t = ((peerMap.size()) / 2);
         this.pol1 = pol1 == null ? SecurityUtils.generatePolynomial(t, q) : pol1;

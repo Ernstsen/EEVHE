@@ -26,7 +26,7 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
                       Map<Integer, PeerCommunicator> peerCommunicatorMap,
                       int id, KeyGenerationParameters params, String logPrefix,
                       BigInteger[] polynomial, Map<Integer, PartialSecretMessageDTO> secrets) {
-        super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix, FeldmanVSS.class.getName());
+        super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);
 
         int t = ((peerMap.size()) / 2);
         if (secrets != null) {
