@@ -1,11 +1,7 @@
 package dk.mmj.eevhe.protocols;
 
-import dk.mmj.eevhe.crypto.ElGamal;
-import dk.mmj.eevhe.crypto.SecurityUtils;
-import dk.mmj.eevhe.crypto.exceptions.UnableToDecryptException;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedPersistedKeyParameters;
-import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.protocols.interfaces.Broadcaster;
+import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.protocols.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
 import org.junit.Before;
@@ -13,14 +9,14 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-public class TestPedersenVSS {
+public class TestFeldmanVSS {
     private ExtendedPersistedKeyParameters params;
 
     @Before
@@ -32,15 +28,15 @@ public class TestPedersenVSS {
     }
 
     /**
-     * Tests PedersenVSS with three non-corrupt participants
+     * Tests FeldmanVSS with three non-corrupt participants
      */
     @Test
     public void testProtocolRunNoCorruption() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestPedersenVSS.TestBroadcaster testBroadcaster = new TestPedersenVSS.TestBroadcaster();
+        final TestPedersenVSS.PrivateCommunicationChannel channel1 = new TestPedersenVSS.PrivateCommunicationChannel();
+        final TestPedersenVSS.PrivateCommunicationChannel channel2 = new TestPedersenVSS.PrivateCommunicationChannel();
+        final TestPedersenVSS.PrivateCommunicationChannel channel3 = new TestPedersenVSS.PrivateCommunicationChannel();
 
         final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
         final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
@@ -56,11 +52,11 @@ public class TestPedersenVSS {
         commMap3.put(2, channel2);
 
         //Creating players TODO: use GennaroDKG instead
-        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
-        final PedersenVSS player2 = new PedersenVSS(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2, null, null);
-        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
+        final FeldmanVSS player1 = new FeldmanVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
+        final FeldmanVSS player2 = new FeldmanVSS(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2, null, null);
+        final FeldmanVSS player3 = new FeldmanVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
 
-        final List<PedersenVSS> players = Arrays.asList(player1, player2, player3);
+        final List<FeldmanVSS> players = Arrays.asList(player1, player2, player3);
 
         players.forEach(VSS::startProtocol);
 
@@ -91,10 +87,10 @@ public class TestPedersenVSS {
     @Test
     public void testProtocolWith1NonParticipant() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestPedersenVSS.TestBroadcaster testBroadcaster = new TestPedersenVSS.TestBroadcaster();
+        final TestPedersenVSS.PrivateCommunicationChannel channel1 = new TestPedersenVSS.PrivateCommunicationChannel();
+        final TestPedersenVSS.PrivateCommunicationChannel channel2 = new TestPedersenVSS.PrivateCommunicationChannel();
+        final TestPedersenVSS.PrivateCommunicationChannel channel3 = new TestPedersenVSS.PrivateCommunicationChannel();
 
         final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
         final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
@@ -110,10 +106,10 @@ public class TestPedersenVSS {
         commMap3.put(2, channel2);
 
         //Creating players TODO: use Gennaro DKG instead
-        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
-        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
+        final FeldmanVSS player1 = new FeldmanVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
+        final FeldmanVSS player3 = new FeldmanVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
 
-        final List<PedersenVSS> players = Arrays.asList(player1, player3);
+        final List<FeldmanVSS> players = Arrays.asList(player1, player3);
 
         players.forEach(VSS::startProtocol);
 
@@ -139,12 +135,12 @@ public class TestPedersenVSS {
     }
 
     /**
-     * Runs PedersenVSS with no private channels. All secret values should be made public in this case
+     * Runs FeldmanVSS with no private channels. All secret values should be made public in this case
      */
     @Test
     public void testProtocolWithComplaints() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
+        final TestPedersenVSS.TestBroadcaster testBroadcaster = new TestPedersenVSS.TestBroadcaster();
         final PeerCommunicator brokenChannel = (m) -> {
         };
 
@@ -176,11 +172,11 @@ public class TestPedersenVSS {
         commMap3.put(2, brokenChannel);
 
         //Creating players
-        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, brokenIncoming1, commMap1, 1, params, "ID=" + 1, null, null);
-        final PedersenVSS player2 = new PedersenVSS(testBroadcaster, brokenIncoming2, commMap2, 2, params, "ID=" + 2, null, null);
-        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, brokenIncoming3, commMap3, 3, params, "ID=" + 3, null, null);
+        final FeldmanVSS player1 = new FeldmanVSS(testBroadcaster, brokenIncoming1, commMap1, 1, params, "ID=" + 1, null, null);
+        final FeldmanVSS player2 = new FeldmanVSS(testBroadcaster, brokenIncoming2, commMap2, 2, params, "ID=" + 2, null, null);
+        final FeldmanVSS player3 = new FeldmanVSS(testBroadcaster, brokenIncoming3, commMap3, 3, params, "ID=" + 3, null, null);
 
-        final List<PedersenVSS> players = Arrays.asList(player1, player2, player3);
+        final List<FeldmanVSS> players = Arrays.asList(player1, player2, player3);
 
         players.forEach(VSS::startProtocol);
 
@@ -211,56 +207,5 @@ public class TestPedersenVSS {
     @Test
     public void testProtocol1Corrupt() {
         //TODO!
-    }
-
-    static class TestBroadcaster implements Broadcaster {
-        final List<CommitmentDTO> commitments = new ArrayList<>();
-        final List<ComplaintDTO> complaints = new ArrayList<>();
-        final List<ComplaintResolveDTO> resolves = new ArrayList<>();
-
-
-        @Override
-        public void commit(CommitmentDTO commitmentDTO) {
-            commitments.add(commitmentDTO);
-        }
-
-        @Override
-        public List<CommitmentDTO> getCommitments() {
-            return commitments;
-        }
-
-        @Override
-        public void complain(ComplaintDTO complaint) {
-            complaints.add(complaint);
-        }
-
-        @Override
-        public List<ComplaintDTO> getComplaints() {
-            return complaints;
-        }
-
-        @Override
-        public void resolveComplaint(ComplaintResolveDTO complaintResolveDTO) {
-            resolves.add(complaintResolveDTO);
-        }
-
-        @Override
-        public List<ComplaintResolveDTO> getResolves() {
-            return resolves;
-        }
-    }
-
-    static class PrivateCommunicationChannel implements IncomingChannel, PeerCommunicator {
-        private final List<PartialSecretMessageDTO> messages = new ArrayList<>();
-
-        @Override
-        public List<PartialSecretMessageDTO> receiveSecrets() {
-            return messages;
-        }
-
-        @Override
-        public void sendSecret(PartialSecretMessageDTO value) {
-            messages.add(value);
-        }
     }
 }
