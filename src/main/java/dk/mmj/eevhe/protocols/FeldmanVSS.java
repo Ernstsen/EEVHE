@@ -153,12 +153,13 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
     }
 
     @Override
-    public PartialKeyPair createKeys() {
+    public BigInteger output() {
         logger.info("Combining values, to make keys");
         BigInteger[] uVals = secrets.values().stream().map(PartialSecretMessageDTO::getPartialSecret1).toArray(BigInteger[]::new);
         BigInteger[] firstCommits = commitments.values().stream().map(arr -> arr[0]).toArray(BigInteger[]::new);
 
-        return FeldmanVSSUtils.generateKeyPair(g, q, uVals, firstCommits);
+//        TODO: FIX
+        return null;
     }
 
     public Map<Integer, PartialSecretMessageDTO> getSecrets() {

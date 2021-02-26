@@ -1,7 +1,7 @@
 package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.crypto.SecurityUtils;
-import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
+import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.entities.PartialKeyPair;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.protocols.interfaces.Broadcaster;
@@ -23,7 +23,7 @@ public class GennaroDKG {
     private final Map<Integer, PeerCommunicator> peerMap;
     private final Logger logger;
     private final int id;
-    private final KeyGenerationParameters params;
+    private final ExtendedKeyGenerationParameters params;
     private final String logPrefix;
     private final BigInteger g;
     private final BigInteger q;
@@ -44,7 +44,7 @@ public class GennaroDKG {
      */
     public GennaroDKG(Broadcaster broadcaster, IncomingChannel incoming,
                       Map<Integer, PeerCommunicator> peerCommunicatorMap,
-                      int id, KeyGenerationParameters params, String logPrefix) {
+                      int id, ExtendedKeyGenerationParameters params, String logPrefix) {
         this.broadcaster = broadcaster;
         this.incoming = incoming;
         this.peerMap = peerCommunicatorMap;
@@ -109,6 +109,8 @@ public class GennaroDKG {
 
         // TODO: Reconstruct keys
         final Map<Integer, PartialSecretMessageDTO> secretsFeldman = feldmanVSS.getSecrets();
-        return pedersenVSS.createKeys();
+
+        // TODO: IMPLEMENT PROTOCOL
+        return null;
     }
 }

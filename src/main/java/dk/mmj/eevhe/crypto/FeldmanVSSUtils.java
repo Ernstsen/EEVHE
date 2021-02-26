@@ -36,7 +36,7 @@ public class FeldmanVSSUtils {
         BigInteger acc = BigInteger.ONE;
 
         for (int t = 0; t < coefficientCommitments.length; t++) {
-            BigInteger jExp = j.modPow(valueOf(t), q);
+            BigInteger jExp = j.pow(t);
             acc = acc.multiply(coefficientCommitments[t].modPow(jExp, p));
         }
 

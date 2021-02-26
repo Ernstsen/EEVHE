@@ -3,6 +3,8 @@ package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.entities.PartialKeyPair;
 
+import java.math.BigInteger;
+
 /**
  * Interface for proper encapsulation of distributed key-generation behaviour
  * <br>
@@ -48,10 +50,10 @@ public interface VSS {
     /**
      * Fifth and final step in the protocol
      * <br>
-     * Combines all relevant data and outputs keys
+     * Combines all relevant data and outputs partial secret
      *
-     * @return partial secret-key, partial public-key and public key
+     * @return partial secret
      */
-    PartialKeyPair createKeys();
+    BigInteger output();
 
 }

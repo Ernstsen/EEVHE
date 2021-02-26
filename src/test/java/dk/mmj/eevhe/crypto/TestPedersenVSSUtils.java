@@ -114,7 +114,7 @@ public class TestPedersenVSSUtils {
         BigInteger q = valueOf(7919);
         BigInteger p = q.multiply(valueOf(2)).add(valueOf(1));
         BigInteger e = generateElementInSubgroup(g, p);
-        BigInteger j = valueOf(1);
+        BigInteger j = valueOf(3);
 
         BigInteger[] polynomial1 = new BigInteger[]{valueOf(3000), valueOf(100), valueOf(2)};
         BigInteger[] polynomial2 = new BigInteger[]{valueOf(1773), valueOf(147), valueOf(82)};

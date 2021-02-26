@@ -2,18 +2,17 @@ package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.crypto.FeldmanVSSUtils;
 import dk.mmj.eevhe.crypto.SecurityUtils;
-import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
+import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.protocols.interfaces.Broadcaster;
 import dk.mmj.eevhe.protocols.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.math.BigInteger;
 import java.util.*;
 
-import static dk.mmj.eevhe.crypto.PedersenVSSUtils.*;
+import static dk.mmj.eevhe.crypto.PedersenVSSUtils.computeCoefficientCommitments;
+import static dk.mmj.eevhe.crypto.PedersenVSSUtils.verifyCommitmentRespected;
 
 /**
  * Pedersen-DKG protocol
@@ -31,9 +30,9 @@ public class PedersenVSS extends AbstractVSS implements VSS {
 
     public PedersenVSS(Broadcaster broadcaster, IncomingChannel incoming,
                        Map<Integer, PeerCommunicator> peerCommunicatorMap,
-                       int id, KeyGenerationParameters params, String logPrefix, BigInteger[] pol1, BigInteger[] pol2) {
+                       int id, ExtendedKeyGenerationParameters params, String logPrefix, BigInteger[] pol1, BigInteger[] pol2) {
         super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);
-        this.e = generateElementInSubgroup(g, p);
+        this.e = params.getGroupElement();
         this.t = ((peerMap.size()) / 2);
         this.pol1 = pol1 == null ? SecurityUtils.generatePolynomial(t, q) : pol1;
         this.pol2 = pol2 == null ? SecurityUtils.generatePolynomial(t, q) : pol2;
@@ -96,25 +95,24 @@ public class PedersenVSS extends AbstractVSS implements VSS {
             this.commitments.put(commitment.getId(), commitment.getCommitment());
         }
 
-
         for (Map.Entry<Integer, PartialSecretMessageDTO> entry : new ArrayList<>(secrets.entrySet())) {
-            int id = entry.getKey();
+            int senderId = entry.getKey();
 
             BigInteger partialSecret1 = entry.getValue().getPartialSecret1();
             BigInteger partialSecret2 = entry.getValue().getPartialSecret2();
 
-            BigInteger[] commitment = this.commitments.get(entry.getKey());
+            BigInteger[] commitment = this.commitments.get(senderId);
             if (commitment == null) {
-                logger.error("Peer with id=" + id + ", had no corresponding commitment!");
+                logger.error("Peer with id=" + senderId + ", had no corresponding commitment!");
                 continue;//TODO: What to do?
             }
 
             boolean matches = verifyCommitmentRespected(
-                    g, e, partialSecret1, partialSecret2, commitment, BigInteger.valueOf(this.id), p, q);
+                    g, e, partialSecret1, partialSecret2, commitment, BigInteger.valueOf(id), p, q);
             if (!matches) {
-                logger.info("" + this.id + ": Sending complaint about DA=" + id);
-                final ComplaintDTO complaint = new ComplaintDTO(this.id, id);
-                secrets.remove(id); //remove secret, as it's garbage
+                logger.info("" + this.id + ": Sending complaint about DA=" + senderId);
+                final ComplaintDTO complaint = new ComplaintDTO(this.id, senderId);
+                secrets.remove(senderId); //remove secret, as it's garbage
                 broadcaster.complain(complaint);
             }
         }
@@ -158,7 +156,7 @@ public class PedersenVSS extends AbstractVSS implements VSS {
             BigInteger[] commit = commitments.get(resolverId);
             boolean resolveIsVerifiable = verifyCommitmentRespected(
                     g, e, resolve.getValue().getPartialSecret1(), resolve.getValue().getPartialSecret2(),
-                    commit, BigInteger.valueOf(id), p, q);
+                    commit, BigInteger.valueOf(resolve.getComplaintSenderId()), p, q);
 
             if (resolveIsVerifiable && resolve.getComplaintSenderId() == id) {
                 logger.info("Applying resolve: " + resolve);
@@ -171,12 +169,11 @@ public class PedersenVSS extends AbstractVSS implements VSS {
     }
 
     @Override
-    public PartialKeyPair createKeys() {
+    public BigInteger output() {
         logger.info("Combining values, to make keys");
-        BigInteger[] uVals = secrets.values().stream().map(PartialSecretMessageDTO::getPartialSecret1).toArray(BigInteger[]::new);
-        BigInteger[] firstCommits = commitments.values().stream().map(arr -> arr[0]).toArray(BigInteger[]::new);
-
-        return FeldmanVSSUtils.generateKeyPair(g, q, uVals, firstCommits);
+        return secrets.values().stream()
+                .map(PartialSecretMessageDTO::getPartialSecret1)
+                .reduce(BigInteger::add).orElse(null);
     }
 
     public Set<Integer> getHonestParties() {
