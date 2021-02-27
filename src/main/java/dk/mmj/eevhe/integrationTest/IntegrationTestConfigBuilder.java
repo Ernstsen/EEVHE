@@ -1,14 +1,13 @@
 package dk.mmj.eevhe.integrationTest;
 
 import dk.eSoftware.commandLineParser.CommandLineParser;
-import dk.eSoftware.commandLineParser.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBuilder {
+public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBuilder<IntegrationTest.IntegrationTestConfiguration> {
     private static final Logger logger = LogManager.getLogger(IntegrationTestConfigBuilder.class);
     private static final String SELF = "integrationTest";
 
@@ -77,7 +76,7 @@ public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBui
     }
 
     @Override
-    public Configuration build() {
+    public IntegrationTest.IntegrationTestConfiguration build() {
         List<Integer> decryptionAuthorities = getDecryptionAuthorities();
         List<Integer> voteDelays = getVoteDelays();
 

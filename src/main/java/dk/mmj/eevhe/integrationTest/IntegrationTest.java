@@ -2,9 +2,8 @@ package dk.mmj.eevhe.integrationTest;
 
 import dk.eSoftware.commandLineParser.*;
 import dk.mmj.eevhe.Application;
+import dk.mmj.eevhe.client.Client;
 import dk.mmj.eevhe.client.ClientConfigBuilder;
-import dk.mmj.eevhe.client.ResultFetcher;
-import dk.mmj.eevhe.client.Voter;
 import dk.mmj.eevhe.initialization.SystemConfigurer;
 import dk.mmj.eevhe.initialization.SystemConfigurerConfigBuilder;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoard;
@@ -71,15 +70,16 @@ public class IntegrationTest implements Application {
      * @param timeOffset when to retrieve the votes in minutes
      */
     private void retrieveVotes(int timeOffset) {
-        CommandLineParser parser = new SingletonCommandLineParser(new ClientConfigBuilder());
-        Configuration parse;
+        CommandLineParser<? extends InstanceCreatingConfiguration<? extends Client>> parser =
+                new SingletonCommandLineParser<>(new ClientConfigBuilder());
+        InstanceCreatingConfiguration<? extends Client> parse;
         try {
             parse = parser.parse("--client --read=true".split(" "));
         } catch (NoSuchBuilderException | WrongFormatException e) {
             throw new RuntimeException("Failed parsing resultFetcher conf", e);
         }
 
-        ResultFetcher voter = new ResultFetcher((ResultFetcher.ResultFetcherConfiguration) parse);
+        Client voter = parse.produceInstance();
 
         scheduler.schedule(voter, timeOffset, TimeUnit.MINUTES);
     }
@@ -90,29 +90,29 @@ public class IntegrationTest implements Application {
      * @param timeOffset relative delay for votes in ms
      */
     private void doMultiVote(int timeOffset) {
-        CommandLineParser parser = new SingletonCommandLineParser(new ClientConfigBuilder());
-        Configuration parse;
+        CommandLineParser<? extends InstanceCreatingConfiguration<? extends Client>> parser
+                = new SingletonCommandLineParser<>(new ClientConfigBuilder());
+        InstanceCreatingConfiguration<? extends Client> parse;
         try {
             parse = parser.parse("--client --multi=50".split(" "));
         } catch (NoSuchBuilderException | WrongFormatException e) {
             throw new RuntimeException("Failed parsing multivote conf", e);
         }
 
-        Voter voter = new Voter((Voter.VoterConfiguration) parse);
+        Client voter = parse.produceInstance();
 
         scheduler.schedule(voter, timeOffset, TimeUnit.MILLISECONDS);
     }
 
     private void startBulletinBoard() {
-        CommandLineParser parser = new SingletonCommandLineParser(new BulletinBoardConfigBuilder());
-        Configuration conf;
+        CommandLineParser<BulletinBoard.BulletinBoardConfiguration> parser = new SingletonCommandLineParser<>(new BulletinBoardConfigBuilder());
+        BulletinBoard.BulletinBoardConfiguration conf;
         try {
             conf = parser.parse(new String[0]);
         } catch (NoSuchBuilderException | WrongFormatException e) {
             throw new RuntimeException("Failed parsing bulletin board conf", e);
         }
-        scheduler.execute(new BulletinBoard((BulletinBoard.BulletinBoardConfiguration) conf));
-//        new Thread(new BulletinBoard((BulletinBoard.BulletinBoardConfiguration) conf)).start();
+        scheduler.execute(conf.produceInstance());
     }
 
     /**
@@ -122,32 +122,33 @@ public class IntegrationTest implements Application {
      */
     private void runSystemConfiguration(int duration) {
         String params = "--addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 --outputFolder=conf --time -min=" + duration;
-        CommandLineParser parser = new SingletonCommandLineParser(new SystemConfigurerConfigBuilder());
+        CommandLineParser<SystemConfigurer.SystemConfiguration> parser = new SingletonCommandLineParser<>(new SystemConfigurerConfigBuilder());
 
-        Configuration conf;
+        SystemConfigurer.SystemConfiguration conf;
         try {
             conf = parser.parse(params.split(" "));
         } catch (NoSuchBuilderException | WrongFormatException e) {
             throw new RuntimeException("Failed parsing trusted dealer conf.", e);
         }
 
-        new SystemConfigurer((SystemConfigurer.SystemConfiguration) conf).run();
+        conf.produceInstance().run();
     }
 
     private void launchDecryptionAuthority(Integer id) {
         String params = "--authority --integrationTest=True --conf=conf/common_input.json --port=808" + id + " --id=" + id;
-        SingletonCommandLineParser parser = new SingletonCommandLineParser(new DecryptionAuthorityConfigBuilder());
-        Configuration conf;
+        SingletonCommandLineParser<DecryptionAuthority.DecryptionAuthorityConfiguration> parser =
+                new SingletonCommandLineParser<>(new DecryptionAuthorityConfigBuilder());
+
+        DecryptionAuthority.DecryptionAuthorityConfiguration conf;
         try {
             conf = parser.parse(params.split(" "));
         } catch (NoSuchBuilderException | WrongFormatException e) {
             throw new RuntimeException("Failed parsing decryption authority conf.", e);
         }
-        scheduler.execute(new DecryptionAuthority((DecryptionAuthority.DecryptionAuthorityConfiguration) conf));
-//        new Thread(new DecryptionAuthority((DecryptionAuthority.DecryptionAuthorityConfiguration) conf)).start();
+        scheduler.execute(conf.produceInstance());
     }
 
-    public static class IntegrationTestConfiguration implements Configuration {
+    public static class IntegrationTestConfiguration extends AbstractInstanceCreatingConfiguration<IntegrationTest> {
         private final List<Integer> decryptionAuthorities;
         private final List<Integer> voteDelays;
         private final int duration;
@@ -158,6 +159,7 @@ public class IntegrationTest implements Application {
          * @param voteDelays            list of times where votes should be dispatched
          */
         IntegrationTestConfiguration(List<Integer> decryptionAuthorities, int duration, List<Integer> voteDelays) {
+            super(IntegrationTest.class);
             this.decryptionAuthorities = decryptionAuthorities;
             this.duration = duration;
             this.voteDelays = voteDelays;

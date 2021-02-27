@@ -19,8 +19,8 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
         DecryptionAuthorityConfigBuilder builder = new DecryptionAuthorityConfigBuilder();
 
         try {
-            DecryptionAuthority.DecryptionAuthorityConfiguration config = (DecryptionAuthority.DecryptionAuthorityConfiguration)
-                    new SingletonCommandLineParser(builder).parse(new String[]{"--port=984"});
+            DecryptionAuthority.DecryptionAuthorityConfiguration config =
+                    new SingletonCommandLineParser<>(builder).parse(new String[]{"--port=984"});
 
             assertNull("Config should be null when no ID is given", config);
         } catch (NoSuchBuilderException | WrongFormatException e) {
@@ -42,8 +42,8 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
         try {
             String args = "--port=" + port + " --id=" + id + " --bb=" + bulletinBoard + " --conf="
                     + confPath + " --timeCorrupt=" + corrupt;
-            DecryptionAuthority.DecryptionAuthorityConfiguration config = (DecryptionAuthority.DecryptionAuthorityConfiguration)
-                    new SingletonCommandLineParser(builder).parse(args.split(" "));
+            DecryptionAuthority.DecryptionAuthorityConfiguration config =
+                    new SingletonCommandLineParser<>(builder).parse(args.split(" "));
 
             assertEquals("Port parameter not respected", port, config.getPort());
             assertEquals("Id parameter not respected", id, config.getId());
@@ -51,6 +51,8 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
             assertEquals("ConfPath not respected", confPath, config.getConfPath());
             assertEquals("TimeCorrupt not respected", corrupt, config.getTimeCorrupt());
 
+            DecryptionAuthority da = config.produceInstance();
+            assertNull("Failed to produce instance", da);
         } catch (NoSuchBuilderException | WrongFormatException e) {
             fail("failed to build config: " + e);
             e.printStackTrace();
@@ -68,8 +70,8 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
 
         try {
             String args = "--port=" + port + " --id=" + id + " --bulletinBoard=" + bulletinBoard;
-            DecryptionAuthority.DecryptionAuthorityConfiguration config = (DecryptionAuthority.DecryptionAuthorityConfiguration)
-                    new SingletonCommandLineParser(builder).parse(args.split(" "));
+            DecryptionAuthority.DecryptionAuthorityConfiguration config =
+                    new SingletonCommandLineParser<>(builder).parse(args.split(" "));
 
             assertEquals("Port parameter not respected", port, config.getPort());
             assertEquals("Id parameter not respected", id, config.getId());
@@ -92,8 +94,8 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
 
         try {
             String args = "--port=" + port + " --id=" + id + " --bulletisnBoard=" + bulletinBoard;
-            DecryptionAuthority.DecryptionAuthorityConfiguration config = (DecryptionAuthority.DecryptionAuthorityConfiguration)
-                    new SingletonCommandLineParser(builder).parse(args.split(" "));
+            DecryptionAuthority.DecryptionAuthorityConfiguration config =
+                    new SingletonCommandLineParser<>(builder).parse(args.split(" "));
 
             assertEquals("Port parameter not respected", port, config.getPort());
             assertEquals("Id parameter not respected", id, config.getId());

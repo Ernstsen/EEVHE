@@ -2,7 +2,7 @@ package dk.mmj.eevhe.server.decryptionauthority;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dk.eSoftware.commandLineParser.Configuration;
+import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.client.FetchingUtilities;
 import dk.mmj.eevhe.crypto.ElGamal;
 import dk.mmj.eevhe.crypto.SecurityUtils;
@@ -308,7 +308,7 @@ public class DecryptionAuthority extends AbstractServer {
     /**
      * Configuration for a DecryptionAuthority
      */
-    public static class DecryptionAuthorityConfiguration implements Configuration {
+    public static class DecryptionAuthorityConfiguration extends AbstractInstanceCreatingConfiguration<DecryptionAuthority> {
         private final int port;
         private final String bulletinBoard;
         private final String confPath;
@@ -316,6 +316,7 @@ public class DecryptionAuthority extends AbstractServer {
         private final int id;
 
         DecryptionAuthorityConfiguration(int port, String bulletinBoard, String confPath, int id, int timeCorrupt) {
+            super(DecryptionAuthority.class);
             this.port = port;
             this.bulletinBoard = bulletinBoard;
             this.id = id;

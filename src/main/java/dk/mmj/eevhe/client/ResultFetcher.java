@@ -217,7 +217,7 @@ public class ResultFetcher extends Client {
      * <br>
      * Created in the {@link ClientConfigBuilder}.
      */
-    public static class ResultFetcherConfiguration extends ClientConfiguration {
+    public static class ResultFetcherConfiguration extends ClientConfiguration<ResultFetcher> {
         private final boolean forceCalculations;
 
         /**
@@ -225,7 +225,7 @@ public class ResultFetcher extends Client {
          * @param forceCalculations whether ciphertext containing sum of votes should be computed locally
          */
         ResultFetcherConfiguration(String targetUrl, boolean forceCalculations) {
-            super(targetUrl);
+            super(ResultFetcher.class, targetUrl);
             this.forceCalculations = forceCalculations;
         }
 

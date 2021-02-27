@@ -9,8 +9,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class TestBulletinBoardConfigBuilder extends AbstractConfigTest {
 
@@ -22,11 +21,13 @@ public class TestBulletinBoardConfigBuilder extends AbstractConfigTest {
         BulletinBoardConfigBuilder builder = new BulletinBoardConfigBuilder();
 
         try {
-            BulletinBoard.BulletinBoardConfiguration config = (BulletinBoard.BulletinBoardConfiguration)
-                    new SingletonCommandLineParser(builder).parse(new String[]{"--port=" + port});
+            BulletinBoard.BulletinBoardConfiguration config =
+                    new SingletonCommandLineParser<>(builder).parse(new String[]{"--port=" + port});
 
             assertEquals("Port parameter not respected", port, config.getPort());
 
+            BulletinBoard bb = config.produceInstance();
+            assertNotNull("Failed to produce instance", bb);
         } catch (NoSuchBuilderException | WrongFormatException e) {
             fail("failed to build config: " + e);
             e.printStackTrace();
@@ -38,7 +39,7 @@ public class TestBulletinBoardConfigBuilder extends AbstractConfigTest {
         BulletinBoardConfigBuilder builder = new BulletinBoardConfigBuilder();
 
         try {
-            new SingletonCommandLineParser(builder).parse(new String[]{"--part=" + 564});
+            new SingletonCommandLineParser<>(builder).parse(new String[]{"--part=" + 564});
         } catch (NoSuchBuilderException | WrongFormatException e) {
             fail("failed to build config: " + e);
             e.printStackTrace();

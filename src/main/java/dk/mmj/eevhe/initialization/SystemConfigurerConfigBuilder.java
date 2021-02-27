@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBuilder {
+public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBuilder<SystemConfigurer.SystemConfiguration> {
     private static final Logger logger = LogManager.getLogger(SystemConfigurerConfigBuilder.class);
 
     //Configuration options
@@ -60,6 +60,7 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
         }
     }
 
+    @Override
     public SystemConfigurer.SystemConfiguration build() {
         return new SystemConfigurer.SystemConfiguration(
                 outputFolderPath,

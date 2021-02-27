@@ -1,7 +1,6 @@
 package dk.mmj.eevhe.server.bulletinboard;
 
 import dk.eSoftware.commandLineParser.CommandLineParser;
-import dk.eSoftware.commandLineParser.Configuration;
 import dk.mmj.eevhe.TestableConfigurationBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +8,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.Collections;
 import java.util.List;
 
-public class BulletinBoardConfigBuilder implements CommandLineParser.ConfigBuilder, TestableConfigurationBuilder {
+public class BulletinBoardConfigBuilder implements CommandLineParser.ConfigBuilder<BulletinBoard.BulletinBoardConfiguration>, TestableConfigurationBuilder {
     private static final Logger logger = LogManager.getLogger(BulletinBoardConfigBuilder.class);
 
     //Configuration options
@@ -32,7 +31,7 @@ public class BulletinBoardConfigBuilder implements CommandLineParser.ConfigBuild
     }
 
     @Override
-    public Configuration build() {
+    public BulletinBoard.BulletinBoardConfiguration build() {
         return new BulletinBoard.BulletinBoardConfiguration(port);
     }
 

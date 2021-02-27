@@ -168,7 +168,7 @@ public class Voter extends Client {
      * <br>
      * Built in the {@link ClientConfigBuilder}.
      */
-    public static class VoterConfiguration extends ClientConfiguration {
+    public static class VoterConfiguration extends ClientConfiguration<Voter> {
         private final String id;
         private final Integer vote;
         private final Integer multi;
@@ -180,7 +180,7 @@ public class Voter extends Client {
          * @param multi     if different from null, multiple random votes are dispatched
          */
         VoterConfiguration(String targetUrl, String id, Integer vote, Integer multi) {
-            super(targetUrl);
+            super(Voter.class,targetUrl);
             this.id = id;
             this.vote = vote;
             this.multi = multi;

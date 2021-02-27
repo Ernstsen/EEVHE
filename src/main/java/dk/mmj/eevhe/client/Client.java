@@ -1,6 +1,8 @@
 package dk.mmj.eevhe.client;
 
+import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.eSoftware.commandLineParser.Configuration;
+import dk.eSoftware.commandLineParser.InstanceCreatingConfiguration;
 import dk.mmj.eevhe.Application;
 import dk.mmj.eevhe.entities.Candidate;
 import dk.mmj.eevhe.entities.PartialPublicInfo;
@@ -59,10 +61,11 @@ public abstract class Client implements Application {
     }
 
 
-    static class ClientConfiguration implements Configuration {
+    static abstract class ClientConfiguration<T extends Client> extends AbstractInstanceCreatingConfiguration<T> {
         private final String targetUrl;
 
-        ClientConfiguration(String targetUrl) {
+        ClientConfiguration(Class<T> clazz,String targetUrl) {
+            super(clazz);
             this.targetUrl = targetUrl;
         }
 

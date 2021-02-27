@@ -1,7 +1,6 @@
 package dk.mmj.eevhe.server.decryptionauthority;
 
 import dk.eSoftware.commandLineParser.CommandLineParser;
-import dk.eSoftware.commandLineParser.Configuration;
 import dk.mmj.eevhe.TestableConfigurationBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class DecryptionAuthorityConfigBuilder implements CommandLineParser.ConfigBuilder, TestableConfigurationBuilder {
+public class DecryptionAuthorityConfigBuilder implements CommandLineParser.ConfigBuilder<DecryptionAuthority.DecryptionAuthorityConfiguration>, TestableConfigurationBuilder {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthorityConfigBuilder.class);
     private static final String SELF = "authority";
 
@@ -52,7 +51,7 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
     }
 
     @Override
-    public Configuration build() {
+    public DecryptionAuthority.DecryptionAuthorityConfiguration build() {
         if (id == null) {
             logger.error("id must be supplied. Use -h for help");
             return null;

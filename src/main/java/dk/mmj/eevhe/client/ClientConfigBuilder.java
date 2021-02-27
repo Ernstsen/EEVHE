@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public class ClientConfigBuilder implements CommandLineParser.ConfigBuilder, TestableConfigurationBuilder {
+public class ClientConfigBuilder implements CommandLineParser.ConfigBuilder<Client.ClientConfiguration<? extends Client>>, TestableConfigurationBuilder {
     private static final Logger logger = LogManager.getLogger(ClientConfigBuilder.class);
     private static final String SELF = "client";
 
@@ -62,7 +62,7 @@ public class ClientConfigBuilder implements CommandLineParser.ConfigBuilder, Tes
      * @return Configuration for client execution
      */
     @Override
-    public Configuration build() {
+    public Client.ClientConfiguration<? extends Client> build() {
         if (read) {
             return new ResultFetcher.ResultFetcherConfiguration(targetUrl, forceCalculations);
         } else {

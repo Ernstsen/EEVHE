@@ -1,7 +1,7 @@
 package dk.mmj.eevhe.initialization;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dk.eSoftware.commandLineParser.Configuration;
+import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.Application;
 import dk.mmj.eevhe.crypto.keygeneration.PersistedKeyParameters;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInfo;
@@ -83,7 +83,7 @@ public class SystemConfigurer implements Application {
     /**
      * Configuration class for the trusted dealer
      */
-    public static class SystemConfiguration implements Configuration {
+    public static class SystemConfiguration extends AbstractInstanceCreatingConfiguration<SystemConfigurer> {
 
         private final long endTime;
         private final Map<Integer, String> daAddresses;
@@ -100,6 +100,7 @@ public class SystemConfigurer implements Application {
                 Path candidateListPath,
                 Map<Integer, String> daAddresses,
                 long endTime) {
+            super(SystemConfigurer.class);
             this.outputFolderPath = candidateListPath;
             this.daAddresses = daAddresses;
             this.endTime = endTime;

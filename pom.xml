@@ -208,7 +208,7 @@
         <dependency>
             <groupId>dk.e-software</groupId>
             <artifactId>commandLineParser</artifactId>
-            <version>1.3.0</version>
+            <version>1.3.2</version>
         </dependency>
 
 

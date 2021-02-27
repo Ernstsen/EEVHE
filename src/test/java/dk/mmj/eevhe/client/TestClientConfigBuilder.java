@@ -7,7 +7,6 @@ import dk.mmj.eevhe.AbstractConfigTest;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.Random;
 
 import static org.junit.Assert.*;
 
@@ -23,8 +22,8 @@ public class TestClientConfigBuilder extends AbstractConfigTest {
 
         try {
             String args = "--read=" + read + " --forceCalculations=" + force + " --server=" + serverString;
-            Client.ClientConfiguration config = (Client.ClientConfiguration)
-                    new SingletonCommandLineParser(builder).parse(args.split(" "));
+            Client.ClientConfiguration<?> config =
+                    new SingletonCommandLineParser<>(builder).parse(args.split(" "));
 
             assertTrue("Should be ResultsFetcher, as read was true", config instanceof ResultFetcher.ResultFetcherConfiguration);
 
@@ -32,6 +31,9 @@ public class TestClientConfigBuilder extends AbstractConfigTest {
 
             assertEquals("force parameter not respected", force, fetchConfig.isForceCalculations());
             assertEquals("Server parameter not respected", serverString, config.getTargetUrl());
+
+            ResultFetcher resultFetcher = fetchConfig.produceInstance();
+            assertNotNull("Failed to produce resultFetcher", resultFetcher);
         } catch (NoSuchBuilderException | WrongFormatException e) {
             fail("failed to build config: " + e);
             e.printStackTrace();
@@ -47,8 +49,8 @@ public class TestClientConfigBuilder extends AbstractConfigTest {
 
         try {
             String args = "--read=" + read + " --forceCalcuflations=" + force + " --server=" + serverString;
-            Client.ClientConfiguration config = (Client.ClientConfiguration)
-                    new SingletonCommandLineParser(builder).parse(args.split(" "));
+            Client.ClientConfiguration<?> config =
+                    new SingletonCommandLineParser<>(builder).parse(args.split(" "));
 
             assertTrue("Should be ResultsFetcher, as read was true", config instanceof ResultFetcher.ResultFetcherConfiguration);
 
@@ -74,8 +76,8 @@ public class TestClientConfigBuilder extends AbstractConfigTest {
         try {
             String args = "--server=" + targetUrl + " --id=" + id + " --vote=" + vote
                     + " --multi=" + multi;
-            Client.ClientConfiguration config = (Client.ClientConfiguration)
-                    new SingletonCommandLineParser(builder).parse(args.split(" "));
+            Client.ClientConfiguration<?> config =
+                    new SingletonCommandLineParser<>(builder).parse(args.split(" "));
 
             assertTrue("Should be voter as read was not set", config instanceof Voter.VoterConfiguration);
 
@@ -86,6 +88,8 @@ public class TestClientConfigBuilder extends AbstractConfigTest {
             assertEquals("Multi parameter not respected", multi, voterConfig.getMulti().intValue());
             assertEquals("Vote paremeter not respected", vote, voterConfig.getVote().intValue());
 
+            Voter voter = voterConfig.produceInstance();
+            assertNotNull("Failed to produce instance", voter);
         } catch (NoSuchBuilderException | WrongFormatException e) {
             fail("failed to build config: " + e);
             e.printStackTrace();

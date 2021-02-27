@@ -1,7 +1,7 @@
 package dk.mmj.eevhe.server.bulletinboard;
 
 
-import dk.eSoftware.commandLineParser.Configuration;
+import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.entities.PersistedBallot;
 import dk.mmj.eevhe.server.AbstractServer;
 import dk.mmj.eevhe.server.ServerState;
@@ -45,10 +45,11 @@ public class BulletinBoard extends AbstractServer {
         return configuration.port;
     }
 
-    public static class BulletinBoardConfiguration implements Configuration {
+    public static class BulletinBoardConfiguration extends AbstractInstanceCreatingConfiguration<BulletinBoard> {
         private final int port;
 
         BulletinBoardConfiguration(int port) {
+            super(BulletinBoard.class);
             this.port = port;
         }
 
