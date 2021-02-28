@@ -1,26 +1,24 @@
 package dk.mmj.eevhe.protocols;
 
-import dk.mmj.eevhe.crypto.FeldmanVSSUtils;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
-import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.CommitmentDTO;
+import dk.mmj.eevhe.entities.ComplaintDTO;
+import dk.mmj.eevhe.entities.ComplaintResolveDTO;
+import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.protocols.interfaces.Broadcaster;
 import dk.mmj.eevhe.protocols.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.computeCoefficientCommitments;
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.verifyCommitmentRespected;
 
 public class FeldmanVSS extends AbstractVSS implements VSS {
     private final BigInteger[] polynomial;
+    private final Set<Integer> honestParties = new HashSet<>();
 
     public FeldmanVSS(Broadcaster broadcaster, IncomingChannel incoming,
                       Map<Integer, PeerCommunicator> peerCommunicatorMap,
@@ -38,6 +36,9 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
     @Override
     public void startProtocol() {
         logger.info("Initialized FeldmanVSS");
+        //TODO: Shouldn't add one self
+        honestParties.add(id);
+        honestParties.addAll(peerMap.keySet());
 
         logger.debug("Calculating coefficient commitments");
         BigInteger[] commitment = computeCoefficientCommitments(g, p, polynomial);
@@ -93,10 +94,10 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
 
         for (Map.Entry<Integer, PartialSecretMessageDTO> entry : new ArrayList<>(secrets.entrySet())) {
             int id = entry.getKey();
-
             BigInteger partialSecret = entry.getValue().getPartialSecret1();
 
-            BigInteger[] commitment = this.commitments.get(entry.getKey());
+
+            BigInteger[] commitment = this.commitments.get(id);
             if (commitment == null) {
                 logger.error("Peer with id=" + id + ", had no corresponding commitment!");
                 continue;//TODO: What to do?
@@ -107,6 +108,7 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
                 logger.info("" + this.id + ": Sending complaint about Peer with ID=" + id);
                 final ComplaintDTO complaint = new ComplaintDTO(this.id, id);
                 secrets.remove(id); //remove secret, as it's garbage
+                honestParties.remove(id);
                 broadcaster.complain(complaint);
             }
         }
@@ -123,18 +125,20 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
         for (ComplaintDTO complaint : complaints) {
             if (complaint.getTargetId() == id) {
                 logger.info("Found complaint about self. Resolving.");
-                BigInteger complaintValue = SecurityUtils.evaluatePolynomial(polynomial, complaint.getSenderId());
+                BigInteger complaintValue1 = SecurityUtils.evaluatePolynomial(polynomial, complaint.getSenderId());
                 PartialSecretMessageDTO complaintResolve = new PartialSecretMessageDTO(
-                        complaintValue, null, complaint.getSenderId(), id);
+                        complaintValue1, null, complaint.getSenderId(), id);
                 ComplaintResolveDTO complaintResolveDTO = new ComplaintResolveDTO(
                         complaint.getSenderId(), this.id, complaintResolve);
                 broadcaster.resolveComplaint(complaintResolveDTO);
             }
         }
+
     }
 
     @Override
     public void applyResolves() {
+        //TODO: We dont use hand complaint and apply resolves in Gennaro.
         logger.info("Checking for complaint resolves");
         List<ComplaintResolveDTO> resolves = broadcaster.getResolves();
 
@@ -154,10 +158,15 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
 
     @Override
     public BigInteger output() {
-        logger.info("Combining values, to make keys");
+        logger.info("Combining values, to make partial secret key");
+        // Returns value x_i
         return secrets.values().stream()
                 .map(PartialSecretMessageDTO::getPartialSecret1)
-                .reduce(BigInteger::add).orElse(null);
+                .reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
+    }
+
+    public Set<Integer> getHonestParties() {
+        return honestParties;
     }
 
     public Map<Integer, PartialSecretMessageDTO> getSecrets() {

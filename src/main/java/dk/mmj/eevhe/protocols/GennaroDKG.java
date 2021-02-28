@@ -2,8 +2,10 @@ package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
+import dk.mmj.eevhe.entities.CommitmentDTO;
 import dk.mmj.eevhe.entities.PartialKeyPair;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
+import dk.mmj.eevhe.entities.PublicKey;
 import dk.mmj.eevhe.protocols.interfaces.Broadcaster;
 import dk.mmj.eevhe.protocols.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
@@ -11,6 +13,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -32,6 +36,7 @@ public class GennaroDKG {
     private final int t;
     private BigInteger[] pol1;
     private PedersenVSS pedersenVSS;
+    private BigInteger partialSecret;
 
 
     /**
@@ -73,6 +78,7 @@ public class GennaroDKG {
     public void generationPhase() {
         pol1 = SecurityUtils.generatePolynomial(t, q);
         BigInteger[] pol2 = SecurityUtils.generatePolynomial(t, q);
+        partialSecret = pol1[0];
 
         pedersenVSS = new PedersenVSS(broadcaster, incoming, peerMap, id, params, logPrefix, pol1, pol2);
 
@@ -80,7 +86,6 @@ public class GennaroDKG {
         pedersenVSS.handleReceivedValues();
         pedersenVSS.handleComplaints();
         pedersenVSS.applyResolves();
-
     }
 
     /**
@@ -104,13 +109,33 @@ public class GennaroDKG {
 
         feldmanVSS.startProtocol();
         feldmanVSS.handleReceivedValues();
-        feldmanVSS.handleComplaints();
-        feldmanVSS.applyResolves();
 
-        // TODO: Reconstruct keys
-        final Map<Integer, PartialSecretMessageDTO> secretsFeldman = feldmanVSS.getSecrets();
+        Set<Integer> honestParties = feldmanVSS.getHonestParties();
+        // If we aren't disqualified, we can compute the partial secret- and public-values.
+        // TODO: // Change if statement logic since one self shouldn't be in it
+        if (honestParties.contains(id)) {
+            BigInteger partialSecretKey = feldmanVSS.output();
+            BigInteger partialPublicKey = g.modPow(partialSecret, p);
 
-        // TODO: IMPLEMENT PROTOCOL
+            // Computes Y = prod_i y_i mod p
+            //TODO: Move the following somewhere else??
+            List<CommitmentDTO> commitments = broadcaster.getCommitments();
+            List<BigInteger> partialPublicKeys = new ArrayList<>();
+            for (CommitmentDTO commitment : commitments) {
+                if (honestParties.contains(commitment.getId())) {
+                    partialPublicKeys.add(commitment.getCommitment()[0]);
+                }
+            }
+            BigInteger publicKey = partialPublicKeys
+                    .stream().reduce(BigInteger::multiply).orElse(BigInteger.ZERO).mod(p);
+
+            return new PartialKeyPair(partialSecretKey, partialPublicKey, new PublicKey(publicKey, g, q));
+        }
         return null;
+    }
+
+    // TODO: This should not be accessible outside of testing?
+    public BigInteger getPartialSecret() {
+        return partialSecret;
     }
 }

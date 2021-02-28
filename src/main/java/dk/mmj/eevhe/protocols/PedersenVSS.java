@@ -1,9 +1,11 @@
 package dk.mmj.eevhe.protocols;
 
-import dk.mmj.eevhe.crypto.FeldmanVSSUtils;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
-import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.CommitmentDTO;
+import dk.mmj.eevhe.entities.ComplaintDTO;
+import dk.mmj.eevhe.entities.ComplaintResolveDTO;
+import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.protocols.interfaces.Broadcaster;
 import dk.mmj.eevhe.protocols.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
@@ -173,7 +175,7 @@ public class PedersenVSS extends AbstractVSS implements VSS {
         logger.info("Combining values, to make keys");
         return secrets.values().stream()
                 .map(PartialSecretMessageDTO::getPartialSecret1)
-                .reduce(BigInteger::add).orElse(null);
+                .reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
     }
 
     public Set<Integer> getHonestParties() {
