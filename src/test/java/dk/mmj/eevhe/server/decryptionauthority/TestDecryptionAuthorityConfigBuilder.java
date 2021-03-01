@@ -1,17 +1,43 @@
 package dk.mmj.eevhe.server.decryptionauthority;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.NoSuchBuilderException;
 import dk.eSoftware.commandLineParser.SingletonCommandLineParser;
 import dk.eSoftware.commandLineParser.WrongFormatException;
 import dk.mmj.eevhe.AbstractConfigTest;
+import dk.mmj.eevhe.entities.DecryptionAuthorityInfo;
+import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
 import static org.junit.Assert.*;
 
 public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
+    private String confPath;
+
+    @Before
+    public void setup() throws IOException {
+        DecryptionAuthorityInput input = new DecryptionAuthorityInput("02", "02", 124, Arrays.asList(
+                new DecryptionAuthorityInfo(1, "https://localhost:8081"),
+                new DecryptionAuthorityInfo(2, "https://localhost:8082")
+        ));
+
+        confPath = "/conf/testConf.json";
+        File file = new File(confPath);
+
+        //noinspection ResultOfMethodCallIgnored
+        file.getParentFile().mkdirs();
+
+
+        new ObjectMapper().writeValue(file, input);
+    }
 
     @Test
     public void returnsNullWithNoId() {
@@ -34,7 +60,6 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
         int port = rand.nextInt();
         int id = rand.nextInt();
         String bulletinBoard = "BBPath";
-        String confPath = "ConfigPath";
         int corrupt = rand.nextInt();
 
         DecryptionAuthorityConfigBuilder builder = new DecryptionAuthorityConfigBuilder();
@@ -52,7 +77,7 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
             assertEquals("TimeCorrupt not respected", corrupt, config.getTimeCorrupt());
 
             DecryptionAuthority da = config.produceInstance();
-            assertNull("Failed to produce instance", da);
+            assertNotNull("Failed to produce instance", da);
         } catch (NoSuchBuilderException | WrongFormatException e) {
             fail("failed to build config: " + e);
             e.printStackTrace();
@@ -116,5 +141,12 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
     @Override
     protected String getHelp() {
         return new DecryptionAuthorityConfigBuilder().help();
+    }
+
+    @After
+    public void tearDown() {
+        if (!new File(confPath).delete()) {
+            System.out.println("Failed to delete temp file! " + confPath);
+        }
     }
 }
