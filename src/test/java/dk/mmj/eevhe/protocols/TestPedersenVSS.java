@@ -87,7 +87,6 @@ public class TestPedersenVSS {
         assertNotNull("Partial secret was null", partialSecret3);
     }
 
-    @Ignore("Not implemented")
     @Test
     public void testProtocolWith1NonParticipant() {
         //Modelling communications channels
