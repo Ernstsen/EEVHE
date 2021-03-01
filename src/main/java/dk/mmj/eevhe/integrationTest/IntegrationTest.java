@@ -46,7 +46,7 @@ public class IntegrationTest implements Application {
         logger.warn("Under no circumstance should this happen in a production environment");
         logger.warn("############### WARNING ###############");
 
-        logger.info("Launching bulletinboard");
+        logger.info("Launching BulletinBoard");
         startBulletinBoard();
 
         logger.info("Configuring system");
@@ -96,7 +96,7 @@ public class IntegrationTest implements Application {
         try {
             parse = parser.parse("--client --multi=50".split(" "));
         } catch (NoSuchBuilderException | WrongFormatException e) {
-            throw new RuntimeException("Failed parsing multivote conf", e);
+            throw new RuntimeException("Failed parsing multi-vote conf", e);
         }
 
         Client voter = parse.produceInstance();
@@ -116,7 +116,7 @@ public class IntegrationTest implements Application {
     }
 
     /**
-     * Executes the trused dealer in thread, as to wait for finished execution
+     * Executes the trusted dealer in thread, as to wait for finished execution
      *
      * @param duration duration of vote
      */
@@ -135,7 +135,7 @@ public class IntegrationTest implements Application {
     }
 
     private void launchDecryptionAuthority(Integer id) {
-        String params = "--authority --integrationTest=True --conf=conf/common_input.json --port=808" + id + " --id=" + id;
+        String params = "--authority --conf=conf/common_input.json --port=808" + id + " --id=" + id;
         SingletonCommandLineParser<DecryptionAuthority.DecryptionAuthorityConfiguration> parser =
                 new SingletonCommandLineParser<>(new DecryptionAuthorityConfigBuilder());
 
