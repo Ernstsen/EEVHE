@@ -2,9 +2,9 @@ package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
-import dk.mmj.eevhe.protocols.interfaces.Broadcaster;
-import dk.mmj.eevhe.protocols.interfaces.IncomingChannel;
-import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

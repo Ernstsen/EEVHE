@@ -6,9 +6,10 @@ import dk.mmj.eevhe.entities.CommitmentDTO;
 import dk.mmj.eevhe.entities.ComplaintDTO;
 import dk.mmj.eevhe.entities.ComplaintResolveDTO;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
-import dk.mmj.eevhe.protocols.interfaces.Broadcaster;
-import dk.mmj.eevhe.protocols.interfaces.IncomingChannel;
-import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.interfaces.VSS;
 
 import java.math.BigInteger;
 import java.util.*;

@@ -14,7 +14,7 @@ import dk.mmj.eevhe.protocols.PedersenVSS;
 import dk.mmj.eevhe.protocols.connectors.BulletinBoardBroadcaster;
 import dk.mmj.eevhe.protocols.connectors.RestPeerCommunicator;
 import dk.mmj.eevhe.protocols.connectors.ServerStateIncomingChannel;
-import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
 import dk.mmj.eevhe.server.AbstractServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

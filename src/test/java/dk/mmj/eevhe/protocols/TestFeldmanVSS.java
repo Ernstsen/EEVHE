@@ -2,8 +2,9 @@ package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedPersistedKeyParameters;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
-import dk.mmj.eevhe.protocols.interfaces.IncomingChannel;
-import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.interfaces.VSS;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;

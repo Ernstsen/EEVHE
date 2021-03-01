@@ -1,7 +1,7 @@
 package dk.mmj.eevhe.protocols.connectors;
 
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
-import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

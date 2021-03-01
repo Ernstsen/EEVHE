@@ -1,7 +1,7 @@
 package dk.mmj.eevhe.protocols.connectors;
 
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
-import dk.mmj.eevhe.protocols.interfaces.IncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
 import dk.mmj.eevhe.server.ServerState;
 import org.junit.Before;
 import org.junit.Test;

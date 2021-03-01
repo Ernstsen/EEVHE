@@ -1,4 +1,4 @@
-package dk.mmj.eevhe.protocols.interfaces;
+package dk.mmj.eevhe.protocols.connectors.interfaces;
 
 import dk.mmj.eevhe.entities.CommitmentDTO;
 import dk.mmj.eevhe.entities.ComplaintDTO;

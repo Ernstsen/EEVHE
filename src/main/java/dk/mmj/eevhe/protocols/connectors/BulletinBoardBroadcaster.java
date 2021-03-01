@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.entities.CommitmentDTO;
 import dk.mmj.eevhe.entities.ComplaintDTO;
 import dk.mmj.eevhe.entities.ComplaintResolveDTO;
-import dk.mmj.eevhe.protocols.interfaces.Broadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

@@ -1,13 +1,11 @@
 package dk.mmj.eevhe.protocols;
 
-import dk.mmj.eevhe.crypto.ElGamal;
-import dk.mmj.eevhe.crypto.SecurityUtils;
-import dk.mmj.eevhe.crypto.exceptions.UnableToDecryptException;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedPersistedKeyParameters;
 import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.protocols.interfaces.Broadcaster;
-import dk.mmj.eevhe.protocols.interfaces.IncomingChannel;
-import dk.mmj.eevhe.protocols.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.interfaces.VSS;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;

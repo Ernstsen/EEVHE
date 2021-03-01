@@ -1,4 +1,4 @@
-package dk.mmj.eevhe.protocols;
+package dk.mmj.eevhe.protocols.interfaces;
 
 
 import dk.mmj.eevhe.entities.PartialKeyPair;
