@@ -10,11 +10,12 @@ import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.protocols.PedersenVSS;
+import dk.mmj.eevhe.protocols.GennaroDKG;
 import dk.mmj.eevhe.protocols.connectors.BulletinBoardBroadcaster;
 import dk.mmj.eevhe.protocols.connectors.RestPeerCommunicator;
 import dk.mmj.eevhe.protocols.connectors.ServerStateIncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.interfaces.DKG;
 import dk.mmj.eevhe.server.AbstractServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,7 +38,7 @@ import java.util.stream.Collectors;
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
 public class DecryptionAuthority extends AbstractServer {
-    private static final Logger logger = LogManager.getLogger(DecryptionAuthority.class);
+    private final Logger logger;
     private static final String RSA_PUBLIC_KEY_NAME = "rsa";
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final JerseyWebTarget bulletinBoard;
@@ -45,16 +46,17 @@ public class DecryptionAuthority extends AbstractServer {
     private final Integer id;
     private final ObjectMapper mapper = new ObjectMapper();
     private KeyGenParams params;
-    private PedersenVSS dkg;
+    private DKG<PartialKeyPair> dkg;
     private DecryptionAuthorityInput input;
     private boolean timeCorrupt = false;
     private PartialSecretKey sk;
     private long endTime;
     private PublicKey pk;
     private List<Candidate> candidates;
+    private Iterator<DKG.Step> dkgSteps;
 
     public DecryptionAuthority(DecryptionAuthorityConfiguration configuration) {
-
+        logger = LogManager.getLogger(DecryptionAuthority.class + " " + configuration.id + ":");
         port = configuration.port;
         id = configuration.id;
 
@@ -107,14 +109,14 @@ public class DecryptionAuthority extends AbstractServer {
     @Override
     protected void afterStart() {
         logger.info("Starting keyGeneration protocol for DA id=" + id);
-        scheduler.execute(this::startKeyGenProtocol);
+        scheduler.execute(this::scheduleDKG);
     }
 
     /**
      * Initializes the key-generation protocol by sending polynomial to the other peers,
      * and awaiting input from the other authorities
      */
-    private void startKeyGenProtocol() {
+    private void scheduleDKG() {
         logger.info("Started keygen protocol for DA with id=" + id);
         Map<Integer, PeerCommunicator> communicators = input.getInfos()
                 .stream()
@@ -126,64 +128,44 @@ public class DecryptionAuthority extends AbstractServer {
                         .map(this::partialSecretKey)
                         .collect(Collectors.toList())
         );
-        // TODO: use GennaroDKG instead of PedersenVSS
-        dkg = new PedersenVSS(new BulletinBoardBroadcaster(bulletinBoard), incoming,
-                communicators, id, params, "ID: " + id, null, null);
-        dkg.startProtocol();
+
+        dkg = new GennaroDKG(new BulletinBoardBroadcaster(bulletinBoard),
+                incoming, communicators, id, params, "ID:" + id);
+        dkgSteps = dkg.getSteps().iterator();
 
         logger.info("scheduling verification of received values. DA with id=" + id);
-        scheduler.schedule(this::verifyReceivedValues, 20, TimeUnit.SECONDS);
+
+        executeDKGStep();
     }
 
     /**
-     * Verifies received secret-values as part of the key-generation protocol
+     * Step execution logic - schedules step, and extracts output when DKG is finished
      */
-    private void verifyReceivedValues() {
-        logger.info("Checking received secret values, for DA with id=" + id);
-        final boolean cont = dkg.handleReceivedValues();
+    private void executeDKGStep() {
+        if (dkgSteps.hasNext()) {
+            DKG.Step step = dkgSteps.next();
+            scheduler.schedule(stepWrapper(step), step.getDelay(), step.getTimeUnit());
+        } else {
+            PartialKeyPair output = dkg.output();
+            sk = new PartialSecretKey(output.getPartialSecretKey(), params.getPrimePair().getP());
+            pk = output.getPublicKey();
+            BigInteger partialPublicKey = output.getPartialPublicKey();
+            PartialPublicInfo ppi = new PartialPublicInfo(id, pk, partialPublicKey, candidates, endTime);
 
-        if (!cont) {//TODO: When should we just ignore the missing value(s)? Otherwise risk corruption killing election by non-participation
-            logger.info("Has not received all commitments - retrying later");
-            scheduler.schedule(this::verifyReceivedValues, 10, TimeUnit.SECONDS);
-            return;
+            bulletinBoard.path("publicInfo").request().post(Entity.entity(ppi, MediaType.APPLICATION_JSON));
         }
-
-        scheduler.schedule(this::handleComplaints, 10, TimeUnit.SECONDS);
     }
 
     /**
-     * Resolves complaints made about values from this DA, as part of the key-generation protocol
+     * Runs step and then schedules next
+     *
+     * @param step step to execute
      */
-    private void handleComplaints() {
-        logger.info("Fetching complaints from Bulletin Board");
-        dkg.handleComplaints();
-        scheduler.schedule(this::checkIfComplaintsAreResolved, 10, TimeUnit.SECONDS);
-    }
-
-    /**
-     * Asserts that all raised complaints are resolved, and updates state to reflect resolves.
-     * <br>
-     * Part of the key-generation protocol
-     */
-    private void checkIfComplaintsAreResolved() {
-        logger.info("" + id + ": checking for complaint resolves");
-        dkg.applyResolves();
-
-        scheduler.schedule(this::combineKeys, 1, TimeUnit.SECONDS);
-    }
-
-    /**
-     * Finalizes the key-generation protocol, by combining the data received to a public key, and a partial secret key
-     */
-    private void combineKeys() {
-        // TODO: FIX BY IMPLEMENTING GENNARO-DKG
-//        logger.info("Combining values, to make keys");
-//        PartialKeyPair partialKeyPair = dkg.output();
-//        pk = partialKeyPair.getPublicKey();
-//        sk = new PartialSecretKey(partialKeyPair.getPartialSecretKey(), pk.getP());
-//        PartialPublicInfo partialInfo = new PartialPublicInfo(id, pk, partialKeyPair.getPartialPublicKey(), candidates, endTime);
-//        bulletinBoard.path("publicInfo").request()
-//                .post(Entity.entity(partialInfo, MediaType.APPLICATION_JSON));
+    private Runnable stepWrapper(final DKG.Step step) {
+        return () -> {
+            step.getExecutable().run();
+            executeDKGStep();
+        };
     }
 
     private String partialSecretKey(Integer id) {
