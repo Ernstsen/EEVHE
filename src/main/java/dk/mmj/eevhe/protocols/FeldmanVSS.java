@@ -29,7 +29,7 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
 
         int t = ((peerMap.size()) / 2);
         if (secrets != null) {
-            this.secrets.putAll(secrets);
+            this.secrets = secrets;
         }
         this.polynomial = polynomial == null ? SecurityUtils.generatePolynomial(t, q) : polynomial;
     }

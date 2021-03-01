@@ -9,19 +9,16 @@ import dk.mmj.eevhe.entities.PublicKey;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
 import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.interfaces.DKG;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.*;
 
-import static dk.mmj.eevhe.crypto.PedersenVSSUtils.generateElementInSubgroup;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
-public class GennaroDKG {
+public class GennaroDKG implements DKG<PartialKeyPair> {
     private final Broadcaster broadcaster;
     private final IncomingChannel incoming;
     private final Map<Integer, PeerCommunicator> peerMap;
@@ -32,11 +29,11 @@ public class GennaroDKG {
     private final BigInteger g;
     private final BigInteger q;
     private final BigInteger p;
-    private final BigInteger e;
     private final int t;
     private BigInteger[] pol1;
     private PedersenVSS pedersenVSS;
     private BigInteger partialSecret;
+    private PartialKeyPair output;
 
 
     /**
@@ -59,11 +56,22 @@ public class GennaroDKG {
         this.g = params.getGenerator();
         this.q = params.getPrimePair().getQ();
         this.p = params.getPrimePair().getP();
-        this.e = generateElementInSubgroup(g, p);
         this.t = ((peerMap.size()) / 2);
 
         logger = LogManager.getLogger(PedersenVSS.class.getName() + ". " + logPrefix + ":");
+    }
 
+
+    @Override
+    public List<Step> getSteps() {
+        ArrayList<Step> steps = new ArrayList<>(generationPhase());
+        steps.addAll(extractionPhase());
+        return steps;
+    }
+
+    @Override
+    public PartialKeyPair output() {
+        return output;
     }
 
     /**
@@ -75,17 +83,18 @@ public class GennaroDKG {
      * - Receives and checks shares from other peers
      * - Resolves complaints
      */
-    public void generationPhase() {
-        pol1 = SecurityUtils.generatePolynomial(t, q);
+    List<Step> generationPhase() {
         BigInteger[] pol2 = SecurityUtils.generatePolynomial(t, q);
+        pol1 = SecurityUtils.generatePolynomial(t, q);
         partialSecret = pol1[0];
+        this.pedersenVSS = new PedersenVSS(broadcaster, incoming, peerMap, id, params, logPrefix, pol1, pol2);
 
-        pedersenVSS = new PedersenVSS(broadcaster, incoming, peerMap, id, params, logPrefix, pol1, pol2);
-
-        pedersenVSS.startProtocol();
-        pedersenVSS.handleReceivedValues();
-        pedersenVSS.handleComplaints();
-        pedersenVSS.applyResolves();
+        return Arrays.asList(
+                new Step(pedersenVSS::startProtocol, 0, SECONDS),
+                new Step(pedersenVSS::handleReceivedValues, 10, SECONDS),
+                new Step(pedersenVSS::handleComplaints, 10, SECONDS),
+                new Step(pedersenVSS::applyResolves, 10, SECONDS)
+        );
     }
 
     /**
@@ -94,40 +103,54 @@ public class GennaroDKG {
      * - Initializes an instance of Feldman-VSS with the honest peers from the generation phase
      * - Receives and checks the secret shares again
      * - Resolves complaints
-     *
-     * @return PartialKeyPair (partialSecretKey, partialPublicKey, publicKey)
+     * - Generates output
      */
-    public PartialKeyPair extractionPhase() {
+    List<Step> extractionPhase() {
         final Set<Integer> honestPartiesPedersen = pedersenVSS.getHonestParties();
-        Map<Integer, PeerCommunicator> honestPeers = peerMap.entrySet()
-                .stream().filter(e -> honestPartiesPedersen.contains(e.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
+        final Map<Integer, PeerCommunicator> honestPeers = new HashMap<>();
+        final Set<Integer> honestParties = new HashSet<>();
         final Map<Integer, PartialSecretMessageDTO> secretsPedersen = pedersenVSS.getSecrets();
+
         FeldmanVSS feldmanVSS = new FeldmanVSS(broadcaster, incoming,
                 honestPeers, id, params, logPrefix, pol1, secretsPedersen);
 
-        feldmanVSS.startProtocol();
-        feldmanVSS.handleReceivedValues();
+        return Arrays.asList(
+                new Step(
+                        () -> peerMap.entrySet()
+                                .stream().filter(e -> honestPartiesPedersen.contains(e.getKey()))
+                                .forEach(e -> peerMap.put(e.getKey(), e.getValue())),
+                        0, SECONDS
+                ),
+                new Step(feldmanVSS::startProtocol, 0, SECONDS),
+                new Step(feldmanVSS::handleReceivedValues, 10, SECONDS),
+                new Step(() -> honestParties.addAll(feldmanVSS.getHonestParties()), 0, SECONDS),
+                new Step(() -> this.setResult(computeKeyPair(broadcaster, honestParties, feldmanVSS)), 0, SECONDS)
+        );
+    }
 
-        Set<Integer> honestParties = feldmanVSS.getHonestParties();
-        // If we aren't disqualified, we can compute the partial secret- and public-values.
-
+    private PartialKeyPair computeKeyPair(Broadcaster broadcaster, Set<Integer> honestParties, FeldmanVSS feldmanVSS) {
+        logger.info("Computing PartialKeyPair");
         BigInteger partialSecretKey = feldmanVSS.output();
         BigInteger partialPublicKey = g.modPow(partialSecret, p);
 
         // Computes Y = prod_i y_i mod p
         List<CommitmentDTO> commitments = broadcaster.getCommitments();
+
         List<BigInteger> partialPublicKeys = new ArrayList<>();
         for (CommitmentDTO commitment : commitments) {
             if (honestParties.contains(commitment.getId())) {
                 partialPublicKeys.add(commitment.getCommitment()[0]);
             }
         }
+
         BigInteger publicKey = partialPublicKeys
                 .stream().reduce(BigInteger::multiply).orElse(BigInteger.ZERO).mod(p);
-
         return new PartialKeyPair(partialSecretKey, partialPublicKey, new PublicKey(publicKey, g, q));
+    }
+
+    private void setResult(PartialKeyPair res) {
+        logger.info("Output has ben set");
+        this.output = res;
     }
 
     BigInteger getPartialSecret() {

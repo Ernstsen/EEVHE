@@ -5,6 +5,7 @@ import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
 import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.interfaces.DKG;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -57,19 +58,38 @@ public class TestGennaroDKG {
         final GennaroDKG player2 = new GennaroDKG(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2);
         final GennaroDKG player3 = new GennaroDKG(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3);
 
-        final List<GennaroDKG> players = Arrays.asList(player1, player2, player3);
+        HashMap<Integer, List<DKG.Step>> generationSteps = new HashMap<>();
+        generationSteps.put(1, player1.generationPhase());
+        generationSteps.put(2, player2.generationPhase());
+        generationSteps.put(3, player3.generationPhase());
 
-        players.forEach(GennaroDKG::generationPhase);
+        for (int i = 0; i < generationSteps.get(1).size(); i++) {
+            generationSteps.get(1).get(i).getExecutable().run();
+            generationSteps.get(2).get(i).getExecutable().run();
+            generationSteps.get(3).get(i).getExecutable().run();
+        }
 
         //No change in state, as no complaints has been registered
         //No change in state, as there were no complaints to be resolved
-        assertEquals("All players should have broadcasted their commitments", 3, testBroadcaster.commitments.size());
+        assertEquals("All players should have broadcast their commitments", 3, testBroadcaster.commitments.size());
         assertEquals("No players should have lodged a complaint", 0, testBroadcaster.complaints.size());
 
         // Fetching partial secret keys from extraction phase
-        final PartialKeyPair partialSecret1 = player1.extractionPhase();
-        final PartialKeyPair partialSecret2 = player2.extractionPhase();
-        final PartialKeyPair partialSecret3 = player3.extractionPhase();
+
+        HashMap<Integer, List<DKG.Step>> extractionSteps = new HashMap<>();
+        extractionSteps.put(1, player1.extractionPhase());
+        extractionSteps.put(2, player2.extractionPhase());
+        extractionSteps.put(3, player3.extractionPhase());
+
+        for (int i = 0; i < extractionSteps.get(1).size(); i++) {
+            extractionSteps.get(1).get(i).getExecutable().run();
+            extractionSteps.get(2).get(i).getExecutable().run();
+            extractionSteps.get(3).get(i).getExecutable().run();
+        }
+
+        final PartialKeyPair partialSecret1 = player1.output();
+        final PartialKeyPair partialSecret2 = player2.output();
+        final PartialKeyPair partialSecret3 = player3.output();
 
         // Assuring that all keys aren't null
         assertNotNull("Partial secret 1 was null", partialSecret1);
