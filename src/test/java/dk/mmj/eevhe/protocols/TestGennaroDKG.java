@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -117,6 +116,20 @@ public class TestGennaroDKG {
 
         // Assert that y = g^x mod p
         assertEquals("Public key Y and g^x did not match", testPublicKey, publicKey);
+    }
+
+    @Test
+    public void testSteps() {
+        final TestBroadcaster testBroadcaster = new TestBroadcaster();
+        final PrivateCommunicationChannel channel = new PrivateCommunicationChannel();
+        final HashMap<Integer, PeerCommunicator> commMap = new HashMap<>();
+
+        GennaroDKG gennaroDKG = new GennaroDKG(testBroadcaster, channel, commMap, 0, params, "");
+
+        ArrayList<DKG.Step> steps = new ArrayList<>();
+        steps.addAll(gennaroDKG.generationPhase());
+        steps.addAll(gennaroDKG.extractionPhase());
+        assertEquals("steps should contain exactly the two phases!", steps.size(), gennaroDKG.getSteps().size());
     }
 
     static class TestBroadcaster implements Broadcaster {

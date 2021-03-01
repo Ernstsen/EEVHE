@@ -64,7 +64,8 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
 
     @Override
     public List<Step> getSteps() {
-        ArrayList<Step> steps = new ArrayList<>(generationPhase());
+        ArrayList<Step> steps = new ArrayList<>();
+        steps.addAll(generationPhase());
         steps.addAll(extractionPhase());
         return steps;
     }
