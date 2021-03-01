@@ -1,5 +1,6 @@
 package dk.mmj.eevhe.protocols;
 
+import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedPersistedKeyParameters;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
@@ -18,7 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class TestGennaroDKG {
-    private ExtendedPersistedKeyParameters params;
+    private ExtendedKeyGenerationParameters params;
 
     @Before
     public void setUp() {

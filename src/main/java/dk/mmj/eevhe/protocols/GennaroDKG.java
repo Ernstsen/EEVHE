@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -135,7 +136,9 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
         BigInteger partialPublicKey = g.modPow(partialSecret, p);
 
         // Computes Y = prod_i y_i mod p
-        List<CommitmentDTO> commitments = broadcaster.getCommitments();
+        List<CommitmentDTO> commitments = broadcaster.getCommitments().stream()
+                .filter(c -> FeldmanVSS.FELDMAN.equals(c.getProtocol()))
+                .collect(Collectors.toList());
 
         List<BigInteger> partialPublicKeys = new ArrayList<>();
         for (CommitmentDTO commitment : commitments) {

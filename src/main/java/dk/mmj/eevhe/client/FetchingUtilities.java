@@ -49,7 +49,7 @@ public class FetchingUtilities {
         return any.get();
     }
 
-    static List<PartialPublicInfo> getPublicInfos(Logger logger, WebTarget target) {
+    public static List<PartialPublicInfo> getPublicInfos(Logger logger, WebTarget target) {
         Response response = target.path("publicInfo").request().buildGet().invoke();
         String responseString = response.readEntity(String.class);
 

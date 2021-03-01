@@ -19,7 +19,7 @@ import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.computeCoefficientCommitments;
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.verifyCommitmentRespected;
 
 public class FeldmanVSS extends AbstractVSS implements VSS {
-    private static final String FELDMAN = "FeldmanVSS";
+    static final String FELDMAN = "FeldmanVSS";
     private final BigInteger[] polynomial;
     private final Set<Integer> honestParties = new HashSet<>();
 

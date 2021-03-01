@@ -1,8 +1,6 @@
 package dk.mmj.eevhe.client;
 
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
-import dk.eSoftware.commandLineParser.Configuration;
-import dk.eSoftware.commandLineParser.InstanceCreatingConfiguration;
 import dk.mmj.eevhe.Application;
 import dk.mmj.eevhe.entities.Candidate;
 import dk.mmj.eevhe.entities.PartialPublicInfo;
@@ -11,6 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
@@ -22,7 +21,7 @@ public abstract class Client implements Application {
     private PublicKey publicKey;
     private PartialPublicInfo publicInfo;
 
-    public Client(ClientConfiguration configuration) {
+    public Client(ClientConfiguration<?> configuration) {
         target = configureWebTarget(logger, configuration.targetUrl);
     }
 
@@ -35,12 +34,14 @@ public abstract class Client implements Application {
         if (publicKey != null) {
             return publicKey;
         }
-        PartialPublicInfo info = fetchPublicInfo();
+        List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, target);
 
-//        BigInteger h = SecurityUtils.combinePartials(info.getPublicKeys(), info.getP());
+        PublicKey publishedPK = publicInfos.get(0).getPublicKey();
 
-//        return publicKey = new PublicKey(h, info.getG(), info.getQ());
-        return publicKey = info.getPublicKey();
+        BigInteger h = publicInfos.stream().map(PartialPublicInfo::getPartialPublicKey)
+                .reduce(BigInteger::multiply).orElse(BigInteger.ONE).mod(publishedPK.getP());
+
+        return this.publicKey = new PublicKey(h, publishedPK.getG(), publishedPK.getQ());
     }
 
     /**
