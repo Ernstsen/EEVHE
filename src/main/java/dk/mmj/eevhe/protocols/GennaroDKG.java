@@ -112,30 +112,25 @@ public class GennaroDKG {
 
         Set<Integer> honestParties = feldmanVSS.getHonestParties();
         // If we aren't disqualified, we can compute the partial secret- and public-values.
-        // TODO: // Change if statement logic since one self shouldn't be in it
-        if (honestParties.contains(id)) {
-            BigInteger partialSecretKey = feldmanVSS.output();
-            BigInteger partialPublicKey = g.modPow(partialSecret, p);
 
-            // Computes Y = prod_i y_i mod p
-            //TODO: Move the following somewhere else??
-            List<CommitmentDTO> commitments = broadcaster.getCommitments();
-            List<BigInteger> partialPublicKeys = new ArrayList<>();
-            for (CommitmentDTO commitment : commitments) {
-                if (honestParties.contains(commitment.getId())) {
-                    partialPublicKeys.add(commitment.getCommitment()[0]);
-                }
+        BigInteger partialSecretKey = feldmanVSS.output();
+        BigInteger partialPublicKey = g.modPow(partialSecret, p);
+
+        // Computes Y = prod_i y_i mod p
+        List<CommitmentDTO> commitments = broadcaster.getCommitments();
+        List<BigInteger> partialPublicKeys = new ArrayList<>();
+        for (CommitmentDTO commitment : commitments) {
+            if (honestParties.contains(commitment.getId())) {
+                partialPublicKeys.add(commitment.getCommitment()[0]);
             }
-            BigInteger publicKey = partialPublicKeys
-                    .stream().reduce(BigInteger::multiply).orElse(BigInteger.ZERO).mod(p);
-
-            return new PartialKeyPair(partialSecretKey, partialPublicKey, new PublicKey(publicKey, g, q));
         }
-        return null;
+        BigInteger publicKey = partialPublicKeys
+                .stream().reduce(BigInteger::multiply).orElse(BigInteger.ZERO).mod(p);
+
+        return new PartialKeyPair(partialSecretKey, partialPublicKey, new PublicKey(publicKey, g, q));
     }
 
-    // TODO: This should not be accessible outside of testing?
-    public BigInteger getPartialSecret() {
+    BigInteger getPartialSecret() {
         return partialSecret;
     }
 }

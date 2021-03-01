@@ -36,7 +36,7 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
     @Override
     public void startProtocol() {
         logger.info("Initialized FeldmanVSS");
-        //TODO: Shouldn't add one self
+
         honestParties.add(id);
         honestParties.addAll(peerMap.keySet());
 
