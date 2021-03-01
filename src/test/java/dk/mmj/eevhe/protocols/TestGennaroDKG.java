@@ -86,19 +86,19 @@ public class TestGennaroDKG {
             extractionSteps.get(3).get(i).getExecutable().run();
         }
 
-        final PartialKeyPair partialSecret1 = player1.output();
-        final PartialKeyPair partialSecret2 = player2.output();
-        final PartialKeyPair partialSecret3 = player3.output();
+        final PartialKeyPair output1 = player1.output();
+        final PartialKeyPair output2 = player2.output();
+        final PartialKeyPair output3 = player3.output();
 
         // Assuring that all keys aren't null
-        assertNotNull("Partial secret 1 was null", partialSecret1);
-        assertNotNull("Partial secret 2 was null", partialSecret2);
-        assertNotNull("Partial secret 3 was null", partialSecret3);
+        assertNotNull("Partial secret 1 was null", output1);
+        assertNotNull("Partial secret 2 was null", output2);
+        assertNotNull("Partial secret 3 was null", output3);
 
         // Fetching partial public keys
-        final BigInteger partialPublicKey1 = partialSecret1.getPartialPublicKey();
-        final BigInteger partialPublicKey2 = partialSecret2.getPartialPublicKey();
-        final BigInteger partialPublicKey3 = partialSecret3.getPartialPublicKey();
+        final BigInteger partialPublicKey1 = output1.getPartialPublicKey();
+        final BigInteger partialPublicKey2 = output2.getPartialPublicKey();
+        final BigInteger partialPublicKey3 = output3.getPartialPublicKey();
 
         // Fetching partial secret keys
         final BigInteger partialSecretKey1 = player1.getPartialSecret();
@@ -106,13 +106,17 @@ public class TestGennaroDKG {
         final BigInteger partialSecretKey3 = player3.getPartialSecret();
 
         // Compute public key y and secret key x
-        final BigInteger p = partialSecret1.getPublicKey().getP();
-        final BigInteger q = partialSecret1.getPublicKey().getQ();
-        final BigInteger g = partialSecret1.getPublicKey().getG();
+        final BigInteger p = output1.getPublicKey().getP();
+        final BigInteger q = output1.getPublicKey().getQ();
+        final BigInteger g = output1.getPublicKey().getG();
         final BigInteger publicKey = partialPublicKey1.multiply(partialPublicKey2)
                 .multiply(partialPublicKey3).mod(p);
         final BigInteger secretKey = partialSecretKey1.add(partialSecretKey2).add(partialSecretKey3).mod(q);
         final BigInteger testPublicKey = g.modPow(secretKey, p);
+
+        assertEquals("partials for player 1 did not match", partialPublicKey1, g.modPow(partialSecretKey1, p));
+        assertEquals("partials for player 2 did not match", partialPublicKey2, g.modPow(partialSecretKey2, p));
+        assertEquals("partials for player 3 did not match", partialPublicKey3, g.modPow(partialSecretKey3, p));
 
         // Assert that y = g^x mod p
         assertEquals("Public key Y and g^x did not match", testPublicKey, publicKey);
