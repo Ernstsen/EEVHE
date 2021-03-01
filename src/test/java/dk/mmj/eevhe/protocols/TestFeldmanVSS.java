@@ -83,7 +83,6 @@ public class TestFeldmanVSS {
         assertNotNull("Partial secret was null", partialSecret3);
     }
 
-    @Ignore("Not implemented")
     @Test
     public void testProtocolWith1NonParticipant() {
         //Modelling communications channels
@@ -93,14 +92,10 @@ public class TestFeldmanVSS {
         final TestPedersenVSS.PrivateCommunicationChannel channel3 = new TestPedersenVSS.PrivateCommunicationChannel();
 
         final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
         final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);
-
-        commMap2.put(1, channel1);
-        commMap2.put(3, channel3);
 
         commMap3.put(1, channel1);
         commMap3.put(2, channel2);

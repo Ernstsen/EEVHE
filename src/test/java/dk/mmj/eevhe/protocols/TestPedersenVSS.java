@@ -96,14 +96,10 @@ public class TestPedersenVSS {
         final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
 
         final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
         final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);
-
-        commMap2.put(1, channel1);
-        commMap2.put(3, channel3);
 
         commMap3.put(1, channel1);
         commMap3.put(2, channel2);
