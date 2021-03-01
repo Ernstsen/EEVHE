@@ -69,8 +69,8 @@ public class TestBulletinBoardBroadcaster {
                     return new SimpleResponse(204);
                 });
 
-        final CommitmentDTO c1 = new CommitmentDTO(new BigInteger[]{valueOf(5), valueOf(654)}, 65);
-        final CommitmentDTO c2 = new CommitmentDTO(new BigInteger[]{valueOf(85), valueOf(65)}, 66);
+        final CommitmentDTO c1 = new CommitmentDTO(new BigInteger[]{valueOf(5), valueOf(654)}, 65, "FOO");
+        final CommitmentDTO c2 = new CommitmentDTO(new BigInteger[]{valueOf(85), valueOf(65)}, 66, "BAR");
 
         broadcaster.commit(c1);
         broadcaster.commit(c2);
@@ -87,15 +87,15 @@ public class TestBulletinBoardBroadcaster {
         when(target.path("commitments").request().post(any()))
                 .thenReturn(new SimpleResponse(500));
 
-        broadcaster.commit(new CommitmentDTO(new BigInteger[]{valueOf(5), valueOf(654)}, 65));
-        broadcaster.commit(new CommitmentDTO(new BigInteger[]{valueOf(85), valueOf(65)}, 66));
+        broadcaster.commit(new CommitmentDTO(new BigInteger[]{valueOf(5), valueOf(654)}, 65, "FOO"));
+        broadcaster.commit(new CommitmentDTO(new BigInteger[]{valueOf(85), valueOf(65)}, 66, "FOO"));
     }
 
     @Test
     public void getCommitments() throws JsonProcessingException {
         final List<CommitmentDTO> expected = Arrays.asList(
-                new CommitmentDTO(new BigInteger[]{valueOf(5), valueOf(654)}, 65),
-                new CommitmentDTO(new BigInteger[]{valueOf(85), valueOf(65)}, 66));
+                new CommitmentDTO(new BigInteger[]{valueOf(5), valueOf(654)}, 65, "BAR"),
+                new CommitmentDTO(new BigInteger[]{valueOf(85), valueOf(65)}, 66, "BAR"));
 
         final String commitsString = new ObjectMapper().writeValueAsString(expected);
 

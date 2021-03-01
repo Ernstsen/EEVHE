@@ -75,7 +75,7 @@ public class TestSerialization {
         DecryptionAuthorityInfo daInfo1 = new DecryptionAuthorityInfo(0, "127.0.0.1:8080");
         DecryptionAuthorityInfo daInfo2 = new DecryptionAuthorityInfo(1, "127.0.0.1:8081");
         serializables.add(daInfo1);
-        serializables.add(new CommitmentDTO(new BigInteger[]{new BigInteger("5464"), new BigInteger("641349646")}, 56));
+        serializables.add(new CommitmentDTO(new BigInteger[]{new BigInteger("5464"), new BigInteger("641349646")}, 56, "FOO"));
         serializables.add(new ComplaintDTO(69849684, 12378612));
         PartialSecretMessageDTO partialSecretMessageDTO = new PartialSecretMessageDTO(new BigInteger("56138131"), new BigInteger("2342429"), 1123, 12412);
         serializables.add(partialSecretMessageDTO);

@@ -118,8 +118,8 @@ public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBui
         return "\tMODE: integrationTest\n" +
                 "\t  --" + DURATION + "int\t Duration of vote in minutes\n" +
                 "\t  --" + VOTE + "\t\t Defines when votes should be cast:\n" +
-                "\t\t\t" + VOTE_START + ": after launch, " + VOTE_END + ": aprox. 15 sec. before termination, "
-                + VOTE_AFTER + ": aprox. 15 sec after termination\n" +
+                "\t\t\t" + VOTE_START + ": after launch, " + VOTE_END + ": approx. 15 sec. before termination, "
+                + VOTE_AFTER + ": approx. 15 sec after termination\n" +
                 "\t  --" + DISABLED_DECRYPTION_AUTHORITIES + "\t Which DA's should not be executed by the automatic test.\n" +
                 "\t\t\t " + DA_1 + ", " + DA_2 + " and " + DA_3 + " are the options available";
     }

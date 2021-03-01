@@ -52,6 +52,7 @@ public class DecryptionAuthority extends AbstractServer {
     private PartialSecretKey sk;
     private long endTime;
     private PublicKey pk;
+    private BigInteger partialPublicKey;
     private List<Candidate> candidates;
     private Iterator<DKG.Step> dkgSteps;
 
@@ -146,13 +147,17 @@ public class DecryptionAuthority extends AbstractServer {
             DKG.Step step = dkgSteps.next();
             scheduler.schedule(stepWrapper(step), step.getDelay(), step.getTimeUnit());
         } else {
+            logger.info("Retrieving keys from DKG and sending to BulletinBoard");
             PartialKeyPair output = dkg.output();
             sk = new PartialSecretKey(output.getPartialSecretKey(), params.getPrimePair().getP());
             pk = output.getPublicKey();
-            BigInteger partialPublicKey = output.getPartialPublicKey();
+            partialPublicKey = output.getPartialPublicKey();
             PartialPublicInfo ppi = new PartialPublicInfo(id, pk, partialPublicKey, candidates, endTime);
 
-            bulletinBoard.path("publicInfo").request().post(Entity.entity(ppi, MediaType.APPLICATION_JSON));
+            Response resp = bulletinBoard.path("publicInfo").request().post(Entity.entity(ppi, MediaType.APPLICATION_JSON));
+            if(resp.getStatus() != 204){
+                logger.error("Failed to post public info to bulletinBoard! Status was: " + resp.getStatus());
+            }
         }
     }
 
@@ -224,7 +229,7 @@ public class DecryptionAuthority extends AbstractServer {
 
         logger.info("Partially decrypted value. Generating proof");
 
-        PublicKey partialPublicKey = new PublicKey(pk.getG().modPow(sk.getSecretValue(), sk.getP()), pk.getG(), pk.getQ());
+        PublicKey partialPublicKey = new PublicKey(this.partialPublicKey, pk.getG(), pk.getQ());
 
         DLogProofUtils.Proof[] proofs = new DLogProofUtils.Proof[candidates.size()];
         for (int i = 0; i < candidates.size(); i++) {

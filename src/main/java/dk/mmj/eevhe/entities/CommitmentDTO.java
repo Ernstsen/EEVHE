@@ -8,10 +8,12 @@ import java.util.Objects;
 public class CommitmentDTO {
     private BigInteger[] commitment;
     private int id;
+    private String protocol;
 
-    public CommitmentDTO(BigInteger[] commitment, int id) {
+    public CommitmentDTO(BigInteger[] commitment, int id, String protocol) {
         this.commitment = commitment;
         this.id = id;
+        this.protocol = protocol;
     }
 
     public CommitmentDTO() {
@@ -33,17 +35,25 @@ public class CommitmentDTO {
         this.id = id;
     }
 
+    public String getProtocol() {
+        return protocol;
+    }
+
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         CommitmentDTO that = (CommitmentDTO) o;
-        return id == that.id && Arrays.equals(commitment, that.commitment);
+        return id == that.id && Arrays.equals(commitment, that.commitment) && Objects.equals(protocol, that.protocol);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(id);
+        int result = Objects.hash(id, protocol);
         result = 31 * result + Arrays.hashCode(commitment);
         return result;
     }
@@ -53,6 +63,7 @@ public class CommitmentDTO {
         return "CommitmentDTO{" +
                 "commitment=" + Arrays.toString(commitment) +
                 ", id=" + id +
+                ", protocol='" + protocol + '\'' +
                 '}';
     }
 }

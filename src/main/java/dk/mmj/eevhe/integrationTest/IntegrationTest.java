@@ -61,7 +61,7 @@ public class IntegrationTest implements Application {
             doMultiVote(voteDelay);
         }
 
-        retrieveVotes(duration);
+        retrieveVotes(duration + 1);
     }
 
     /**

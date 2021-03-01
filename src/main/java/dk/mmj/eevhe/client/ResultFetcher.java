@@ -64,7 +64,8 @@ public class ResultFetcher extends Client {
                 PartialResult result = partialResultList.getResults().get(candIdx);
 
                 CipherText partialDecryption = new CipherText(result.getResult(), sumCiphertext.getD());
-                List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, target);
+                Map<Integer, PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, target)
+                        .stream().collect(Collectors.toMap(PartialPublicInfo::getSenderId, (i) -> i));
                 PublicKey partialPublicKey = new PublicKey(
                         publicInfos.get(result.getId()).getPartialPublicKey(),
                         publicInfos.get(result.getId()).getPublicKey().getG(),

@@ -13,6 +13,7 @@ import dk.mmj.eevhe.protocols.interfaces.VSS;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static dk.mmj.eevhe.crypto.PedersenVSSUtils.computeCoefficientCommitments;
 import static dk.mmj.eevhe.crypto.PedersenVSSUtils.verifyCommitmentRespected;
@@ -25,6 +26,7 @@ import static dk.mmj.eevhe.crypto.PedersenVSSUtils.verifyCommitmentRespected;
  * J Cryptology 20, 51–83 (2007). <a href="https://doi.org/10.1007/s00145-006-0347-3">https://doi.org/10.1007/s00145-006-0347-3</a>
  */
 public class PedersenVSS extends AbstractVSS implements VSS {
+    private static final String PEDERSEN = "PedersenVSS";
     private final Set<Integer> honestParties = new HashSet<>();
     private final BigInteger e;
     private final int t;
@@ -52,7 +54,7 @@ public class PedersenVSS extends AbstractVSS implements VSS {
         BigInteger[] commitment = computeCoefficientCommitments(g, e, p, pol1, pol2);
 
         logger.info("Broadcasting commitments");
-        broadcaster.commit(new CommitmentDTO(commitment, id));
+        broadcaster.commit(new CommitmentDTO(commitment, id, PEDERSEN));
 
         commitments.put(id, commitment);
         secrets.put(id,
@@ -91,7 +93,9 @@ public class PedersenVSS extends AbstractVSS implements VSS {
         }
 
         logger.info("Reading commitments");
-        final List<CommitmentDTO> commitments = broadcaster.getCommitments();
+        final List<CommitmentDTO> commitments = broadcaster.getCommitments().stream()
+                .filter(c -> PEDERSEN.equals(c.getProtocol()))
+                .collect(Collectors.toList());
 
         logger.info("Verifying secret shares, using commitments");
         for (CommitmentDTO commitment : commitments) {

@@ -13,11 +13,13 @@ import dk.mmj.eevhe.protocols.interfaces.VSS;
 
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.computeCoefficientCommitments;
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.verifyCommitmentRespected;
 
 public class FeldmanVSS extends AbstractVSS implements VSS {
+    private static final String FELDMAN = "FeldmanVSS";
     private final BigInteger[] polynomial;
     private final Set<Integer> honestParties = new HashSet<>();
 
@@ -45,7 +47,7 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
         BigInteger[] commitment = computeCoefficientCommitments(g, p, polynomial);
 
         logger.info("Broadcasting commitments");
-        broadcaster.commit(new CommitmentDTO(commitment, id));
+        broadcaster.commit(new CommitmentDTO(commitment, id, FELDMAN));
 
         if (secrets.isEmpty()) {
             logger.info("Computing and distributing secret shares");
@@ -78,15 +80,17 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
             secrets.put(secret.getSender(), secret);
         }
 
-        boolean hasReceivedFromAll = secrets.size() == peerMap.size() + 1;//Peers + self
+        boolean hasReceivedFromAll = secrets.keySet().containsAll(honestParties);//Peers + self
         //TODO: When should we just ignore the missing value(s)? Otherwise risk corruption killing election by non-participation
         if (!hasReceivedFromAll) {
-            logger.info("Has not received all commitments - should retry");
+            logger.info("Has not received all secrets - should retry");
             return false;
         }
 
         logger.info("Reading commitments");
-        final List<CommitmentDTO> commitments = broadcaster.getCommitments();
+        final List<CommitmentDTO> commitments = broadcaster.getCommitments().stream()
+                .filter(c -> FELDMAN.equals(c.getProtocol()))
+                .collect(Collectors.toList());
 
         logger.info("Verifying secret shares, using commitments");
         for (CommitmentDTO commitment : commitments) {

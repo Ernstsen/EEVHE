@@ -92,7 +92,7 @@ public class TestBulletinBoard {
                 2
         );
 
-        CommitmentDTO commitmentDTO = new CommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1);
+        CommitmentDTO commitmentDTO = new CommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1, "BAR");
 
         ComplaintDTO complaint = new ComplaintDTO(1, 2);
         ComplaintResolveDTO resolve = new ComplaintResolveDTO(1, 2, new PartialSecretMessageDTO(valueOf(564), valueOf(568), 2, 1));

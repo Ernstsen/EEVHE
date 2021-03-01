@@ -119,7 +119,7 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
                 new Step(
                         () -> peerMap.entrySet()
                                 .stream().filter(e -> honestPartiesPedersen.contains(e.getKey()))
-                                .forEach(e -> peerMap.put(e.getKey(), e.getValue())),
+                                .forEach(e -> honestPeers.put(e.getKey(), e.getValue())),
                         0, SECONDS
                 ),
                 new Step(feldmanVSS::startProtocol, 0, SECONDS),

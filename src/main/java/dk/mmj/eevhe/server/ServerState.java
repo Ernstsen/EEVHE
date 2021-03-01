@@ -2,9 +2,13 @@ package dk.mmj.eevhe.server;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.omg.CORBA.TRANSACTION_UNAVAILABLE;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
  * Singleton state for a server. Acts like a map
@@ -32,6 +36,18 @@ public class ServerState {
      */
     public void put(String key, Object object) {
         state.put(key, object);
+    }
+
+    public synchronized <T> void putInList(String key, T object) {
+        //noinspection unchecked
+        List<T> list = (List<T>) state.get(key);
+
+        if (list == null) {
+            list = new ArrayList<T>();
+            state.put(key, list);
+        }
+
+        list.add(object);
     }
 
     /**

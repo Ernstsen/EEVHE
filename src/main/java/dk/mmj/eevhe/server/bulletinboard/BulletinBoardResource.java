@@ -82,9 +82,7 @@ public class BulletinBoardResource {
             logger.warn("Voter with id=" + voterId + " attempted to vote more than once");
             throw new NotAllowedException("A vote has already been registered with this ID");
         }
-
-        List<PersistedBallot> votes = state.get(BALLOTS, ArrayList.class);
-        votes.add(new PersistedBallot(ballot));
+        addToList(BALLOTS, new PersistedBallot(ballot));
         hasVoted.add(voterId);
     }
 
@@ -106,16 +104,8 @@ public class BulletinBoardResource {
         addToList(RESULT, partialDecryptions);
     }
 
-    @SuppressWarnings("unchecked")
     private void addToList(String key, Object element) {
-        List<Object> list = state.get(key, List.class);
-
-        if (list == null) {
-            list = new ArrayList<>();
-            state.put(key, list);
-        }
-
-        list.add(element);
+        state.putInList(key, element);
     }
 
     @SuppressWarnings("unchecked")
@@ -136,6 +126,7 @@ public class BulletinBoardResource {
     @Path("commitments")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postCommitments(CommitmentDTO commitment) {
+        logger.debug("Received commitment from DA with id=" + commitment.getId() + ", for protocol=" + commitment.getProtocol());
         addToList(COEFFICIENT_COMMITMENT, commitment);
     }
 
