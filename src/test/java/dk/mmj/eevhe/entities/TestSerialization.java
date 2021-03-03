@@ -64,7 +64,7 @@ public class TestSerialization {
         PartialResultList partialResultList = new PartialResultList(Arrays.asList(partialResult, partialResult2), 5);
         PartialResultList partialResultList2 = new PartialResultList(Arrays.asList(partialResult2, partialResult), 94);
         serializables.add(partialResultList);
-        serializables.add(new PartialSecretKey(new BigInteger("23422"), new BigInteger("235423523")));
+        serializables.add(new PartialSecretKey(new BigInteger("23422"), new BigInteger("2342124"), new BigInteger("235423523")));
 
         serializables.add(new PersistedBallot(ballot));
         PersistedVote pv1 = new PersistedVote(candidateVoteDTO);
@@ -82,7 +82,8 @@ public class TestSerialization {
         serializables.add(new ComplaintResolveDTO(5874767, 1298376192, partialSecretMessageDTO));
         serializables.add(new DecryptionAuthorityInput("wiughweiugnwe", "woegnweoginw", 54684654, Arrays.asList(daInfo1, daInfo2)));
 
-        serializables.add(new PartialKeyPair(new BigInteger("123456789"), new BigInteger("123456789"), publicKey));
+        serializables.add(new PartialKeyPair(new PartialSecretKey(new BigInteger("123521"), new BigInteger("8734534"), new BigInteger("98273523"))
+                , new BigInteger("123456789"), publicKey));
         serializables.add(new PartialPublicInfo(1, publicKey, new BigInteger("6513894"), Arrays.asList(cand1, cand2), 16318));
     }
 

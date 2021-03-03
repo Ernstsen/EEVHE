@@ -6,8 +6,8 @@ import dk.mmj.eevhe.crypto.exceptions.UnableToDecryptException;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedPersistedKeyParameters;
 import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
-import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.PrivateCommunicationChannel;
+import dk.mmj.eevhe.protocols.connectors.TestBroadcaster;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.DKG;
 import org.junit.Before;
@@ -73,8 +73,8 @@ public class TestGennaroDKG {
 
         //No change in state, as no complaints has been registered
         //No change in state, as there were no complaints to be resolved
-        assertEquals("All players should have broadcast their commitments", 3, testBroadcaster.commitments.size());
-        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.complaints.size());
+        assertEquals("All players should have broadcast their commitments", 3, testBroadcaster.getCommitments().size());
+        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.getComplaints().size());
 
         // Fetching partial secret keys from extraction phase
 
@@ -104,32 +104,35 @@ public class TestGennaroDKG {
         final BigInteger partialPublicKey3 = output3.getPartialPublicKey();
 
         // Fetching partial secret keys
-        final BigInteger partialSecretKey1 = output1.getPartialSecretKey();
-        final BigInteger partialSecretKey2 = output2.getPartialSecretKey();
-        final BigInteger partialSecretKey3 = output3.getPartialSecretKey();
+        final PartialSecretKey partialSecretKey1 = output1.getPartialSecretKey();
+        final PartialSecretKey partialSecretKey2 = output2.getPartialSecretKey();
+        final PartialSecretKey partialSecretKey3 = output3.getPartialSecretKey();
 
         // Compute public key y and secret key x
         final BigInteger p = output1.getPublicKey().getP();
         final BigInteger q = output1.getPublicKey().getQ();
         final BigInteger g = output1.getPublicKey().getG();
 
-        assertInvariants(player1, player2, player3, output1, output2, output3, partialPublicKey1, partialPublicKey2, partialPublicKey3, p, q, g);
-        assertEncryptDecrypt(output1, partialSecretKey1, partialSecretKey2, partialSecretKey3, p, g);
+        assertInvariants(output1, output2, output3, partialPublicKey1, partialPublicKey2, partialPublicKey3, p, q, g);
+        assertEncryptDecrypt(output1, partialSecretKey1.getSecretValue(), partialSecretKey2.getSecretValue(), partialSecretKey3.getSecretValue(), p, g);
     }
 
-    private void assertInvariants(GennaroDKG player1, GennaroDKG player2, GennaroDKG player3,
-                                  PartialKeyPair output1, PartialKeyPair output2, PartialKeyPair output3,
+    private void assertInvariants(PartialKeyPair output1, PartialKeyPair output2, PartialKeyPair output3,
                                   BigInteger partialPublicKey1, BigInteger partialPublicKey2, BigInteger partialPublicKey3,
                                   BigInteger p, BigInteger q, BigInteger g) {
         //Invariant Assertions
         final BigInteger publicKey = partialPublicKey1.multiply(partialPublicKey2)
                 .multiply(partialPublicKey3).mod(p);
-        final BigInteger x = player1.getPartialSecret().add(player2.getPartialSecret()).add(player3.getPartialSecret()).mod(q);
+
+        BigInteger partialSecret1 = output1.getPartialSecretKey().getdLogPublicValue();
+        BigInteger partialSecret2 = output2.getPartialSecretKey().getdLogPublicValue();
+        BigInteger partialSecret3 = output3.getPartialSecretKey().getdLogPublicValue();
+        final BigInteger x = partialSecret1.add(partialSecret2).add(partialSecret3).mod(q);
         final BigInteger testPublicKey = g.modPow(x, p);
 
-        assertEquals("partials for player 1 did not match", partialPublicKey1, g.modPow(player1.getPartialSecret(), p));
-        assertEquals("partials for player 2 did not match", partialPublicKey2, g.modPow(player2.getPartialSecret(), p));
-        assertEquals("partials for player 3 did not match", partialPublicKey3, g.modPow(player3.getPartialSecret(), p));
+        assertEquals("partials for player 1 did not match", partialPublicKey1, g.modPow(partialSecret1, p));
+        assertEquals("partials for player 2 did not match", partialPublicKey2, g.modPow(partialSecret2, p));
+        assertEquals("partials for player 3 did not match", partialPublicKey3, g.modPow(partialSecret3, p));
 
         // Assert that y = g^x mod p
         assertEquals("Public key Y and g^x did not match", testPublicKey, publicKey);
@@ -176,56 +179,5 @@ public class TestGennaroDKG {
         steps.addAll(gennaroDKG.generationPhase());
         steps.addAll(gennaroDKG.extractionPhase());
         assertEquals("steps should contain exactly the two phases!", steps.size(), gennaroDKG.getSteps().size());
-    }
-
-    static class TestBroadcaster implements Broadcaster {
-        final List<CommitmentDTO> commitments = new ArrayList<>();
-        final List<ComplaintDTO> complaints = new ArrayList<>();
-        final List<ComplaintResolveDTO> resolves = new ArrayList<>();
-
-
-        @Override
-        public void commit(CommitmentDTO commitmentDTO) {
-            commitments.add(commitmentDTO);
-        }
-
-        @Override
-        public List<CommitmentDTO> getCommitments() {
-            return commitments;
-        }
-
-        @Override
-        public void complain(ComplaintDTO complaint) {
-            complaints.add(complaint);
-        }
-
-        @Override
-        public List<ComplaintDTO> getComplaints() {
-            return complaints;
-        }
-
-        @Override
-        public void resolveComplaint(ComplaintResolveDTO complaintResolveDTO) {
-            resolves.add(complaintResolveDTO);
-        }
-
-        @Override
-        public List<ComplaintResolveDTO> getResolves() {
-            return resolves;
-        }
-    }
-
-    static class PrivateCommunicationChannel implements IncomingChannel, PeerCommunicator {
-        private final List<PartialSecretMessageDTO> messages = new ArrayList<>();
-
-        @Override
-        public List<PartialSecretMessageDTO> receiveSecrets() {
-            return messages;
-        }
-
-        @Override
-        public void sendSecret(PartialSecretMessageDTO value) {
-            messages.add(value);
-        }
     }
 }

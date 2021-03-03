@@ -2,10 +2,7 @@ package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
-import dk.mmj.eevhe.entities.CommitmentDTO;
-import dk.mmj.eevhe.entities.PartialKeyPair;
-import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
-import dk.mmj.eevhe.entities.PublicKey;
+import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
 import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
@@ -149,15 +146,15 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
 
         BigInteger publicKey = partialPublicKeys
                 .stream().reduce(BigInteger::multiply).orElse(BigInteger.ZERO).mod(p);
-        return new PartialKeyPair(partialSecretKey, partialPublicKey, new PublicKey(publicKey, g, q));
+        return new PartialKeyPair(
+                new PartialSecretKey(partialSecretKey, partialSecret, p),
+                partialPublicKey,
+                new PublicKey(publicKey, g, q)
+        );
     }
 
     private void setResult(PartialKeyPair res) {
         logger.info("Output has ben set");
         this.output = res;
-    }
-
-    BigInteger getPartialSecret() {
-        return partialSecret;
     }
 }

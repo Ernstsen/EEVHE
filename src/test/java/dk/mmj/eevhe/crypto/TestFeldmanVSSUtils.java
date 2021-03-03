@@ -140,7 +140,7 @@ public class TestFeldmanVSSUtils {
         PartialKeyPair actualPartialKeyPair = FeldmanVSSUtils.generateKeyPair(g, q, u, gV);
 
         assertEquals("Public keys h are not equal", expectedH, actualPartialKeyPair.getPublicKey().getH());
-        assertEquals("Partial secret keys s_j are not equal", expectedPartialSecretKey, actualPartialKeyPair.getPartialSecretKey());
+        assertEquals("Partial secret keys s_j are not equal", expectedPartialSecretKey, actualPartialKeyPair.getPartialSecretKey().getSecretValue());
         assertEquals("Partial public keys h_j are not equal", expectedPartialPublicKey, actualPartialKeyPair.getPartialPublicKey());
     }
 
@@ -171,7 +171,7 @@ public class TestFeldmanVSSUtils {
         PartialKeyPair actualPartialKeyPair = FeldmanVSSUtils.generateKeyPair(g, q, u, gV);
 
         assertEquals("Public keys h are not equal", expectedH, actualPartialKeyPair.getPublicKey().getH());
-        assertEquals("Partial secret keys s_j are not equal", expectedPartialSecretKey, actualPartialKeyPair.getPartialSecretKey());
+        assertEquals("Partial secret keys s_j are not equal", expectedPartialSecretKey, actualPartialKeyPair.getPartialSecretKey().getSecretValue());
         assertEquals("Partial public keys h_j are not equal", expectedPartialPublicKey, actualPartialKeyPair.getPartialPublicKey());
     }
 }

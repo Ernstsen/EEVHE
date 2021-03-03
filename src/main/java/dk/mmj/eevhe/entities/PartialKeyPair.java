@@ -4,11 +4,11 @@ import java.math.BigInteger;
 import java.util.Objects;
 
 public class PartialKeyPair {
-    private BigInteger partialSecretKey;
+    private PartialSecretKey partialSecretKey;
     private BigInteger partialPublicKey;
     private PublicKey publicKey;
 
-    public PartialKeyPair(BigInteger partialSecretKey, BigInteger partialPublicKey, PublicKey publicKey) {
+    public PartialKeyPair(PartialSecretKey partialSecretKey, BigInteger partialPublicKey, PublicKey publicKey) {
         this.partialSecretKey = partialSecretKey;
         this.partialPublicKey = partialPublicKey;
         this.publicKey = publicKey;
@@ -17,11 +17,11 @@ public class PartialKeyPair {
     public PartialKeyPair() {
     }
 
-    public BigInteger getPartialSecretKey() {
+    public PartialSecretKey getPartialSecretKey() {
         return partialSecretKey;
     }
 
-    public void setPartialSecretKey(BigInteger partialSecretKey) {
+    public void setPartialSecretKey(PartialSecretKey partialSecretKey) {
         this.partialSecretKey = partialSecretKey;
     }
 

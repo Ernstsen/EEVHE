@@ -1,6 +1,7 @@
 package dk.mmj.eevhe.crypto;
 
 import dk.mmj.eevhe.entities.PartialKeyPair;
+import dk.mmj.eevhe.entities.PartialSecretKey;
 import dk.mmj.eevhe.entities.PublicKey;
 
 import java.math.BigInteger;
@@ -63,6 +64,8 @@ public class FeldmanVSSUtils {
     }
 
     /**
+     * <b>NOTE: does not include dLogPublicValue, as unable to generate that value without solving discrete log </b>
+     *
      * @param g  Generator g
      * @param q  Prime modulus q = (p-1)/2
      * @param u  For all i: u_i, which is equal to f_i(j)
@@ -78,6 +81,6 @@ public class FeldmanVSSUtils {
         BigInteger partialSecretKey = Arrays.stream(u).reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
         BigInteger partialPublicKey = g.modPow(partialSecretKey, p);
 
-        return new PartialKeyPair(partialSecretKey, partialPublicKey, publicKey);
+        return new PartialKeyPair(new PartialSecretKey(partialSecretKey, null, p), partialPublicKey, publicKey);
     }
 }

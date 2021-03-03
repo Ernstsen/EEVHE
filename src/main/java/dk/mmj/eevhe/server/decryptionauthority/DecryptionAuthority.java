@@ -17,6 +17,7 @@ import dk.mmj.eevhe.protocols.connectors.ServerStateIncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.DKG;
 import dk.mmj.eevhe.server.AbstractServer;
+import dk.mmj.eevhe.server.decryptionauthority.interfaces.Decrypter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
@@ -38,23 +39,25 @@ import java.util.stream.Collectors;
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
 public class DecryptionAuthority extends AbstractServer {
-    private final Logger logger;
     private static final String RSA_PUBLIC_KEY_NAME = "rsa";
+    private final Logger logger;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final JerseyWebTarget bulletinBoard;
     private final int port;
     private final Integer id;
     private final ObjectMapper mapper = new ObjectMapper();
-    private KeyGenParams params;
+    private final Decrypter decrypter;
+    private final KeyGenParams params;
+    private final DecryptionAuthorityInput input;
+    private final long endTime;
+    private final List<Candidate> candidates;
     private DKG<PartialKeyPair> dkg;
-    private DecryptionAuthorityInput input;
     private boolean timeCorrupt = false;
     private PartialSecretKey sk;
-    private long endTime;
     private PublicKey pk;
     private BigInteger partialPublicKey;
-    private List<Candidate> candidates;
     private Iterator<DKG.Step> dkgSteps;
+    private PartialKeyPair keyPair;
 
     public DecryptionAuthority(DecryptionAuthorityConfiguration configuration) {
         logger = LogManager.getLogger(DecryptionAuthority.class + " " + configuration.id + ":");
@@ -71,8 +74,7 @@ public class DecryptionAuthority extends AbstractServer {
             });
         } catch (IOException e) {
             logger.error("You moved the file, and are yet to do this properly!");
-            System.exit(-1);
-            return;
+            throw new RuntimeException("Failed to load file for candidates", e);
         }
 
         File conf = new File(configuration.confPath);
@@ -103,8 +105,14 @@ public class DecryptionAuthority extends AbstractServer {
             scheduler.schedule(this::terminateVoting, relativeEndTime, TimeUnit.MILLISECONDS);
         } catch (IOException e) {
             logger.error("Failed to read authorities input file", e);
-            System.exit(-1);
+            throw new RuntimeException("Failed to read DecryptionAuthorityInput from file", e);
         }
+
+        decrypter = new DecrypterIml(id,
+                this::getBallots,
+                b -> VoteProofUtils.verifyBallot(b, pk),
+                candidates
+        );
     }
 
     @Override
@@ -148,14 +156,11 @@ public class DecryptionAuthority extends AbstractServer {
             scheduler.schedule(stepWrapper(step), step.getDelay(), step.getTimeUnit());
         } else {
             logger.info("Retrieving keys from DKG and sending to BulletinBoard");
-            PartialKeyPair output = dkg.output();
-            sk = new PartialSecretKey(output.getPartialSecretKey(), params.getPrimePair().getP());
-            pk = output.getPublicKey();
-            partialPublicKey = output.getPartialPublicKey();
-            PartialPublicInfo ppi = new PartialPublicInfo(id, pk, partialPublicKey, candidates, endTime);
+            keyPair = dkg.output();
+            PartialPublicInfo ppi = new PartialPublicInfo(id, keyPair.getPublicKey(), keyPair.getPartialPublicKey(), candidates, endTime);
 
             Response resp = bulletinBoard.path("publicInfo").request().post(Entity.entity(ppi, MediaType.APPLICATION_JSON));
-            if(resp.getStatus() != 204){
+            if (resp.getStatus() != 204) {
                 logger.error("Failed to post public info to bulletinBoard! Status was: " + resp.getStatus());
             }
         }
@@ -179,8 +184,6 @@ public class DecryptionAuthority extends AbstractServer {
 
     private void terminateVoting() {
         Long bulletinBoardTime = new Long(bulletinBoard.path("getCurrentTime").request().get(String.class));
-        PartialPublicInfo pi = FetchingUtilities.fetchPublicInfo(logger, RSA_PUBLIC_KEY_NAME, bulletinBoard);
-        List<Candidate> candidates = pi.getCandidates();
 
         long remainingTime = endTime - bulletinBoardTime;
 
@@ -190,59 +193,10 @@ public class DecryptionAuthority extends AbstractServer {
             return;
         }
 
-        logger.info("Terminating voting - Fetching ballots");
-        List<PersistedBallot> ballots = getBallots();
-
-        if (ballots == null || ballots.size() < 1) {
-            logger.error("No votes registered. Terminating server without result");
-            terminate();
-            return;
-        }
-
-        logger.info("Verifying ballots");
-        ballots = ballots.parallelStream()
-                .filter(v -> v.getTs().getTime() < endTime)
-                .filter(b -> VoteProofUtils.verifyBallot(b, pk)).collect(Collectors.toList());
-
-
-        logger.info("Summing votes");
-        Map<Integer, List<CandidateVoteDTO>> votes = new HashMap<>(candidates.size());
-        ballots.forEach(b -> {
-            for (int i = 0; i < candidates.size(); i++) {
-                List<CandidateVoteDTO> lst = votes.computeIfAbsent(i, j -> new ArrayList<>());
-                lst.add(b.getCandidateVotes().get(i));
-            }
-        });
-
-        CipherText[] sums = new CipherText[candidates.size()];
-
-        for (int i = 0; i < candidates.size(); i++) {
-            sums[i] = SecurityUtils.concurrentVoteSum(votes.get(i), pk, 1000);
-        }
-
-        logger.info("Beginning partial decryption");
-
-        BigInteger[] results = new BigInteger[candidates.size()];
-        for (int i = 0; i < candidates.size(); i++) {
-            results[i] = ElGamal.partialDecryption(sums[i].getC(), sk.getSecretValue(), sk.getP());
-        }
-
-        logger.info("Partially decrypted value. Generating proof");
-
-        PublicKey partialPublicKey = new PublicKey(this.partialPublicKey, pk.getG(), pk.getQ());
-
-        DLogProofUtils.Proof[] proofs = new DLogProofUtils.Proof[candidates.size()];
-        for (int i = 0; i < candidates.size(); i++) {
-            proofs[i] = DLogProofUtils.generateProof(sums[i], sk.getSecretValue(), partialPublicKey, id);
-        }
+        PartialResultList res = decrypter.generatePartialResult(endTime, keyPair);
 
         logger.info("Posting to bulletin board");
-        ArrayList<PartialResult> partialResults = new ArrayList<>();
-        for (int i = 0; i < candidates.size(); i++) {
-            partialResults.add(new PartialResult(id, results[i], proofs[i], sums[i], ballots.size()));
-        }
-
-        Entity<PartialResultList> resultEntity = Entity.entity(new PartialResultList(partialResults, ballots.size()), MediaType.APPLICATION_JSON);
+        Entity<PartialResultList> resultEntity = Entity.entity(res, MediaType.APPLICATION_JSON);
         Response post = bulletinBoard.path("result").request().post(resultEntity);
 
         if (post.getStatus() < 200 || post.getStatus() > 300) {
