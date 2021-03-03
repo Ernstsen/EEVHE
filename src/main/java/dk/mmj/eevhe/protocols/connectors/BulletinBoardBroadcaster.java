@@ -3,8 +3,9 @@ package dk.mmj.eevhe.protocols.connectors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.entities.CommitmentDTO;
-import dk.mmj.eevhe.entities.ComplaintDTO;
 import dk.mmj.eevhe.entities.ComplaintResolveDTO;
+import dk.mmj.eevhe.entities.FeldmanComplaintDTO;
+import dk.mmj.eevhe.entities.PedersenComplaintDTO;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,24 +51,46 @@ public class BulletinBoardBroadcaster implements Broadcaster {
     }
 
     @Override
-    public void complain(ComplaintDTO complaint) {
+    public void pedersenComplain(PedersenComplaintDTO complaint) {
         logger.info("Sending complaint:" + complaint);
-        Entity<ComplaintDTO> entity = Entity.entity(complaint, MediaType.APPLICATION_JSON);
-        final Response response = target.path("complain").request().post(entity);
+        Entity<PedersenComplaintDTO> entity = Entity.entity(complaint, MediaType.APPLICATION_JSON);
+        final Response response = target.path("pedersenComplain").request().post(entity);
         if (response.getStatus() != 204) {
             logger.error("Failed to post complaint! Received status: " + response.getStatus());
         }
     }
 
     @Override
-    public List<ComplaintDTO> getComplaints() {
-        String complaintsString = target.path("complaints").request().get(String.class);
+    public void feldmanComplain(FeldmanComplaintDTO complaint) {
+        logger.info("Sending complaint:" + complaint);
+        Entity<FeldmanComplaintDTO> entity = Entity.entity(complaint, MediaType.APPLICATION_JSON);
+        final Response response = target.path("feldmanComplain").request().post(entity);
+        if (response.getStatus() != 204) {
+            logger.error("Failed to post complaint! Received status: " + response.getStatus());
+        }
+    }
+
+    @Override
+    public List<PedersenComplaintDTO> getPedersenComplaints() {
+        String complaintsString = target.path("pedersenComplaints").request().get(String.class);
         try {
-            return mapper.readValue(complaintsString, new TypeReference<List<ComplaintDTO>>() {
+            return mapper.readValue(complaintsString, new TypeReference<List<PedersenComplaintDTO>>() {
             });
         } catch (IOException e) {
-            logger.error("Failed to read complaint list from Bulletin Board", e);
-            throw new RuntimeException("Unable to fetch complaints from BulletinBoard", e);
+            logger.error("Failed to read pedersen complaint list from Bulletin Board", e);
+            throw new RuntimeException("Unable to fetch pedersen complaints from BulletinBoard", e);
+        }
+    }
+
+    @Override
+    public List<FeldmanComplaintDTO> getFeldmanComplaints() {
+        String complaintsString = target.path("feldmanComplaints").request().get(String.class);
+        try {
+            return mapper.readValue(complaintsString, new TypeReference<List<FeldmanComplaintDTO>>() {
+            });
+        } catch (IOException e) {
+            logger.error("Failed to read feldman complaint list from Bulletin Board", e);
+            throw new RuntimeException("Unable to fetch feldman complaints from BulletinBoard", e);
         }
     }
 

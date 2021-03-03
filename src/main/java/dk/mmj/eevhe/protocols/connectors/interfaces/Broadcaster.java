@@ -1,8 +1,9 @@
 package dk.mmj.eevhe.protocols.connectors.interfaces;
 
 import dk.mmj.eevhe.entities.CommitmentDTO;
-import dk.mmj.eevhe.entities.ComplaintDTO;
 import dk.mmj.eevhe.entities.ComplaintResolveDTO;
+import dk.mmj.eevhe.entities.FeldmanComplaintDTO;
+import dk.mmj.eevhe.entities.PedersenComplaintDTO;
 
 import java.util.List;
 
@@ -27,18 +28,32 @@ public interface Broadcaster {
     List<CommitmentDTO> getCommitments();
 
     /**
-     * Broadcast a complaint
+     * Broadcast a complaint in the Pedersen protocol
      *
      * @param complaint complaint to be broadcasted
      */
-    void complain(ComplaintDTO complaint);
+    void pedersenComplain(PedersenComplaintDTO complaint);
 
     /**
-     * Delivers all broadcasted complaints
+     * Broadcast a complaint in the Feldman protocol
+     *
+     * @param complaint complaint to be broadcasted
+     */
+    void feldmanComplain(FeldmanComplaintDTO complaint);
+
+    /**
+     * Delivers all broadcasted pedersen complaints
      *
      * @return list of all broadcasted complaints
      */
-    List<ComplaintDTO> getComplaints();
+    List<PedersenComplaintDTO> getPedersenComplaints();
+
+    /**
+     * Delivers all broadcasted feldman complaints
+     *
+     * @return list of all broadcasted complaints
+     */
+    List<FeldmanComplaintDTO> getFeldmanComplaints();
 
     /**
      * Broadcasts a resolve to a complaint

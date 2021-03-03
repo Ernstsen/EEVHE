@@ -94,7 +94,8 @@ public class TestBulletinBoard {
 
         CommitmentDTO commitmentDTO = new CommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1, "BAR");
 
-        ComplaintDTO complaint = new ComplaintDTO(1, 2);
+        PedersenComplaintDTO pedersenComplaint = new PedersenComplaintDTO(1, 2);
+        FeldmanComplaintDTO feldmanComplaint = new FeldmanComplaintDTO(1, 2, valueOf(123), valueOf(123));
         ComplaintResolveDTO resolve = new ComplaintResolveDTO(1, 2, new PartialSecretMessageDTO(valueOf(564), valueOf(568), 2, 1));
 
         PartialPublicInfo partialPublicInfo = new PartialPublicInfo(
@@ -124,7 +125,10 @@ public class TestBulletinBoard {
                 target.path("commitments").request().post(Entity.entity(commitmentDTO, mediaType)).getStatus()
         );
         assertEquals("should be successful post", 204,
-                target.path("complain").request().post(Entity.entity(complaint, mediaType)).getStatus()
+                target.path("pedersenComplain").request().post(Entity.entity(pedersenComplaint, mediaType)).getStatus()
+        );
+        assertEquals("should be successful post", 204,
+                target.path("feldmanComplain").request().post(Entity.entity(feldmanComplaint, mediaType)).getStatus()
         );
         assertEquals("should be successful post", 204,
                 target.path("resolveComplaint").request().post(Entity.entity(resolve, mediaType)).getStatus()
@@ -167,12 +171,19 @@ public class TestBulletinBoard {
         assertEquals("Unexpected list size", 1, fetchedCommitmentList.size());
         assertEquals("Fetched commitment did not match posted one", commitmentDTO, fetchedCommitmentList.get(0));
 
-        String complaintsString = target.path("complaints").request()
+        String complaintsString = target.path("pedersenComplaints").request()
                 .get(String.class);
-        List<ComplaintDTO> fetchedComplaintList = mapper.readValue(complaintsString, new TypeReference<List<ComplaintDTO>>() {
+        List<PedersenComplaintDTO> fetchedComplaintList = mapper.readValue(complaintsString, new TypeReference<List<PedersenComplaintDTO>>() {
         });
         assertEquals("Unexpected list size", 1, fetchedComplaintList.size());
-        assertEquals("Fetched complaint did not match posted one", complaint, fetchedComplaintList.get(0));
+        assertEquals("Fetched complaint did not match posted one", pedersenComplaint, fetchedComplaintList.get(0));
+
+        String feldmanComplaintsString = target.path("feldmanComplaints").request()
+                .get(String.class);
+        List<FeldmanComplaintDTO> feldmanFetchedComplaintList = mapper.readValue(feldmanComplaintsString, new TypeReference<List<FeldmanComplaintDTO>>() {
+        });
+        assertEquals("Unexpected list size", 1, feldmanFetchedComplaintList.size());
+        assertEquals("Fetched complaint did not match posted one", feldmanComplaint, feldmanFetchedComplaintList.get(0));
 
         String complaintResolvesString = target.path("complaintResolves").request()
                 .get(String.class);

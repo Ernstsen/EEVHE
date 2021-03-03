@@ -113,7 +113,7 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
         final Set<Integer> honestParties = new HashSet<>();
         final Map<Integer, PartialSecretMessageDTO> secretsPedersen = pedersenVSS.getSecrets();
 
-        FeldmanVSS feldmanVSS = new FeldmanVSS(broadcaster, incoming,
+        GennaroFeldmanVSS feldmanVSS = new GennaroFeldmanVSS(broadcaster, incoming,
                 honestPeers, id, params, logPrefix, pol1, secretsPedersen);
 
         return Arrays.asList(
@@ -125,19 +125,20 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
                 ),
                 new Step(feldmanVSS::startProtocol, 0, SECONDS),
                 new Step(feldmanVSS::handleReceivedValues, 10, SECONDS),
+                new Step(feldmanVSS::handleComplaints, 10, SECONDS),
                 new Step(() -> honestParties.addAll(feldmanVSS.getHonestParties()), 0, SECONDS),
                 new Step(() -> this.setResult(computeKeyPair(broadcaster, honestParties, feldmanVSS)), 0, SECONDS)
         );
     }
 
-    private PartialKeyPair computeKeyPair(Broadcaster broadcaster, Set<Integer> honestParties, FeldmanVSS feldmanVSS) {
+    private PartialKeyPair computeKeyPair(Broadcaster broadcaster, Set<Integer> honestParties, GennaroFeldmanVSS feldmanVSS) {
         logger.info("Computing PartialKeyPair");
         BigInteger partialSecretKey = feldmanVSS.output();
         BigInteger partialPublicKey = g.modPow(partialSecret, p);
 
         // Computes Y = prod_i y_i mod p
         List<CommitmentDTO> commitments = broadcaster.getCommitments().stream()
-                .filter(c -> FeldmanVSS.FELDMAN.equals(c.getProtocol()))
+                .filter(c -> GennaroFeldmanVSS.FELDMAN.equals(c.getProtocol()))
                 .collect(Collectors.toList());
 
         List<BigInteger> partialPublicKeys = new ArrayList<>();

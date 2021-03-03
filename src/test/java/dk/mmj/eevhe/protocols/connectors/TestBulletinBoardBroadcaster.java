@@ -2,10 +2,7 @@ package dk.mmj.eevhe.protocols.connectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dk.mmj.eevhe.entities.CommitmentDTO;
-import dk.mmj.eevhe.entities.ComplaintDTO;
-import dk.mmj.eevhe.entities.ComplaintResolveDTO;
-import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
+import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +42,7 @@ public class TestBulletinBoardBroadcaster {
         target = mock(WebTarget.class);
 
         //Build map with all webTargets with paths
-        Arrays.asList("commitments", "complain", "complaints", "resolveComplaint", "complaintResolves")
+        Arrays.asList("commitments", "pedersenComplain", "pedersenComplaints", "feldmanComplain", "feldmanComplaints", "resolveComplaint", "complaintResolves")
                 .forEach(s -> targets.put(s, mock(WebTarget.class)));
 
         //noinspection SuspiciousMethodCalls
@@ -124,71 +121,139 @@ public class TestBulletinBoardBroadcaster {
     }
 
     @Test
-    public void complain() {
-        final WebTarget commitTarget = targets.get("complain");
+    public void pedersenComplain() {
+        final WebTarget commitTarget = targets.get("pedersenComplain");
         final Invocation.Builder commitBuilder = mock(Invocation.Builder.class);
         when(commitTarget.request()).thenReturn(commitBuilder);
 
-        final List<ComplaintDTO> complaints = new ArrayList<>();
-        when(target.path("complain").request().post(any()))
+        final List<PedersenComplaintDTO> complaints = new ArrayList<>();
+        when(target.path("pedersenComplain").request().post(any()))
                 .then(invocationOnMock -> {
-                    final Entity<ComplaintDTO> argument = invocationOnMock.getArgument(0);
+                    final Entity<PedersenComplaintDTO> argument = invocationOnMock.getArgument(0);
                     complaints.add(argument.getEntity());
                     return new SimpleResponse(204);
                 });
 
-        final ComplaintDTO c1 = new ComplaintDTO(2, 65);
-        final ComplaintDTO c2 = new ComplaintDTO(2, 66);
+        final PedersenComplaintDTO c1 = new PedersenComplaintDTO(2, 65);
+        final PedersenComplaintDTO c2 = new PedersenComplaintDTO(2, 66);
 
-        broadcaster.complain(c1);
-        broadcaster.complain(c2);
+        broadcaster.pedersenComplain(c1);
+        broadcaster.pedersenComplain(c2);
         assertTrue("First complaint not properly handled", complaints.contains(c1));
         assertTrue("Second complaint not properly handled", complaints.contains(c2));
     }
 
     @Test
-    public void complainError() {
-        final WebTarget commitTarget = targets.get("complain");
+    public void feldmanComplain() {
+        final WebTarget commitTarget = targets.get("feldmanComplain");
         final Invocation.Builder commitBuilder = mock(Invocation.Builder.class);
         when(commitTarget.request()).thenReturn(commitBuilder);
 
-        when(target.path("complain").request().post(any()))
-                .thenReturn(new SimpleResponse(500));
+        final List<FeldmanComplaintDTO> complaints = new ArrayList<>();
+        when(target.path("feldmanComplain").request().post(any()))
+                .then(invocationOnMock -> {
+                    final Entity<FeldmanComplaintDTO> argument = invocationOnMock.getArgument(0);
+                    complaints.add(argument.getEntity());
+                    return new SimpleResponse(204);
+                });
 
+        final FeldmanComplaintDTO c1 = new FeldmanComplaintDTO(2, 65, valueOf(123), valueOf(123));
+        final FeldmanComplaintDTO c2 = new FeldmanComplaintDTO(2, 66, valueOf(123), valueOf(123));
 
-        broadcaster.complain(new ComplaintDTO(2, 65));
-        broadcaster.complain(new ComplaintDTO(2, 66));
+        broadcaster.feldmanComplain(c1);
+        broadcaster.feldmanComplain(c2);
+        assertTrue("First complaint not properly handled", complaints.contains(c1));
+        assertTrue("Second complaint not properly handled", complaints.contains(c2));
     }
 
     @Test
-    public void getComplaints() throws JsonProcessingException {
-        final List<ComplaintDTO> expected = Arrays.asList(
-                new ComplaintDTO(2, 65),
-                new ComplaintDTO(2, 66));
+    public void pedersenComplainError() {
+        final WebTarget commitTarget = targets.get("pedersenComplain");
+        final Invocation.Builder commitBuilder = mock(Invocation.Builder.class);
+        when(commitTarget.request()).thenReturn(commitBuilder);
+
+        when(target.path("pedersenComplain").request().post(any()))
+                .thenReturn(new SimpleResponse(500));
+
+
+        broadcaster.pedersenComplain(new PedersenComplaintDTO(2, 65));
+        broadcaster.pedersenComplain(new PedersenComplaintDTO(2, 66));
+    }
+
+    @Test
+    public void feldmanComplainError() {
+        final WebTarget commitTarget = targets.get("feldmanComplain");
+        final Invocation.Builder commitBuilder = mock(Invocation.Builder.class);
+        when(commitTarget.request()).thenReturn(commitBuilder);
+
+        when(target.path("feldmanComplain").request().post(any()))
+                .thenReturn(new SimpleResponse(500));
+
+
+        broadcaster.feldmanComplain(new FeldmanComplaintDTO(2, 65, valueOf(123), valueOf(123)));
+        broadcaster.feldmanComplain(new FeldmanComplaintDTO(2, 66, valueOf(123), valueOf(123)));
+    }
+
+    @Test
+    public void getPedersenComplaints() throws JsonProcessingException {
+        final List<PedersenComplaintDTO> expected = Arrays.asList(
+                new PedersenComplaintDTO(2, 65),
+                new PedersenComplaintDTO(2, 66));
 
         final String commitsString = new ObjectMapper().writeValueAsString(expected);
 
-        final WebTarget webTarget = targets.get("complaints");
+        final WebTarget webTarget = targets.get("pedersenComplaints");
         final Invocation.Builder builder = mock(Invocation.Builder.class);
         when(webTarget.request()).thenReturn(builder);
-        when(target.path("complaints").request().get(String.class)).thenReturn(commitsString);
+        when(target.path("pedersenComplaints").request().get(String.class)).thenReturn(commitsString);
 
-        final List<ComplaintDTO> commitments = broadcaster.getComplaints();
+        final List<PedersenComplaintDTO> commitments = broadcaster.getPedersenComplaints();
         assertArrayEquals("Commitments were not equal to those sent through webTarget",
                 expected.toArray(),
                 commitments.toArray());
     }
 
     @Test
-    public void getComplaintsError() {
-        final String commitsString = "stringWithError";
+    public void getFeldmanComplaints() throws JsonProcessingException {
+        final List<FeldmanComplaintDTO> expected = Arrays.asList(
+                new FeldmanComplaintDTO(2, 65, valueOf(123), valueOf(123)),
+                new FeldmanComplaintDTO(2, 66, valueOf(123), valueOf(123)));
 
-        final WebTarget webTarget = targets.get("complaints");
+        final String commitsString = new ObjectMapper().writeValueAsString(expected);
+
+        final WebTarget webTarget = targets.get("feldmanComplaints");
         final Invocation.Builder builder = mock(Invocation.Builder.class);
         when(webTarget.request()).thenReturn(builder);
-        when(target.path("complaints").request().get(String.class)).thenReturn(commitsString);
+        when(target.path("feldmanComplaints").request().get(String.class)).thenReturn(commitsString);
 
-        assertException(broadcaster::getComplaints);
+        final List<FeldmanComplaintDTO> commitments = broadcaster.getFeldmanComplaints();
+        assertArrayEquals("Commitments were not equal to those sent through webTarget",
+                expected.toArray(),
+                commitments.toArray());
+    }
+
+    @Test
+    public void getPedersenComplaintsError() {
+        final String commitsString = "stringWithError";
+
+        final WebTarget webTarget = targets.get("pedersenComplaints");
+        final Invocation.Builder builder = mock(Invocation.Builder.class);
+        when(webTarget.request()).thenReturn(builder);
+        when(target.path("pedersenComplaints").request().get(String.class)).thenReturn(commitsString);
+
+        assertException(broadcaster::getPedersenComplaints);
+    }
+
+    @Test
+    public void getFeldmanComplaintsError() {
+        final String commitsString = "stringWithError";
+
+        final WebTarget webTarget = targets.get("feldmanComplaints");
+        final Invocation.Builder builder = mock(Invocation.Builder.class);
+        when(webTarget.request()).thenReturn(builder);
+        when(target.path("feldmanComplaints").request().get(String.class)).thenReturn(commitsString);
+
+        assertException(broadcaster::getFeldmanComplaints);
     }
 
     @Test

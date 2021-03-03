@@ -29,7 +29,7 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
                 new DecryptionAuthorityInfo(2, "https://localhost:8082")
         ));
 
-        confPath = "/conf/testConf.json";
+        confPath = "./conf/testConf.json";
         File file = new File(confPath);
 
         //noinspection ResultOfMethodCallIgnored

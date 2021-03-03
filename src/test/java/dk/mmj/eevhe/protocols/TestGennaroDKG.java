@@ -74,7 +74,7 @@ public class TestGennaroDKG {
         //No change in state, as no complaints has been registered
         //No change in state, as there were no complaints to be resolved
         assertEquals("All players should have broadcast their commitments", 3, testBroadcaster.commitments.size());
-        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.complaints.size());
+        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.pedersenComplaints.size());
 
         // Fetching partial secret keys from extraction phase
 
@@ -180,7 +180,8 @@ public class TestGennaroDKG {
 
     static class TestBroadcaster implements Broadcaster {
         final List<CommitmentDTO> commitments = new ArrayList<>();
-        final List<ComplaintDTO> complaints = new ArrayList<>();
+        final List<PedersenComplaintDTO> pedersenComplaints = new ArrayList<>();
+        final List<FeldmanComplaintDTO> feldmanComplaints = new ArrayList<>();
         final List<ComplaintResolveDTO> resolves = new ArrayList<>();
 
 
@@ -195,13 +196,23 @@ public class TestGennaroDKG {
         }
 
         @Override
-        public void complain(ComplaintDTO complaint) {
-            complaints.add(complaint);
+        public void pedersenComplain(PedersenComplaintDTO complaint) {
+            pedersenComplaints.add(complaint);
         }
 
         @Override
-        public List<ComplaintDTO> getComplaints() {
-            return complaints;
+        public void feldmanComplain(FeldmanComplaintDTO complaint) {
+            feldmanComplaints.add(complaint);
+        }
+
+        @Override
+        public List<PedersenComplaintDTO> getPedersenComplaints() {
+            return pedersenComplaints;
+        }
+
+        @Override
+        public List<FeldmanComplaintDTO> getFeldmanComplaints() {
+            return feldmanComplaints;
         }
 
         @Override

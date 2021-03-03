@@ -145,18 +145,35 @@ public class BulletinBoardResource {
     }
 
     @POST
-    @Path("complain")
+    @Path("pedersenComplain")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void postComplaint(ComplaintDTO complaint) {
-        addToList(COMPLAINTS, complaint);
+    public void postComplaint(PedersenComplaintDTO complaint) {
+        addToList(PEDERSEN_COMPLAINTS, complaint);
+    }
+
+    @POST
+    @Path("feldmanComplain")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void postComplaint(FeldmanComplaintDTO complaint) {
+        addToList(FELDMAN_COMPLAINTS, complaint);
     }
 
     @SuppressWarnings("unchecked")
     @GET
-    @Path("complaints")
+    @Path("pedersenComplaints")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<ComplaintDTO> getComplaints() {
-        List<ComplaintDTO> list = state.get(COMPLAINTS, List.class);
+    public List<PedersenComplaintDTO> getPedersenComplaints() {
+        List<PedersenComplaintDTO> list = state.get(PEDERSEN_COMPLAINTS, List.class);
+
+        return list != null ? list : new ArrayList<>();
+    }
+
+    @SuppressWarnings("unchecked")
+    @GET
+    @Path("feldmanComplaints")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<FeldmanComplaintDTO> getFeldmanComplaints() {
+        List<FeldmanComplaintDTO> list = state.get(FELDMAN_COMPLAINTS, List.class);
 
         return list != null ? list : new ArrayList<>();
     }

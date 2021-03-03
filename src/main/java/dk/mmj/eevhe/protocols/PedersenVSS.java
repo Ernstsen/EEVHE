@@ -3,7 +3,7 @@ package dk.mmj.eevhe.protocols;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.entities.CommitmentDTO;
-import dk.mmj.eevhe.entities.ComplaintDTO;
+import dk.mmj.eevhe.entities.PedersenComplaintDTO;
 import dk.mmj.eevhe.entities.ComplaintResolveDTO;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
@@ -118,9 +118,9 @@ public class PedersenVSS extends AbstractVSS implements VSS {
                     g, e, partialSecret1, partialSecret2, commitment, BigInteger.valueOf(id), p, q);
             if (!matches) {
                 logger.info("" + this.id + ": Sending complaint about DA=" + senderId);
-                final ComplaintDTO complaint = new ComplaintDTO(this.id, senderId);
+                final PedersenComplaintDTO complaint = new PedersenComplaintDTO(this.id, senderId);
                 secrets.remove(senderId); //remove secret, as it's garbage
-                broadcaster.complain(complaint);
+                broadcaster.pedersenComplain(complaint);
             }
         }
 
@@ -130,11 +130,11 @@ public class PedersenVSS extends AbstractVSS implements VSS {
     @Override
     public void handleComplaints() {
         logger.info("Fetching complaints");
-        List<ComplaintDTO> complaints = broadcaster.getComplaints();
+        List<PedersenComplaintDTO> complaints = broadcaster.getPedersenComplaints();
         Map<Integer, Integer> complaintCountMap = new HashMap<>();
 
         logger.debug("Received " + complaints.size() + " complaints");
-        for (ComplaintDTO complaint : complaints) {
+        for (PedersenComplaintDTO complaint : complaints) {
             complaintCountMap.compute(complaint.getTargetId(), (key, val) -> val != null ? val + 1 : 1);
 
             if (complaint.getTargetId() == id) {
