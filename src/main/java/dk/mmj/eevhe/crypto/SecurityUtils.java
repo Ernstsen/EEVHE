@@ -216,11 +216,7 @@ public class SecurityUtils {
      */
     public static BigInteger lagrangeInterpolate(Map<Integer, BigInteger> partialsMap, BigInteger p) {
         BigInteger q = p.subtract(BigInteger.ONE).divide(valueOf(2));
-        Integer[] authorityIndexesInteger = partialsMap.keySet().toArray(new Integer[0]);
-        int[] authorityIndexes = new int[authorityIndexesInteger.length];
-        for (int i = 0; i < authorityIndexesInteger.length; i++) {
-            authorityIndexes[i] = authorityIndexesInteger[i];
-        }
+        int[] authorityIndexes = partialsMap.keySet().stream().mapToInt(Integer::valueOf).toArray();
 
         return partialsMap.keySet().stream()
                 .map(key -> partialsMap.get(key).modPow(generateLagrangeCoefficient(authorityIndexes, key, q), p))

@@ -74,10 +74,12 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
     public boolean handleReceivedValues() {
         logger.info("Checking received secret values");
 
-        List<PartialSecretMessageDTO> incomingSecrets = incoming.receiveSecrets();
+        if (secrets.size() == 1) {
+            List<PartialSecretMessageDTO> incomingSecrets = incoming.receiveSecrets();
 
-        for (PartialSecretMessageDTO secret : incomingSecrets) {
-            secrets.put(secret.getSender(), secret);
+            for (PartialSecretMessageDTO secret : incomingSecrets) {
+                secrets.put(secret.getSender(), secret);
+            }
         }
 
         boolean hasReceivedFromAll = secrets.keySet().containsAll(honestParties);//Peers + self
@@ -174,7 +176,4 @@ public class FeldmanVSS extends AbstractVSS implements VSS {
         return honestParties;
     }
 
-    public Map<Integer, PartialSecretMessageDTO> getSecrets() {
-        return secrets;
-    }
 }

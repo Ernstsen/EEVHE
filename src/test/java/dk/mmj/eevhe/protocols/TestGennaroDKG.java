@@ -1,5 +1,8 @@
 package dk.mmj.eevhe.protocols;
 
+import dk.mmj.eevhe.crypto.ElGamal;
+import dk.mmj.eevhe.crypto.SecurityUtils;
+import dk.mmj.eevhe.crypto.exceptions.UnableToDecryptException;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedPersistedKeyParameters;
 import dk.mmj.eevhe.entities.*;
@@ -15,8 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class TestGennaroDKG {
     private ExtendedKeyGenerationParameters params;
@@ -102,25 +104,64 @@ public class TestGennaroDKG {
         final BigInteger partialPublicKey3 = output3.getPartialPublicKey();
 
         // Fetching partial secret keys
-        final BigInteger partialSecretKey1 = player1.getPartialSecret();
-        final BigInteger partialSecretKey2 = player2.getPartialSecret();
-        final BigInteger partialSecretKey3 = player3.getPartialSecret();
+        final BigInteger partialSecretKey1 = output1.getPartialSecretKey();
+        final BigInteger partialSecretKey2 = output2.getPartialSecretKey();
+        final BigInteger partialSecretKey3 = output3.getPartialSecretKey();
 
         // Compute public key y and secret key x
         final BigInteger p = output1.getPublicKey().getP();
         final BigInteger q = output1.getPublicKey().getQ();
         final BigInteger g = output1.getPublicKey().getG();
+
+        assertInvariants(player1, player2, player3, output1, output2, output3, partialPublicKey1, partialPublicKey2, partialPublicKey3, p, q, g);
+        assertEncryptDecrypt(output1, partialSecretKey1, partialSecretKey2, partialSecretKey3, p, g);
+    }
+
+    private void assertInvariants(GennaroDKG player1, GennaroDKG player2, GennaroDKG player3,
+                                  PartialKeyPair output1, PartialKeyPair output2, PartialKeyPair output3,
+                                  BigInteger partialPublicKey1, BigInteger partialPublicKey2, BigInteger partialPublicKey3,
+                                  BigInteger p, BigInteger q, BigInteger g) {
+        //Invariant Assertions
         final BigInteger publicKey = partialPublicKey1.multiply(partialPublicKey2)
                 .multiply(partialPublicKey3).mod(p);
-        final BigInteger secretKey = partialSecretKey1.add(partialSecretKey2).add(partialSecretKey3).mod(q);
-        final BigInteger testPublicKey = g.modPow(secretKey, p);
+        final BigInteger x = player1.getPartialSecret().add(player2.getPartialSecret()).add(player3.getPartialSecret()).mod(q);
+        final BigInteger testPublicKey = g.modPow(x, p);
 
-        assertEquals("partials for player 1 did not match", partialPublicKey1, g.modPow(partialSecretKey1, p));
-        assertEquals("partials for player 2 did not match", partialPublicKey2, g.modPow(partialSecretKey2, p));
-        assertEquals("partials for player 3 did not match", partialPublicKey3, g.modPow(partialSecretKey3, p));
+        assertEquals("partials for player 1 did not match", partialPublicKey1, g.modPow(player1.getPartialSecret(), p));
+        assertEquals("partials for player 2 did not match", partialPublicKey2, g.modPow(player2.getPartialSecret(), p));
+        assertEquals("partials for player 3 did not match", partialPublicKey3, g.modPow(player3.getPartialSecret(), p));
 
         // Assert that y = g^x mod p
         assertEquals("Public key Y and g^x did not match", testPublicKey, publicKey);
+
+
+        assertEquals("PublicKey for instances 1 and 2 did not match", output1.getPublicKey(), output2.getPublicKey());
+        assertEquals("PublicKey for instances 2 and 3 did not match", output2.getPublicKey(), output3.getPublicKey());
+    }
+
+    private void assertEncryptDecrypt(PartialKeyPair output1, BigInteger partialSecretKey1,
+                                      BigInteger partialSecretKey2, BigInteger partialSecretKey3,
+                                      BigInteger p, BigInteger g) {
+        //Asserts that encryption and subsequent decryption is possible
+        BigInteger msg = new BigInteger("15");
+        CipherText cipherText = ElGamal.homomorphicEncryption(output1.getPublicKey(), msg);
+
+
+        BigInteger dec1 = ElGamal.partialDecryption(cipherText.getC(), partialSecretKey1, p);
+        BigInteger dec2 = ElGamal.partialDecryption(cipherText.getC(), partialSecretKey2, p);
+        BigInteger dec3 = ElGamal.partialDecryption(cipherText.getC(), partialSecretKey3, p);
+
+        HashMap<Integer, BigInteger> partials = new HashMap<>();
+        partials.put(1, dec1);
+        partials.put(2, dec2);
+        partials.put(3, dec3);
+        BigInteger cs = SecurityUtils.lagrangeInterpolate(partials, p);
+        try {
+            int result = ElGamal.homomorphicDecryptionFromPartials(cipherText.getD(), cs, g, p, 15);
+            assertEquals("Results was incorrect", 15, result);
+        } catch (UnableToDecryptException e) {
+            fail(e.getMessage());
+        }
     }
 
     @Test

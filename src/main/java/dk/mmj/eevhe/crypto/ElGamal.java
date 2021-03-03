@@ -53,7 +53,7 @@ public class ElGamal {
      * @param message   message to be encrypted
      * @return encrypted value
      */
-    static CipherText homomorphicEncryption(PublicKey publicKey, BigInteger message) {
+    public static CipherText homomorphicEncryption(PublicKey publicKey, BigInteger message) {
         BigInteger r = SecurityUtils.getRandomNumModN(publicKey.getQ());
 
         return homomorphicEncryption(publicKey, message, r);
@@ -66,7 +66,7 @@ public class ElGamal {
      * @param cipherText cipher text consisting of c and d
      * @return the original number which were encrypted
      */
-    static int homomorphicDecryption(KeyPair keyPair, CipherText cipherText, int max) throws UnableToDecryptException {
+    public static int homomorphicDecryption(KeyPair keyPair, CipherText cipherText, int max) throws UnableToDecryptException {
         BigInteger p = keyPair.getPublicKey().getQ().multiply(BigInteger.valueOf(2)).add(BigInteger.ONE);
         BigInteger hr = cipherText.getC().modPow(keyPair.getSecretKey(), p);
         BigInteger gPowMessage = cipherText.getD().multiply(hr.modInverse(p)).mod(p);
@@ -115,7 +115,7 @@ public class ElGamal {
     private static int findDecryptionValue(BigInteger gPowMessage, BigInteger g, BigInteger p, int max) throws UnableToDecryptException {
         int b = 0;
 
-        while (b < max) {
+        while (b <= max) {
             if (gPowMessage.equals(g.modPow(BigInteger.valueOf(b), p))) {
                 return b;
             }

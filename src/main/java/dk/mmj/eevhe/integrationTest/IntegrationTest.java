@@ -13,7 +13,9 @@ import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthorityConfigBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +33,7 @@ public class IntegrationTest implements Application {
     private final List<Integer> decryptionAuthorities;
     private final List<Integer> voteDelays;
     private final int duration;
+    private final Map<Integer, DecryptionAuthority> authorityInstances = new HashMap<>();
 
     public IntegrationTest(IntegrationTest.IntegrationTestConfiguration configuration) {
         this.decryptionAuthorities = configuration.decryptionAuthorities;
@@ -62,6 +65,12 @@ public class IntegrationTest implements Application {
         }
 
         retrieveVotes(duration + 1);
+
+        scheduler.schedule(this::twoMinHook, 2, TimeUnit.MINUTES);
+    }
+
+    private void twoMinHook(){
+        logger.debug("Two Minute Hook");
     }
 
     /**
@@ -145,7 +154,9 @@ public class IntegrationTest implements Application {
         } catch (NoSuchBuilderException | WrongFormatException e) {
             throw new RuntimeException("Failed parsing decryption authority conf.", e);
         }
-        scheduler.execute(conf.produceInstance());
+        DecryptionAuthority da = conf.produceInstance();
+        authorityInstances.put(id, da);
+        scheduler.execute(da);
     }
 
     public static class IntegrationTestConfiguration extends AbstractInstanceCreatingConfiguration<IntegrationTest> {
