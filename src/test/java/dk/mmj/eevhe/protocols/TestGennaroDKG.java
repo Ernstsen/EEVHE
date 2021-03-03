@@ -74,7 +74,7 @@ public class TestGennaroDKG {
         //No change in state, as no complaints has been registered
         //No change in state, as there were no complaints to be resolved
         assertEquals("All players should have broadcast their commitments", 3, testBroadcaster.getCommitments().size());
-        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.getComplaints().size());
+        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.getPedersenComplaints().size());
 
         // Fetching partial secret keys from extraction phase
 

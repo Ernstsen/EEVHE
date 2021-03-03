@@ -9,7 +9,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 
 @Suite.SuiteClasses({
-        TestFeldmanVSS.class,
+        TestGennaroFeldmanVSS.class,
         TestGennaroDKG.class,
         TestPedersenVSS.class,
         TestBulletinBoardBroadcaster.class,

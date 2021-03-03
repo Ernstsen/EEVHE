@@ -3,14 +3,14 @@ package dk.mmj.eevhe.entities;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
-public class ComplaintDTO {
+public class PedersenComplaintDTO {
     private int senderId;
     private int targetId;
 
-    public ComplaintDTO() {
+    public PedersenComplaintDTO() {
     }
 
-    public ComplaintDTO(int senderId, int targetId) {
+    public PedersenComplaintDTO(int senderId, int targetId) {
         this.senderId = senderId;
         this.targetId = targetId;
     }
@@ -35,7 +35,7 @@ public class ComplaintDTO {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ComplaintDTO that = (ComplaintDTO) o;
+        PedersenComplaintDTO that = (PedersenComplaintDTO) o;
         return senderId == that.senderId && targetId == that.targetId;
     }
 

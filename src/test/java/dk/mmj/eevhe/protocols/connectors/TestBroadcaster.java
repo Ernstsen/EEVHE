@@ -1,8 +1,9 @@
 package dk.mmj.eevhe.protocols.connectors;
 
 import dk.mmj.eevhe.entities.CommitmentDTO;
-import dk.mmj.eevhe.entities.ComplaintDTO;
 import dk.mmj.eevhe.entities.ComplaintResolveDTO;
+import dk.mmj.eevhe.entities.FeldmanComplaintDTO;
+import dk.mmj.eevhe.entities.PedersenComplaintDTO;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
 
 import java.util.ArrayList;
@@ -10,7 +11,8 @@ import java.util.List;
 
 public class TestBroadcaster implements Broadcaster {
     final List<CommitmentDTO> commitments = new ArrayList<>();
-    final List<ComplaintDTO> complaints = new ArrayList<>();
+    final List<PedersenComplaintDTO> pedersenComplaints = new ArrayList<>();
+    final List<FeldmanComplaintDTO> feldmanComplaints = new ArrayList<>();
     final List<ComplaintResolveDTO> resolves = new ArrayList<>();
 
 
@@ -25,13 +27,23 @@ public class TestBroadcaster implements Broadcaster {
     }
 
     @Override
-    public void complain(ComplaintDTO complaint) {
-        complaints.add(complaint);
+    public void pedersenComplain(PedersenComplaintDTO complaint) {
+        pedersenComplaints.add(complaint);
     }
 
     @Override
-    public List<ComplaintDTO> getComplaints() {
-        return complaints;
+    public void feldmanComplain(FeldmanComplaintDTO complaint) {
+        feldmanComplaints.add(complaint);
+    }
+
+    @Override
+    public List<PedersenComplaintDTO> getPedersenComplaints() {
+        return pedersenComplaints;
+    }
+
+    @Override
+    public List<FeldmanComplaintDTO> getFeldmanComplaints() {
+        return feldmanComplaints;
     }
 
     @Override

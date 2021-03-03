@@ -17,7 +17,7 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class TestFeldmanVSS {
+public class TestGennaroFeldmanVSS {
     private ExtendedPersistedKeyParameters params;
 
     @Before
@@ -53,11 +53,11 @@ public class TestFeldmanVSS {
         commMap3.put(2, channel2);
 
         //Creating players TODO: use GennaroDKG instead
-        final FeldmanVSS player1 = new FeldmanVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
-        final FeldmanVSS player2 = new FeldmanVSS(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2, null, null);
-        final FeldmanVSS player3 = new FeldmanVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
+        final GennaroFeldmanVSS player1 = new GennaroFeldmanVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
+        final GennaroFeldmanVSS player2 = new GennaroFeldmanVSS(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2, null, null);
+        final GennaroFeldmanVSS player3 = new GennaroFeldmanVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
 
-        final List<FeldmanVSS> players = Arrays.asList(player1, player2, player3);
+        final List<GennaroFeldmanVSS> players = Arrays.asList(player1, player2, player3);
 
         players.forEach(VSS::startProtocol);
 
@@ -65,7 +65,7 @@ public class TestFeldmanVSS {
 
         players.forEach(VSS::handleReceivedValues);
 
-        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.complaints.size());
+        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.pedersenComplaints.size());
 
         players.forEach(VSS::handleComplaints);
 
@@ -102,10 +102,10 @@ public class TestFeldmanVSS {
         commMap3.put(2, channel2);
 
         //Creating players TODO: use Gennaro DKG instead
-        final FeldmanVSS player1 = new FeldmanVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
-        final FeldmanVSS player3 = new FeldmanVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
+        final GennaroFeldmanVSS player1 = new GennaroFeldmanVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
+        final GennaroFeldmanVSS player3 = new GennaroFeldmanVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
 
-        final List<FeldmanVSS> players = Arrays.asList(player1, player3);
+        final List<GennaroFeldmanVSS> players = Arrays.asList(player1, player3);
 
         players.forEach(VSS::startProtocol);
 
@@ -113,7 +113,7 @@ public class TestFeldmanVSS {
 
         players.forEach(VSS::handleReceivedValues);
 
-        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.complaints.size());
+        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.feldmanComplaints.size());
 
         players.forEach(VSS::handleComplaints);
 
@@ -168,11 +168,11 @@ public class TestFeldmanVSS {
         commMap3.put(2, brokenChannel);
 
         //Creating players
-        final FeldmanVSS player1 = new FeldmanVSS(testBroadcaster, brokenIncoming1, commMap1, 1, params, "ID=" + 1, null, null);
-        final FeldmanVSS player2 = new FeldmanVSS(testBroadcaster, brokenIncoming2, commMap2, 2, params, "ID=" + 2, null, null);
-        final FeldmanVSS player3 = new FeldmanVSS(testBroadcaster, brokenIncoming3, commMap3, 3, params, "ID=" + 3, null, null);
+        final GennaroFeldmanVSS player1 = new GennaroFeldmanVSS(testBroadcaster, brokenIncoming1, commMap1, 1, params, "ID=" + 1, null, null);
+        final GennaroFeldmanVSS player2 = new GennaroFeldmanVSS(testBroadcaster, brokenIncoming2, commMap2, 2, params, "ID=" + 2, null, null);
+        final GennaroFeldmanVSS player3 = new GennaroFeldmanVSS(testBroadcaster, brokenIncoming3, commMap3, 3, params, "ID=" + 3, null, null);
 
-        final List<FeldmanVSS> players = Arrays.asList(player1, player2, player3);
+        final List<GennaroFeldmanVSS> players = Arrays.asList(player1, player2, player3);
 
         players.forEach(VSS::startProtocol);
 
@@ -180,7 +180,7 @@ public class TestFeldmanVSS {
 
         players.forEach(VSS::handleReceivedValues);
 
-        assertEquals("All players should have lodged 2 complaints", 6, testBroadcaster.complaints.size());
+        assertEquals("All players should have lodged 2 complaints", 6, testBroadcaster.feldmanComplaints.size());
 
         players.forEach(VSS::handleComplaints);
 

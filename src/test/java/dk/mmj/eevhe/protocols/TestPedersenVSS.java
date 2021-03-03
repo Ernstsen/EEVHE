@@ -66,7 +66,7 @@ public class TestPedersenVSS {
 
         players.forEach(VSS::handleReceivedValues);
 
-        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.complaints.size());
+        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.pedersenComplaints.size());
 
         players.forEach(VSS::handleComplaints);
 
@@ -114,7 +114,7 @@ public class TestPedersenVSS {
 
         players.forEach(VSS::handleReceivedValues);
 
-        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.complaints.size());
+        assertEquals("No players should have lodged a complaint", 0, testBroadcaster.pedersenComplaints.size());
 
         players.forEach(VSS::handleComplaints);
 
@@ -181,7 +181,7 @@ public class TestPedersenVSS {
 
         players.forEach(VSS::handleReceivedValues);
 
-        assertEquals("All players should have lodged 2 complaints", 6, testBroadcaster.complaints.size());
+        assertEquals("All players should have lodged 2 complaints", 6, testBroadcaster.pedersenComplaints.size());
 
         players.forEach(VSS::handleComplaints);
 
@@ -208,7 +208,8 @@ public class TestPedersenVSS {
 
     static class TestBroadcaster implements Broadcaster {
         final List<CommitmentDTO> commitments = new ArrayList<>();
-        final List<ComplaintDTO> complaints = new ArrayList<>();
+        final List<PedersenComplaintDTO> pedersenComplaints = new ArrayList<>();
+        final List<FeldmanComplaintDTO> feldmanComplaints = new ArrayList<>();
         final List<ComplaintResolveDTO> resolves = new ArrayList<>();
 
 
@@ -223,13 +224,23 @@ public class TestPedersenVSS {
         }
 
         @Override
-        public void complain(ComplaintDTO complaint) {
-            complaints.add(complaint);
+        public void pedersenComplain(PedersenComplaintDTO complaint) {
+            pedersenComplaints.add(complaint);
         }
 
         @Override
-        public List<ComplaintDTO> getComplaints() {
-            return complaints;
+        public void feldmanComplain(FeldmanComplaintDTO complaint) {
+            feldmanComplaints.add(complaint);
+        }
+
+        @Override
+        public List<PedersenComplaintDTO> getPedersenComplaints() {
+            return pedersenComplaints;
+        }
+
+        @Override
+        public List<FeldmanComplaintDTO> getFeldmanComplaints() {
+            return feldmanComplaints;
         }
 
         @Override
