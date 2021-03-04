@@ -64,7 +64,7 @@ public class DecrypterIml implements Decrypter {
 
         logger.info("Beginning partial decryption");
 
-        PublicKey partialPublicKey = new PublicKey(pk.getG().modPow(sk.getSecretValue(),pk.getP()), pk.getG(), pk.getQ());
+        PublicKey partialPublicKey = new PublicKey(keyPair.getPartialPublicKey(), pk.getG(), pk.getQ());
 
         ArrayList<PartialResult> partialResults = new ArrayList<>();
         for (int i = 0; i < candidates.size(); i++) {
@@ -72,7 +72,7 @@ public class DecrypterIml implements Decrypter {
             BigInteger result = ElGamal.partialDecryption(sum.getC(), sk.getSecretValue(), sk.getP());
             DLogProofUtils.Proof proof = DLogProofUtils.generateProof(sum, sk.getSecretValue(), partialPublicKey, id);
 
-            partialResults.add(new PartialResult(id, result, proof, sum, ballots.size()));
+            partialResults.add(new PartialResult(id, result, proof, sum));
             logger.info("Partially decrypted " + (i + 1) + "/" + candidates.size() + " candidates");
         }
 

@@ -81,6 +81,6 @@ public class FeldmanVSSUtils {
         BigInteger partialSecretKey = Arrays.stream(u).reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
         BigInteger partialPublicKey = g.modPow(partialSecretKey, p);
 
-        return new PartialKeyPair(new PartialSecretKey(partialSecretKey, null, p), partialPublicKey, publicKey);
+        return new PartialKeyPair(new PartialSecretKey(partialSecretKey, p), partialPublicKey, publicKey);
     }
 }

@@ -129,9 +129,9 @@ public class TestGennaroDKG {
         partialPublicKeys.put(3, partialPublicKey3);
 
         HashMap<Integer, BigInteger> partialSecrets = new HashMap<>();
-        partialSecrets.put(1, partialSecretKey1.getdLogPublicValue());
-        partialSecrets.put(2, partialSecretKey2.getdLogPublicValue());
-        partialSecrets.put(3, partialSecretKey3.getdLogPublicValue());
+        partialSecrets.put(1, partialSecretKey1.getSecretValue());
+        partialSecrets.put(2, partialSecretKey2.getSecretValue());
+        partialSecrets.put(3, partialSecretKey3.getSecretValue());
 
         List<PublicKey> publicKeys = new ArrayList<>();
         publicKeys.add(output1.getPublicKey());
@@ -149,6 +149,7 @@ public class TestGennaroDKG {
         // Compute public key
         final BigInteger publicKey = partialPublicKeys.values().stream().reduce(BigInteger.ONE, BigInteger::multiply).mod(p);
         final BigInteger x = partialSecrets.values().stream().reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
+
         final BigInteger testPublicKey = g.modPow(x, p);
 
         // Assert that partials match
@@ -164,7 +165,7 @@ public class TestGennaroDKG {
         // Assert that y = g^x mod p
         assertEquals("Public key Y and g^x did not match", testPublicKey, publicKey);
         // Assert that public keys all match
-        assertTrue("PublicKey for all instances did not match", publicKeys.stream()
+        assertTrue("PublicKey did not match for all instances", publicKeys.stream()
                 .allMatch(publicKeys.get(0)::equals));
     }
 
@@ -207,6 +208,7 @@ public class TestGennaroDKG {
 
     // TODO: One corrupt who is removed from honest parties
     // TODO: Two corrupt, should not be able to decrypt
+
     /**
      * Tests GennaroDKG with two non-corrupt participants, and one corrupt
      */
@@ -283,8 +285,8 @@ public class TestGennaroDKG {
         // Test invariants
         final BigInteger publicKey = partialPublicKey1.multiply(partialPublicKey3).mod(p);
 
-        BigInteger partialSecret1 = output1.getPartialSecretKey().getdLogPublicValue();
-        BigInteger partialSecret3 = output3.getPartialSecretKey().getdLogPublicValue();
+        BigInteger partialSecret1 = partialSecretKey1.getSecretValue();
+        BigInteger partialSecret3 = partialSecretKey3.getSecretValue();
 
         final BigInteger x = partialSecret1.add(partialSecret3).mod(q);
         final BigInteger testPublicKey = g.modPow(x, p);

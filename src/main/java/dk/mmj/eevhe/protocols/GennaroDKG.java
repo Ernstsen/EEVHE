@@ -131,7 +131,7 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
     private PartialKeyPair computeKeyPair(Broadcaster broadcaster, Set<Integer> honestParties, GennaroFeldmanVSS feldmanVSS) {
         logger.info("Computing PartialKeyPair");
         BigInteger partialSecretKey = feldmanVSS.output();
-        BigInteger partialPublicKey = g.modPow(partialSecret, p);
+        BigInteger partialPublicKey = g.modPow(partialSecretKey, p);
 
         // Computes Y = prod_i y_i mod p
         List<CommitmentDTO> commitments = broadcaster.getCommitments().stream()
@@ -148,7 +148,7 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
         BigInteger publicKey = partialPublicKeys
                 .stream().reduce(BigInteger::multiply).orElse(BigInteger.ZERO).mod(p);
         return new PartialKeyPair(
-                new PartialSecretKey(partialSecretKey, partialSecret, p),
+                new PartialSecretKey(partialSecretKey, p),
                 partialPublicKey,
                 new PublicKey(publicKey, g, q)
         );
