@@ -107,6 +107,7 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
 
             if (matches1 && !matches2) {
                 honestParties.remove(complaint.getTargetId());
+                secrets.remove(complaint.getTargetId());
             }
         }
     }

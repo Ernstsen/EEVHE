@@ -102,7 +102,7 @@ public class TestPedersenVSS {
         commMap3.put(1, channel1);
         commMap3.put(2, channel2);
 
-        //Creating players TODO: use Gennaro DKG instead
+        //Creating players
         final PedersenVSS player1 = new PedersenVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
         final PedersenVSS player3 = new PedersenVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
 
