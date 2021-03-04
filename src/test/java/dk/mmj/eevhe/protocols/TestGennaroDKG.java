@@ -124,9 +124,9 @@ public class TestGennaroDKG {
         final BigInteger publicKey = partialPublicKey1.multiply(partialPublicKey2)
                 .multiply(partialPublicKey3).mod(p);
 
-        BigInteger partialSecret1 = output1.getPartialSecretKey().getdLogPublicValue();
-        BigInteger partialSecret2 = output2.getPartialSecretKey().getdLogPublicValue();
-        BigInteger partialSecret3 = output3.getPartialSecretKey().getdLogPublicValue();
+        BigInteger partialSecret1 = output1.getPartialSecretKey().getSecretValue();
+        BigInteger partialSecret2 = output2.getPartialSecretKey().getSecretValue();
+        BigInteger partialSecret3 = output3.getPartialSecretKey().getSecretValue();
         final BigInteger x = partialSecret1.add(partialSecret2).add(partialSecret3).mod(q);
         final BigInteger testPublicKey = g.modPow(x, p);
 

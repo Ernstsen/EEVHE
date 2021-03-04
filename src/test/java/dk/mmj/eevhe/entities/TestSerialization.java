@@ -20,6 +20,14 @@ import static junit.framework.TestCase.*;
 public class TestSerialization {
     private List<Object> serializables;
 
+    private static Object[] toObjectArray(Object val) {
+        Object[] res = new Object[Array.getLength(val)];
+        for (int i = 0; i < Array.getLength(val); i++) {
+            res[i] = Array.get(val, i);
+        }
+        return res;
+    }
+
     @Before
     public void setup() {
         this.serializables = new ArrayList<>();
@@ -57,14 +65,14 @@ public class TestSerialization {
         serializables.add(new KeyPair(new BigInteger("785423"), publicKey));
 
         DLogProofUtils.Proof dlogProof = new DLogProofUtils.Proof(new BigInteger("654"), new BigInteger("69846"));
-        PartialResult partialResult = new PartialResult(32, new BigInteger("2342"), dlogProof, cipherText, 12);
-        PartialResult partialResult2 = new PartialResult(54, new BigInteger("234221"), dlogProof, cipherText, 122);
+        PartialResult partialResult = new PartialResult(32, new BigInteger("2342"), dlogProof, cipherText);
+        PartialResult partialResult2 = new PartialResult(54, new BigInteger("234221"), dlogProof, cipherText);
         serializables.add(partialResult);
 
         PartialResultList partialResultList = new PartialResultList(Arrays.asList(partialResult, partialResult2), 5);
         PartialResultList partialResultList2 = new PartialResultList(Arrays.asList(partialResult2, partialResult), 94);
         serializables.add(partialResultList);
-        serializables.add(new PartialSecretKey(new BigInteger("23422"), new BigInteger("2342124"), new BigInteger("235423523")));
+        serializables.add(new PartialSecretKey(new BigInteger("23422"), new BigInteger("2342124")));
 
         serializables.add(new PersistedBallot(ballot));
         PersistedVote pv1 = new PersistedVote(candidateVoteDTO);
@@ -83,11 +91,10 @@ public class TestSerialization {
         serializables.add(new ComplaintResolveDTO(5874767, 1298376192, partialSecretMessageDTO));
         serializables.add(new DecryptionAuthorityInput("wiughweiugnwe", "woegnweoginw", 54684654, Arrays.asList(daInfo1, daInfo2)));
 
-        serializables.add(new PartialKeyPair(new PartialSecretKey(new BigInteger("123521"), new BigInteger("8734534"), new BigInteger("98273523"))
+        serializables.add(new PartialKeyPair(new PartialSecretKey(new BigInteger("123521"), new BigInteger("98273523"))
                 , new BigInteger("123456789"), publicKey));
         serializables.add(new PartialPublicInfo(1, publicKey, new BigInteger("6513894"), Arrays.asList(cand1, cand2), 16318));
     }
-
 
     @Test
     public void testSerializeThenDeserialize() {
@@ -139,13 +146,5 @@ public class TestSerialization {
                 }
             }
         }
-    }
-
-    private static Object[] toObjectArray(Object val){
-        Object[] res = new Object[Array.getLength(val)];
-        for (int i = 0; i < Array.getLength(val); i++) {
-            res[i] = Array.get(val, i);
-        }
-        return res;
     }
 }

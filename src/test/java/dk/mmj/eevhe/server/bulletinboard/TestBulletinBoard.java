@@ -87,8 +87,8 @@ public class TestBulletinBoard {
         DLogProofUtils.Proof dp2 = new DLogProofUtils.Proof(valueOf(62968), valueOf(613658874));
         PartialResultList partialResultList = new PartialResultList(
                 Arrays.asList(
-                        new PartialResult(1, valueOf(234), dp1, c, 2),
-                        new PartialResult(2, valueOf(6854), dp2, c2, 2)),
+                        new PartialResult(1, valueOf(234), dp1, c),
+                        new PartialResult(2, valueOf(6854), dp2, c2)),
                 2
         );
 

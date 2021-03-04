@@ -14,7 +14,6 @@ import dk.mmj.eevhe.protocols.interfaces.DKG;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigInteger;
 import java.util.*;
 
 import static org.junit.Assert.assertNull;
@@ -91,11 +90,13 @@ public class TestDecrypterIml {
                 new Candidate(2, "Morten", "B")
         );
 
-        DecrypterIml decrypterIml = new DecrypterIml(1, () -> ballots, b -> VoteProofUtils.verifyBallot(b, pk), candidates);
+        DecrypterIml decrypterIml1 = new DecrypterIml(1, () -> ballots, b -> VoteProofUtils.verifyBallot(b, pk), candidates);
+        DecrypterIml decrypterIml2 = new DecrypterIml(2, () -> ballots, b -> VoteProofUtils.verifyBallot(b, pk), candidates);
+        DecrypterIml decrypterIml3 = new DecrypterIml(3, () -> ballots, b -> VoteProofUtils.verifyBallot(b, pk), candidates);
 
-        PartialResultList partialResultList1 = decrypterIml.generatePartialResult(new Date().getTime() - 10, dkgRes.get(1));
-        PartialResultList partialResultList2 = decrypterIml.generatePartialResult(new Date().getTime() - 10, dkgRes.get(2));
-        PartialResultList partialResultList3 = decrypterIml.generatePartialResult(new Date().getTime() - 10, dkgRes.get(3));
+        PartialResultList partialResultList1 = decrypterIml1.generatePartialResult(new Date().getTime() - 10, dkgRes.get(1));
+        PartialResultList partialResultList2 = decrypterIml2.generatePartialResult(new Date().getTime() - 10, dkgRes.get(2));
+        PartialResultList partialResultList3 = decrypterIml3.generatePartialResult(new Date().getTime() - 10, dkgRes.get(3));
 
         partialResultList1.getResults().forEach(this::assertResultPasses);
         partialResultList2.getResults().forEach(this::assertResultPasses);
@@ -106,13 +107,15 @@ public class TestDecrypterIml {
 
     private void assertResultPasses(PartialResult res) {
         PartialKeyPair partialKeyPair = dkgRes.get(res.getId());
-        BigInteger partialPublicKey = partialKeyPair.getPartialPublicKey();
-        BigInteger g = partialKeyPair.getPublicKey().getG();
-        BigInteger q = partialKeyPair.getPublicKey().getQ();
+        PublicKey pk = partialKeyPair.getPublicKey();
 
-        assertTrue("Failed to validate proof of correct decryption for partial decryption!", DLogProofUtils.verifyProof(res.getCipherText(),
-                new CipherText(res.getResult(), res.getCipherText().getD()),
-                new PublicKey(partialPublicKey, g, q), res.getProof(), res.getId()));
+        CipherText sum = res.getCipherText();
+        PublicKey partialPublicKey = new PublicKey(partialKeyPair.getPartialPublicKey(), pk.getG(), pk.getQ());
+
+        assertTrue("Failed to validate proof of correct decryption for partial decryption!", DLogProofUtils.verifyProof(
+                sum,
+                new CipherText(res.getResult(), sum.getD()),
+                partialPublicKey, res.getProof(), res.getId()));
     }
 
     @Test
