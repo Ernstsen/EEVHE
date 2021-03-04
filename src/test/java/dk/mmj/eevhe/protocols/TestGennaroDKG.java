@@ -206,14 +206,13 @@ public class TestGennaroDKG {
         assertEquals("steps should contain exactly the two phases!", steps.size(), gennaroDKG.getSteps().size());
     }
 
-    // TODO: One corrupt who is removed from honest parties
-    // TODO: Two corrupt, should not be able to decrypt
-
     /**
      * Tests GennaroDKG with two non-corrupt participants, and one corrupt
      */
     @Test
     public void testProtocolRunOneCorrupt() {
+        // TODO: One corrupt who is removed from honest parties, and assert this
+        // TODO: Two corrupt, should not be able to decrypt
         //Modelling communications channels
         final TestBroadcaster testBroadcaster = new TestBroadcaster();
         final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
@@ -235,70 +234,81 @@ public class TestGennaroDKG {
 
         //Creating players
         final GennaroDKG player1 = new GennaroDKG(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1);
+        final GennaroDKG player2 = new GennaroDKG(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2);
         final GennaroDKG player3 = new GennaroDKG(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3);
 
         HashMap<Integer, List<DKG.Step>> generationSteps = new HashMap<>();
         generationSteps.put(1, player1.generationPhase());
+        generationSteps.put(2, player2.generationPhase());
         generationSteps.put(3, player3.generationPhase());
 
         for (int i = 0; i < generationSteps.get(1).size(); i++) {
             generationSteps.get(1).get(i).getExecutable().run();
+            generationSteps.get(2).get(i).getExecutable().run();
             generationSteps.get(3).get(i).getExecutable().run();
         }
 
         //No change in state, as no complaints has been registered
         //No change in state, as there were no complaints to be resolved
-        assertEquals("All players should have broadcast their commitments", 2, testBroadcaster.getCommitments().size());
+        assertEquals("All players should have broadcast their commitments", 3, testBroadcaster.getCommitments().size());
         assertEquals("Players should not have lodged a complaint", 0, testBroadcaster.getPedersenComplaints().size());
 
         // Fetching partial secret keys from extraction phase
 
         HashMap<Integer, List<DKG.Step>> extractionSteps = new HashMap<>();
         extractionSteps.put(1, player1.extractionPhase());
+        extractionSteps.put(2, player2.extractionPhase());
         extractionSteps.put(3, player3.extractionPhase());
 
         for (int i = 0; i < extractionSteps.get(1).size(); i++) {
             extractionSteps.get(1).get(i).getExecutable().run();
+            extractionSteps.get(2).get(i).getExecutable().run();
             extractionSteps.get(3).get(i).getExecutable().run();
         }
 
         final PartialKeyPair output1 = player1.output();
+        final PartialKeyPair output2 = player2.output();
         final PartialKeyPair output3 = player3.output();
 
         // Assuring that all keys aren't null
         assertNotNull("Partial secret 1 was null", output1);
+        assertNotNull("Partial secret 2 was null", output2);
         assertNotNull("Partial secret 3 was null", output3);
 
         // Fetching partial public keys
         final BigInteger partialPublicKey1 = output1.getPartialPublicKey();
+        final BigInteger partialPublicKey2 = output2.getPartialPublicKey();
         final BigInteger partialPublicKey3 = output3.getPartialPublicKey();
 
         // Fetching partial secret keys
         final PartialSecretKey partialSecretKey1 = output1.getPartialSecretKey();
+        final PartialSecretKey partialSecretKey2 = output2.getPartialSecretKey();
         final PartialSecretKey partialSecretKey3 = output3.getPartialSecretKey();
 
-        // Compute public key y and secret key x
         final BigInteger p = output1.getPublicKey().getP();
         final BigInteger q = output1.getPublicKey().getQ();
         final BigInteger g = output1.getPublicKey().getG();
 
         // Test invariants
-        final BigInteger publicKey = partialPublicKey1.multiply(partialPublicKey3).mod(p);
+        HashMap<Integer, BigInteger> partialPublicKeys = new HashMap<>();
+        partialPublicKeys.put(1, partialPublicKey1);
+        partialPublicKeys.put(2, partialPublicKey2);
+        partialPublicKeys.put(3, partialPublicKey3);
 
-        BigInteger partialSecret1 = partialSecretKey1.getSecretValue();
-        BigInteger partialSecret3 = partialSecretKey3.getSecretValue();
+        HashMap<Integer, BigInteger> partialSecrets = new HashMap<>();
+        partialSecrets.put(1, partialSecretKey1.getSecretValue());
+        partialSecrets.put(2, partialSecretKey2.getSecretValue());
+        partialSecrets.put(3, partialSecretKey3.getSecretValue());
 
-        final BigInteger x = partialSecret1.add(partialSecret3).mod(q);
-        final BigInteger testPublicKey = g.modPow(x, p);
-
-        assertEquals("partials for player 1 did not match", partialPublicKey1, g.modPow(partialSecret1, p));
-        assertEquals("partials for player 3 did not match", partialPublicKey3, g.modPow(partialSecret3, p));
-
-        // Assert that y = g^x mod p
-        assertEquals("Public key Y and g^x did not match", testPublicKey, publicKey);
+        List<PublicKey> publicKeys = new ArrayList<>();
+        publicKeys.add(output1.getPublicKey());
+        publicKeys.add(output2.getPublicKey());
+        publicKeys.add(output3.getPublicKey());
+        assertInvariants(publicKeys, partialPublicKeys, partialSecrets, p, q, g);
 
         HashMap<Integer, BigInteger> partialSecretKeys = new HashMap<>();
         partialSecretKeys.put(1, partialSecretKey1.getSecretValue());
+        partialSecretKeys.put(2, partialSecretKey2.getSecretValue());
         partialSecretKeys.put(3, partialSecretKey3.getSecretValue());
 
         assertEncryptDecrypt(output1, partialSecretKeys, p, g);
