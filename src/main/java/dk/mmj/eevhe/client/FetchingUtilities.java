@@ -2,7 +2,9 @@ package dk.mmj.eevhe.client;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.mmj.eevhe.entities.BallotList;
 import dk.mmj.eevhe.entities.PartialPublicInfo;
+import dk.mmj.eevhe.entities.PersistedBallot;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
@@ -15,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +27,36 @@ import java.util.function.Predicate;
  * Utility class for fetching information from the <i>BulletinBoard</i>
  */
 public class FetchingUtilities {
+
+    /**
+     * Retrieves cast ballots from BulletinBoard
+     *
+     * @param logger logger to be used in giving feedback
+     * @param bulletinBoard WebTarget pointing at bulletinBoard
+     * @return list of ballots from BulletinBoard
+     */
+    public static List<PersistedBallot> getBallots(Logger logger, WebTarget bulletinBoard) {
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            String getVotes = bulletinBoard.path("getBallots").request().get(String.class);
+            BallotList voteObjects = mapper.readValue(getVotes, BallotList.class);
+            ArrayList<PersistedBallot> ballots = new ArrayList<>();
+
+            for (Object ballot : voteObjects.getBallots()) {
+                if (ballot instanceof PersistedBallot) {
+                    ballots.add((PersistedBallot) ballot);
+                } else {
+                    logger.error("Found ballot that was not correct class. Was " + ballot.getClass() + ". Terminating server");
+                    return null;
+                }
+            }
+            return ballots;
+        } catch (IOException e) {
+            logger.error("Failed to read BallotList from JSON string", e);
+            return null;
+        }
+    }
+
 
     /**
      * Fetches a list of  {@link PartialPublicInfo}s from the BulletinBoard, supplied as a {@link WebTarget}.

@@ -4,9 +4,9 @@ import dk.mmj.eevhe.crypto.ElGamal;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.server.decryptionauthority.interfaces.BallotFetcher;
-import dk.mmj.eevhe.server.decryptionauthority.interfaces.BallotVerifier;
-import dk.mmj.eevhe.server.decryptionauthority.interfaces.Decrypter;
+import dk.mmj.eevhe.interfaces.BallotFetcher;
+import dk.mmj.eevhe.interfaces.BallotVerifier;
+import dk.mmj.eevhe.interfaces.Decrypter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class DecrypterIml implements Decrypter {
+public class DecrypterImpl implements Decrypter {
 
     private final Logger logger;
     private final BallotFetcher ballotFetcher;
@@ -25,9 +25,9 @@ public class DecrypterIml implements Decrypter {
     private final List<Candidate> candidates;
     private final int id;
 
-    public DecrypterIml(int id, BallotFetcher ballotFetcher, BallotVerifier ballotVerifier, List<Candidate> candidates) {
+    public DecrypterImpl(int id, BallotFetcher ballotFetcher, BallotVerifier ballotVerifier, List<Candidate> candidates) {
         this.id = id;
-        this.logger = LogManager.getLogger(DecrypterIml.class.getName() + " ID=" + id);
+        this.logger = LogManager.getLogger(DecrypterImpl.class.getName() + " ID=" + id);
         this.ballotFetcher = ballotFetcher;
         this.ballotVerifier = ballotVerifier;
         this.candidates = candidates;

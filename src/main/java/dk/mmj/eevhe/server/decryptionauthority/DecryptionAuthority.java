@@ -3,6 +3,7 @@ package dk.mmj.eevhe.server.decryptionauthority;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
+import dk.mmj.eevhe.client.FetchingUtilities;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
@@ -13,7 +14,7 @@ import dk.mmj.eevhe.protocols.connectors.ServerStateIncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.DKG;
 import dk.mmj.eevhe.server.AbstractServer;
-import dk.mmj.eevhe.server.decryptionauthority.interfaces.Decrypter;
+import dk.mmj.eevhe.interfaces.Decrypter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
@@ -35,13 +36,11 @@ import java.util.stream.Collectors;
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
 public class DecryptionAuthority extends AbstractServer {
-    private static final String RSA_PUBLIC_KEY_NAME = "rsa";
     private final Logger logger;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final JerseyWebTarget bulletinBoard;
     private final int port;
     private final Integer id;
-    private final ObjectMapper mapper = new ObjectMapper();
     private Decrypter decrypter;
     private final KeyGenParams params;
     private final DecryptionAuthorityInput input;
@@ -62,6 +61,7 @@ public class DecryptionAuthority extends AbstractServer {
         }
 
         bulletinBoard = configureWebTarget(logger, configuration.bulletinBoard);
+        ObjectMapper mapper = new ObjectMapper();
         try {
             candidates = mapper.readValue(new File("conf/testing_candidates.json"), new TypeReference<List<Candidate>>() {
             });
@@ -147,8 +147,8 @@ public class DecryptionAuthority extends AbstractServer {
             keyPair = dkg.output();
             PartialPublicInfo ppi = new PartialPublicInfo(id, keyPair.getPublicKey(), keyPair.getPartialPublicKey(), candidates, endTime);
 
-            decrypter = new DecrypterIml(id,
-                    this::getBallots,
+            decrypter = new DecrypterImpl(id,
+                    () -> FetchingUtilities.getBallots(logger, bulletinBoard),
                     b -> VoteProofUtils.verifyBallot(b, keyPair.getPublicKey()),
                     candidates
             );
@@ -204,32 +204,6 @@ public class DecryptionAuthority extends AbstractServer {
             logger.info("Successfully transferred partial decryption to bulletin board");
         }
 
-    }
-
-    /**
-     * Retrieves cast ballots from BulletinBoard
-     *
-     * @return list of ballots from BulletinBoard
-     */
-    private List<PersistedBallot> getBallots() {
-        try {
-            String getVotes = bulletinBoard.path("getBallots").request().get(String.class);
-            BallotList voteObjects = mapper.readValue(getVotes, BallotList.class);
-            ArrayList<PersistedBallot> ballots = new ArrayList<>();
-
-            for (Object ballot : voteObjects.getBallots()) {
-                if (ballot instanceof PersistedBallot) {
-                    ballots.add((PersistedBallot) ballot);
-                } else {
-                    logger.error("Found ballot that was not correct class. Was " + ballot.getClass() + ". Terminating server");
-                    terminate();
-                }
-            }
-            return ballots;
-        } catch (IOException e) {
-            logger.error("Failed to read BallotList from JSON string", e);
-            return null;
-        }
     }
 
     @Override

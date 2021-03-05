@@ -2,6 +2,7 @@ package dk.mmj.eevhe.entities;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.mmj.eevhe.client.results.ElectionResult;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,6 +95,7 @@ public class TestSerialization {
         serializables.add(new PartialKeyPair(new PartialSecretKey(new BigInteger("123521"), new BigInteger("98273523"))
                 , new BigInteger("123456789"), publicKey));
         serializables.add(new PartialPublicInfo(1, publicKey, new BigInteger("6513894"), Arrays.asList(cand1, cand2), 16318));
+        serializables.add(new ElectionResult(Arrays.asList(1,2, 41, 12, 12541), 12412134));
     }
 
     @Test

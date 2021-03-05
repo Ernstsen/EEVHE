@@ -1,4 +1,4 @@
-package dk.mmj.eevhe.server.decryptionauthority.interfaces;
+package dk.mmj.eevhe.interfaces;
 
 import dk.mmj.eevhe.entities.PartialKeyPair;
 import dk.mmj.eevhe.entities.PartialResultList;
