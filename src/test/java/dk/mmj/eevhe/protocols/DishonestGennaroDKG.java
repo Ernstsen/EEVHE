@@ -24,6 +24,8 @@ public class DishonestGennaroDKG extends GennaroDKG {
     private final String logPrefix;
     private final boolean wrongCommitment;
     private final boolean complainAgainstHonestParty;
+    private Set<Integer> honestPartiesPedersen;
+    private Set<Integer> honestPartiesFeldman;
     private PartialKeyPair output;
 
 
@@ -79,9 +81,9 @@ public class DishonestGennaroDKG extends GennaroDKG {
         BigInteger[] pol1 = super.pol1;
         PedersenVSS pedersenVSS = super.pedersenVSS;
 
-        final Set<Integer> honestPartiesPedersen = pedersenVSS.getHonestParties();
+        honestPartiesPedersen = pedersenVSS.getHonestParties();
+        honestPartiesFeldman = new HashSet<>();
         final Map<Integer, PeerCommunicator> honestPeers = new HashMap<>();
-        final Set<Integer> honestParties = new HashSet<>();
         final Map<Integer, PartialSecretMessageDTO> secretsPedersen = pedersenVSS.getSecrets();
 
         DishonestGennaroFeldmanVSS feldmanVSS = new DishonestGennaroFeldmanVSS(broadcaster, incoming,
@@ -97,8 +99,8 @@ public class DishonestGennaroDKG extends GennaroDKG {
                 new Step(feldmanVSS::startProtocol, 0, SECONDS),
                 new Step(feldmanVSS::handleReceivedValues, 10, SECONDS),
                 new Step(feldmanVSS::handleComplaints, 10, SECONDS),
-                new Step(() -> honestParties.addAll(feldmanVSS.getHonestParties()), 0, SECONDS),
-                new Step(() -> this.setResult(computeKeyPair(broadcaster, honestParties, feldmanVSS)), 0, SECONDS)
+                new Step(() -> honestPartiesFeldman.addAll(feldmanVSS.getHonestParties()), 0, SECONDS),
+                new Step(() -> this.setResult(computeKeyPair(broadcaster, honestPartiesFeldman, feldmanVSS)), 0, SECONDS)
         );
     }
 
@@ -110,5 +112,13 @@ public class DishonestGennaroDKG extends GennaroDKG {
     private void setResult(PartialKeyPair res) {
         logger.info("Output has ben set");
         this.output = res;
+    }
+
+    public Set<Integer> getHonestPartiesPedersen() {
+        return honestPartiesPedersen;
+    }
+
+    public Set<Integer> getHonestPartiesFeldman() {
+        return honestPartiesFeldman;
     }
 }

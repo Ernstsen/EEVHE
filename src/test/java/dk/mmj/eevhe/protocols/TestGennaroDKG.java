@@ -265,7 +265,14 @@ public class TestGennaroDKG {
             extractionSteps.get(3).get(i).getExecutable().run();
         }
 
-        assertEquals("Two players should have lodged complaints in extraction phase", 2, testBroadcaster.getFeldmanComplaints().size());
+        assertEquals("Two players should have lodged complaints in extraction phase",
+                2, testBroadcaster.getFeldmanComplaints().size());
+        assertNotEquals("Size of honest parties did not change",
+                player2.getHonestPartiesPedersen().size(), player2.getHonestPartiesFeldman().size());
+
+        assertTrue("Dishonest party 1 was not removed from honestParty set",
+                (player2.getHonestPartiesPedersen().contains(1) &&
+                        !player2.getHonestPartiesFeldman().contains(1)));
 
         final PartialKeyPair output2 = player2.output();
         final PartialKeyPair output3 = player3.output();

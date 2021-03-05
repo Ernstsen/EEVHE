@@ -19,9 +19,13 @@ import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.verifyCommitmentRespected;
 
 public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
     static final String FELDMAN = "FeldmanVSS";
+    static final String PEDERSEN = "PedersenVSS";
+    protected final Map<Integer, BigInteger[]> feldmanCommitments = new HashMap<>();
+    protected final Map<Integer, BigInteger[]> pedersenCommitments = new HashMap<>();
     private final BigInteger[] polynomial;
     private final BigInteger e;
     private final Set<Integer> honestParties = new HashSet<>();
+
 
     public GennaroFeldmanVSS(Broadcaster broadcaster, IncomingChannel incoming,
                              Map<Integer, PeerCommunicator> peerCommunicatorMap,
@@ -54,27 +58,37 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
     @Override
     public boolean handleReceivedValues() {
         logger.info("Reading commitments");
-        final List<CommitmentDTO> commitments = broadcaster.getCommitments().stream()
+        final List<CommitmentDTO> feldmanCommitments = broadcaster.getCommitments().stream()
                 .filter(c -> FELDMAN.equals(c.getProtocol()))
                 .collect(Collectors.toList());
+        final List<CommitmentDTO> pedersenCommitments = broadcaster.getCommitments().stream()
+                .filter(c -> PEDERSEN.equals(c.getProtocol()))
+                .collect(Collectors.toList());
 
-        logger.info("Verifying secret shares, using commitments");
-        for (CommitmentDTO commitment : commitments) {
-            this.commitments.put(commitment.getId(), commitment.getCommitment());
+        for (CommitmentDTO commitment : feldmanCommitments) {
+            this.feldmanCommitments.put(commitment.getId(), commitment.getCommitment());
+        }
+        for (CommitmentDTO commitment : pedersenCommitments) {
+            this.pedersenCommitments.put(commitment.getId(), commitment.getCommitment());
         }
 
+        logger.info("Verifying secret shares, using commitments");
         for (Map.Entry<Integer, PartialSecretMessageDTO> entry : new ArrayList<>(secrets.entrySet())) {
             int senderId = entry.getKey();
+            if (senderId == id) {
+                continue;
+            }
             BigInteger partialSecret = entry.getValue().getPartialSecret1();
 
-
-            BigInteger[] commitment = this.commitments.get(senderId);
-            if (commitment == null) {
-                logger.error("Peer with id=" + senderId + ", had no corresponding commitment!");
-                continue;//TODO: What to do?
+            BigInteger[] feldmanCommitment = this.feldmanCommitments.get(senderId);
+            if (feldmanCommitment == null) {
+                logger.error("Peer with id=" + senderId + ", had no corresponding commitment," +
+                        " and has been removed from honest parties.");
+                honestParties.remove(senderId);
+                continue;
             }
 
-            boolean matches = verifyCommitmentRespected(g, partialSecret, commitment, BigInteger.valueOf(id), p, q);
+            boolean matches = verifyCommitmentRespected(g, partialSecret, feldmanCommitment, BigInteger.valueOf(id), p, q);
             if (!matches) {
                 logger.info("" + id + ": Sending complaint about Peer with ID=" + senderId);
                 PartialSecretMessageDTO secret = secrets.get(senderId);
@@ -95,15 +109,16 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
         logger.debug("Received " + complaints.size() + " complaints");
         for (FeldmanComplaintDTO complaint : complaints) {
             // Check 1
-            BigInteger[] commitment = commitments.get(complaint.getTargetId());
+            BigInteger[] pedersenCommitment = pedersenCommitments.get(complaint.getTargetId());
+            BigInteger[] feldmanCommitment = feldmanCommitments.get(complaint.getTargetId());
             BigInteger partialSecret1 = complaint.getVal1();
             BigInteger partialSecret2 = complaint.getVal2();
 
             BigInteger complainerId = BigInteger.valueOf(complaint.getSenderId());
             boolean matches1 = PedersenVSSUtils.verifyCommitmentRespected(g, e,
-                    partialSecret1, partialSecret2, commitment, complainerId, p, q);
+                    partialSecret1, partialSecret2, pedersenCommitment, complainerId, p, q);
             // Check 2
-            boolean matches2 = verifyCommitmentRespected(g, partialSecret1, commitment, complainerId, p, q);
+            boolean matches2 = verifyCommitmentRespected(g, partialSecret1, feldmanCommitment, complainerId, p, q);
 
             if (matches1 && !matches2) {
                 logger.info("Removing party with ID " + complaint.getTargetId() + " from honest parties");

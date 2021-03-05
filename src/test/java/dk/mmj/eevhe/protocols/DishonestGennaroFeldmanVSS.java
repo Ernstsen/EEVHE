@@ -59,15 +59,21 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
     @Override
     public boolean handleReceivedValues() {
         logger.info("Reading commitments");
-        final List<CommitmentDTO> commitments = broadcaster.getCommitments().stream()
+        final List<CommitmentDTO> feldmanCommitments = broadcaster.getCommitments().stream()
                 .filter(c -> FELDMAN.equals(c.getProtocol()))
                 .collect(Collectors.toList());
+        final List<CommitmentDTO> pedersenCommitments = broadcaster.getCommitments().stream()
+                .filter(c -> PEDERSEN.equals(c.getProtocol()))
+                .collect(Collectors.toList());
 
-        logger.info("Verifying secret shares, using commitments");
-        for (CommitmentDTO commitment : commitments) {
-            this.commitments.put(commitment.getId(), commitment.getCommitment());
+        for (CommitmentDTO commitment : feldmanCommitments) {
+            this.feldmanCommitments.put(commitment.getId(), commitment.getCommitment());
+        }
+        for (CommitmentDTO commitment : pedersenCommitments) {
+            this.pedersenCommitments.put(commitment.getId(), commitment.getCommitment());
         }
 
+        logger.info("Verifying secret shares, using commitments");
         for (Map.Entry<Integer, PartialSecretMessageDTO> entry : new ArrayList<>(secrets.entrySet())) {
             int senderId = entry.getKey();
             if (senderId == id) {
@@ -75,13 +81,15 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
             }
             BigInteger partialSecret = entry.getValue().getPartialSecret1();
 
-            BigInteger[] commitment = this.commitments.get(senderId);
-            if (commitment == null) {
-                logger.error("Peer with id=" + senderId + ", had no corresponding commitment!");
-                continue;//TODO: What to do?
+            BigInteger[] feldmanCommitment = this.feldmanCommitments.get(senderId);
+            if (feldmanCommitment == null) {
+                logger.error("Peer with id=" + senderId + ", had no corresponding commitment," +
+                        " and has been removed from honest parties.");
+                honestParties.remove(senderId);
+                continue;
             }
 
-            boolean matches = verifyCommitmentRespected(g, partialSecret, commitment, BigInteger.valueOf(id), p, q);
+            boolean matches = verifyCommitmentRespected(g, partialSecret, feldmanCommitment, BigInteger.valueOf(id), p, q);
             if (!matches) {
                 logger.info("" + id + ": Sending complaint about Peer with ID=" + senderId);
                 PartialSecretMessageDTO secret = secrets.get(senderId);

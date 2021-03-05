@@ -31,6 +31,8 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
     BigInteger[] pol1;
     PedersenVSS pedersenVSS;
     BigInteger partialSecret;
+    private Set<Integer> honestPartiesPedersen;
+    private Set<Integer> honestPartiesFeldman;
     private PartialKeyPair output;
 
 
@@ -105,9 +107,9 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
      * - Generates output
      */
     List<Step> extractionPhase() {
-        final Set<Integer> honestPartiesPedersen = pedersenVSS.getHonestParties();
+        honestPartiesPedersen = pedersenVSS.getHonestParties();
+        honestPartiesFeldman = new HashSet<>();
         final Map<Integer, PeerCommunicator> honestPeers = new HashMap<>();
-        final Set<Integer> honestParties = new HashSet<>();
         final Map<Integer, PartialSecretMessageDTO> secretsPedersen = pedersenVSS.getSecrets();
 
         GennaroFeldmanVSS feldmanVSS = new GennaroFeldmanVSS(broadcaster, incoming,
@@ -123,8 +125,8 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
                 new Step(feldmanVSS::startProtocol, 0, SECONDS),
                 new Step(feldmanVSS::handleReceivedValues, 10, SECONDS),
                 new Step(feldmanVSS::handleComplaints, 10, SECONDS),
-                new Step(() -> honestParties.addAll(feldmanVSS.getHonestParties()), 0, SECONDS),
-                new Step(() -> this.setResult(computeKeyPair(broadcaster, honestParties, feldmanVSS)), 0, SECONDS)
+                new Step(() -> honestPartiesFeldman.addAll(feldmanVSS.getHonestParties()), 0, SECONDS),
+                new Step(() -> this.setResult(computeKeyPair(broadcaster, honestPartiesFeldman, feldmanVSS)), 0, SECONDS)
         );
     }
 
@@ -157,5 +159,13 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
     private void setResult(PartialKeyPair res) {
         logger.info("Output has ben set");
         this.output = res;
+    }
+
+    public Set<Integer> getHonestPartiesPedersen() {
+        return honestPartiesPedersen;
+    }
+
+    public Set<Integer> getHonestPartiesFeldman() {
+        return honestPartiesFeldman;
     }
 }
