@@ -24,10 +24,11 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
 
     @Before
     public void setup() throws IOException {
-        DecryptionAuthorityInput input = new DecryptionAuthorityInput("02", "02", 124, Arrays.asList(
-                new DecryptionAuthorityInfo(1, "https://localhost:8081"),
-                new DecryptionAuthorityInfo(2, "https://localhost:8082")
-        ));
+        DecryptionAuthorityInput input = new DecryptionAuthorityInput("02", "02", "02", 124,
+                Arrays.asList(
+                        new DecryptionAuthorityInfo(1, "https://localhost:8081"),
+                        new DecryptionAuthorityInfo(2, "https://localhost:8082")
+                ));
 
         confPath = "./conf/testConf.json";
         File file = new File(confPath);

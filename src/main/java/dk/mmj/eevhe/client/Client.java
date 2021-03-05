@@ -9,8 +9,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
-import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
@@ -36,12 +37,20 @@ public abstract class Client implements Application {
         }
         List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, target);
 
-        PublicKey publishedPK = publicInfos.get(0).getPublicKey();
+        HashMap<PublicKey, Integer> pkCount = new HashMap<>();
+        for (PartialPublicInfo info : publicInfos) {
+            pkCount.compute(info.getPublicKey(), (pk, v) -> v != null ? v + 1 : 1);
+        }
 
-        BigInteger h = publicInfos.stream().map(PartialPublicInfo::getPartialPublicKey)
-                .reduce(BigInteger::multiply).orElse(BigInteger.ONE).mod(publishedPK.getP());
+        int t = publicInfos.size() / 2;
+        for (Map.Entry<PublicKey, Integer> e : pkCount.entrySet()) {
+            if (e.getValue() > t) {
+                return this.publicKey = e.getKey();
+            }
+        }
 
-        return this.publicKey = new PublicKey(h, publishedPK.getG(), publishedPK.getQ());
+        logger.error("Failed to find valid Public-key");
+        return null;
     }
 
     /**
@@ -65,7 +74,7 @@ public abstract class Client implements Application {
     static abstract class ClientConfiguration<T extends Client> extends AbstractInstanceCreatingConfiguration<T> {
         private final String targetUrl;
 
-        ClientConfiguration(Class<T> clazz,String targetUrl) {
+        ClientConfiguration(Class<T> clazz, String targetUrl) {
             super(clazz);
             this.targetUrl = targetUrl;
         }

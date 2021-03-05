@@ -3,15 +3,18 @@ package dk.mmj.eevhe.entities;
 import java.util.List;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class DecryptionAuthorityInput {
     private String pHex;
     private String gHex;
+    private String eHex;
     private long endTime;
     private List<DecryptionAuthorityInfo> infos;
 
-    public DecryptionAuthorityInput(String pHex, String gHex, long endTime, List<DecryptionAuthorityInfo> infos) {
+    public DecryptionAuthorityInput(String pHex, String gHex, String eHex, long endTime, List<DecryptionAuthorityInfo> infos) {
         this.pHex = pHex;
         this.gHex = gHex;
+        this.eHex = eHex;
         this.endTime = endTime;
         this.infos = infos;
     }
@@ -35,6 +38,14 @@ public class DecryptionAuthorityInput {
         this.gHex = gHex;
     }
 
+    public String geteHex() {
+        return eHex;
+    }
+
+    public void seteHex(String eHex) {
+        this.eHex = eHex;
+    }
+
     public long getEndTime() {
         return endTime;
     }
@@ -56,12 +67,12 @@ public class DecryptionAuthorityInput {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         DecryptionAuthorityInput that = (DecryptionAuthorityInput) o;
-        return endTime == that.endTime && Objects.equals(pHex, that.pHex) && Objects.equals(gHex, that.gHex) && Objects.equals(infos, that.infos);
+        return endTime == that.endTime && Objects.equals(pHex, that.pHex) && Objects.equals(gHex, that.gHex) && Objects.equals(eHex, that.eHex) && Objects.equals(infos, that.infos);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(pHex, gHex, endTime, infos);
+        return Objects.hash(pHex, gHex, eHex, endTime, infos);
     }
 
     @Override
@@ -69,6 +80,7 @@ public class DecryptionAuthorityInput {
         return "DecryptionAuthorityInput{" +
                 "pHex='" + pHex + '\'' +
                 ", gHex='" + gHex + '\'' +
+                ", eHex='" + eHex + '\'' +
                 ", endTime=" + endTime +
                 ", infos=" + infos +
                 '}';

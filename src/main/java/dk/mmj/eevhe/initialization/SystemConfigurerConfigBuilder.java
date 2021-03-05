@@ -1,16 +1,15 @@
 package dk.mmj.eevhe.initialization;
 
 import dk.eSoftware.commandLineParser.CommandLineParser;
+import dk.mmj.eevhe.TestableConfigurationBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBuilder<SystemConfigurer.SystemConfiguration> {
+public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBuilder<SystemConfigurer.SystemConfiguration>, TestableConfigurationBuilder {
     private static final Logger logger = LogManager.getLogger(SystemConfigurerConfigBuilder.class);
 
     //Configuration options
@@ -21,13 +20,10 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
     private static final String TIME_DAY = "day=";
     private static final String TIME_HR = "hour=";
     private static final String TIME_MIN = "min=";
-
-
+    private final Map<Integer, String> daAddresses = new HashMap<>();
     //state
     private Path outputFolderPath = Paths.get("./conf/");
     private long time = 10_000 * 60;
-    private final Map<Integer, String> daAddresses = new HashMap<>();
-
 
     @Override
     public void applyCommand(CommandLineParser.Command command) {
@@ -73,6 +69,19 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
         return "\tMODE: Trusted Dealer (dealer) - Trusted dealer creates files to configure Decryption Authorities \n" +
                 "\t  --" + TIME + "\t\t Sets time. Vote ends at current time + time parameters. Standard value: 10 min\n" +
                 "\t\t -" + TIME_DAY + "days, -" + TIME_HR + "hours, -" + TIME_MIN + "minutes\n" +
-                "\t --" + DA_ADDRESSES + "\t\t defines addresses for the DAs. Supplied on the form -id_url";
+                "\t --" + DA_ADDRESSES + "\t\t defines addresses for the DAs. Supplied on the form -id_url\n"+
+                "\t --" + OUTPUT_FOLDER_PATH + "\t\t defines output folder using relative path";
+    }
+
+    @Override
+    public List<String> getParameters() {
+        return Arrays.asList(
+                OUTPUT_FOLDER_PATH,
+                DA_ADDRESSES,
+                TIME,
+                TIME_DAY,
+                TIME_HR,
+                TIME_MIN
+        );
     }
 }

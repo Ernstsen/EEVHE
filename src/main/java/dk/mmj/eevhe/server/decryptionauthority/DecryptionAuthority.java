@@ -81,8 +81,9 @@ public class DecryptionAuthority extends AbstractServer {
 
             BigInteger p = new BigInteger(Hex.decode(input.getpHex()));
             BigInteger g = new BigInteger(Hex.decode(input.getgHex()));
+            BigInteger e = new BigInteger(Hex.decode(input.geteHex()));
             BigInteger q = p.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2));
-            params = new KeyGenParams(p, q, g);
+            params = new KeyGenParams(p, q, g, e);
             endTime = input.getEndTime();
             long relativeEndTime = endTime - new Date().getTime();
 
@@ -187,6 +188,10 @@ public class DecryptionAuthority extends AbstractServer {
         }
 
         PartialResultList res = decrypter.generatePartialResult(endTime, keyPair);
+        if(res == null){
+            logger.info("No result to post");
+            return;
+        }
 
         logger.info("Posting to bulletin board");
         Entity<PartialResultList> resultEntity = Entity.entity(res, MediaType.APPLICATION_JSON);
@@ -283,10 +288,12 @@ public class DecryptionAuthority extends AbstractServer {
     public static class KeyGenParams implements ExtendedKeyGenerationParameters {
         private final PrimePair pair;
         private final BigInteger generator;
+        private final BigInteger groupElement;
 
-        public KeyGenParams(BigInteger p, BigInteger q, BigInteger generator) {
+        public KeyGenParams(BigInteger p, BigInteger q, BigInteger generator, BigInteger groupElement) {
             this.pair = new PrimePair(p, q);
             this.generator = generator;
+            this.groupElement = groupElement;
         }
 
         @Override
@@ -301,8 +308,7 @@ public class DecryptionAuthority extends AbstractServer {
 
         @Override
         public BigInteger getGroupElement() {
-            // TODO: Implement this correctly. Read from file..
-            return BigInteger.ONE;
+            return groupElement;
         }
     }
 }

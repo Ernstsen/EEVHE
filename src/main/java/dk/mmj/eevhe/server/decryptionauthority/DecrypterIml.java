@@ -52,6 +52,10 @@ public class DecrypterIml implements Decrypter {
                 .filter(v -> v.getTs().getTime() < endTime)
                 .filter(ballotVerifier::verifyBallot).collect(Collectors.toList());
 
+        if(ballots.isEmpty()){
+            logger.error("No votes - returning null");
+            return null;
+        }
 
         logger.info("Summing votes");
         Map<Integer, List<CandidateVoteDTO>> votes = new HashMap<>(candidates.size());
