@@ -41,7 +41,7 @@ public abstract class Client implements Application {
         BigInteger h = publicInfos.stream().map(PartialPublicInfo::getPartialPublicKey)
                 .reduce(BigInteger::multiply).orElse(BigInteger.ONE).mod(publishedPK.getP());
 
-        return this.publicKey = new PublicKey(h, publishedPK.getG(), publishedPK.getQ());
+        return this.publicKey = publishedPK;
     }
 
     /**
