@@ -211,8 +211,6 @@ public class TestGennaroDKG {
      */
     @Test
     public void testProtocolRunOneCorrupt() {
-        // TODO: One corrupt who is removed from honest parties, and assert this
-        // TODO: Two corrupt, should not be able to decrypt
         //Modelling communications channels
         final TestBroadcaster testBroadcaster = new TestBroadcaster();
         final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
@@ -233,7 +231,8 @@ public class TestGennaroDKG {
         commMap3.put(2, channel2);
 
         //Creating players
-        final GennaroDKG player1 = new GennaroDKG(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1);
+        final GennaroDKG player1 = new DishonestGennaroDKG(testBroadcaster,
+                channel1, commMap1, 1, params, "ID=" + 1, true, false);
         final GennaroDKG player2 = new GennaroDKG(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2);
         final GennaroDKG player3 = new GennaroDKG(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3);
 
@@ -266,51 +265,45 @@ public class TestGennaroDKG {
             extractionSteps.get(3).get(i).getExecutable().run();
         }
 
-        final PartialKeyPair output1 = player1.output();
+        assertEquals("Two players should have lodged complaints in extraction phase", 2, testBroadcaster.getFeldmanComplaints().size());
+
         final PartialKeyPair output2 = player2.output();
         final PartialKeyPair output3 = player3.output();
 
         // Assuring that all keys aren't null
-        assertNotNull("Partial secret 1 was null", output1);
         assertNotNull("Partial secret 2 was null", output2);
         assertNotNull("Partial secret 3 was null", output3);
 
         // Fetching partial public keys
-        final BigInteger partialPublicKey1 = output1.getPartialPublicKey();
         final BigInteger partialPublicKey2 = output2.getPartialPublicKey();
         final BigInteger partialPublicKey3 = output3.getPartialPublicKey();
 
         // Fetching partial secret keys
-        final PartialSecretKey partialSecretKey1 = output1.getPartialSecretKey();
         final PartialSecretKey partialSecretKey2 = output2.getPartialSecretKey();
         final PartialSecretKey partialSecretKey3 = output3.getPartialSecretKey();
 
-        final BigInteger p = output1.getPublicKey().getP();
-        final BigInteger q = output1.getPublicKey().getQ();
-        final BigInteger g = output1.getPublicKey().getG();
+        // Compute public key y and secret key x
+        final BigInteger p = output2.getPublicKey().getP();
+        final BigInteger q = output2.getPublicKey().getQ();
+        final BigInteger g = output2.getPublicKey().getG();
 
-        // Test invariants
+        HashMap<Integer, BigInteger> partialSecretKeys = new HashMap<>();
+        partialSecretKeys.put(2, partialSecretKey2.getSecretValue());
+        partialSecretKeys.put(3, partialSecretKey3.getSecretValue());
+
         HashMap<Integer, BigInteger> partialPublicKeys = new HashMap<>();
-        partialPublicKeys.put(1, partialPublicKey1);
         partialPublicKeys.put(2, partialPublicKey2);
         partialPublicKeys.put(3, partialPublicKey3);
 
         HashMap<Integer, BigInteger> partialSecrets = new HashMap<>();
-        partialSecrets.put(1, partialSecretKey1.getSecretValue());
         partialSecrets.put(2, partialSecretKey2.getSecretValue());
         partialSecrets.put(3, partialSecretKey3.getSecretValue());
 
         List<PublicKey> publicKeys = new ArrayList<>();
-        publicKeys.add(output1.getPublicKey());
         publicKeys.add(output2.getPublicKey());
         publicKeys.add(output3.getPublicKey());
+
         assertInvariants(publicKeys, partialPublicKeys, partialSecrets, p, q, g);
-
-        HashMap<Integer, BigInteger> partialSecretKeys = new HashMap<>();
-        partialSecretKeys.put(1, partialSecretKey1.getSecretValue());
-        partialSecretKeys.put(2, partialSecretKey2.getSecretValue());
-        partialSecretKeys.put(3, partialSecretKey3.getSecretValue());
-
-        assertEncryptDecrypt(output1, partialSecretKeys, p, g);
+        assertEncryptDecrypt(output2, partialSecretKeys, p, g);
     }
 }

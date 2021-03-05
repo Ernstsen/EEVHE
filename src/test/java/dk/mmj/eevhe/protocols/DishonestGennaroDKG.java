@@ -1,22 +1,20 @@
 package dk.mmj.eevhe.protocols;
 
-import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
-import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.PartialKeyPair;
+import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
 import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
-import dk.mmj.eevhe.protocols.interfaces.DKG;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.math.BigInteger;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public class GennaroDKG implements DKG<PartialKeyPair> {
+public class DishonestGennaroDKG extends GennaroDKG {
     private final Broadcaster broadcaster;
     private final IncomingChannel incoming;
     private final Map<Integer, PeerCommunicator> peerMap;
@@ -24,13 +22,8 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
     private final int id;
     private final ExtendedKeyGenerationParameters params;
     private final String logPrefix;
-    private final BigInteger g;
-    private final BigInteger q;
-    private final BigInteger p;
-    private final int t;
-    BigInteger[] pol1;
-    PedersenVSS pedersenVSS;
-    BigInteger partialSecret;
+    private final boolean wrongCommitment;
+    private final boolean complainAgainstHonestParty;
     private PartialKeyPair output;
 
 
@@ -42,30 +35,26 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
      * @param params              Key Generation Parameters: (g, p, q)
      * @param logPrefix           Prefix used for logging
      */
-    public GennaroDKG(Broadcaster broadcaster, IncomingChannel incoming,
-                      Map<Integer, PeerCommunicator> peerCommunicatorMap,
-                      int id, ExtendedKeyGenerationParameters params, String logPrefix) {
+    public DishonestGennaroDKG(Broadcaster broadcaster, IncomingChannel incoming,
+                               Map<Integer, PeerCommunicator> peerCommunicatorMap,
+                               int id, ExtendedKeyGenerationParameters params, String logPrefix,
+                               boolean wrongCommitment, boolean complainAgainstHonestParty) {
+        super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);
         this.broadcaster = broadcaster;
         this.incoming = incoming;
         this.peerMap = peerCommunicatorMap;
         this.id = id;
         this.params = params;
         this.logPrefix = logPrefix;
-        this.g = params.getGenerator();
-        this.q = params.getPrimePair().getQ();
-        this.p = params.getPrimePair().getP();
-        this.t = ((peerMap.size()) / 2);
+        this.wrongCommitment = wrongCommitment;
+        this.complainAgainstHonestParty = complainAgainstHonestParty;
 
         logger = LogManager.getLogger(PedersenVSS.class.getName() + ". " + logPrefix + ":");
     }
 
-
     @Override
     public List<Step> getSteps() {
-        ArrayList<Step> steps = new ArrayList<>();
-        steps.addAll(generationPhase());
-        steps.addAll(extractionPhase());
-        return steps;
+        return super.getSteps();
     }
 
     @Override
@@ -73,27 +62,9 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
         return output;
     }
 
-    /**
-     * Generation phase of the Gennaro-DKG.
-     * <p>
-     * - Initializes two random polynomials
-     * - Initializes an instance of Pedersen-VSS
-     * - Generates and distributes secret shares
-     * - Receives and checks shares from other peers
-     * - Resolves complaints
-     */
+    @Override
     List<Step> generationPhase() {
-        BigInteger[] pol2 = SecurityUtils.generatePolynomial(t, q);
-        pol1 = SecurityUtils.generatePolynomial(t, q);
-        partialSecret = pol1[0];
-        this.pedersenVSS = new PedersenVSS(broadcaster, incoming, peerMap, id, params, logPrefix, pol1, pol2);
-
-        return Arrays.asList(
-                new Step(pedersenVSS::startProtocol, 0, SECONDS),
-                new Step(pedersenVSS::handleReceivedValues, 10, SECONDS),
-                new Step(pedersenVSS::handleComplaints, 10, SECONDS),
-                new Step(pedersenVSS::applyResolves, 10, SECONDS)
-        );
+        return super.generationPhase();
     }
 
     /**
@@ -105,13 +76,16 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
      * - Generates output
      */
     List<Step> extractionPhase() {
+        BigInteger[] pol1 = super.pol1;
+        PedersenVSS pedersenVSS = super.pedersenVSS;
+
         final Set<Integer> honestPartiesPedersen = pedersenVSS.getHonestParties();
         final Map<Integer, PeerCommunicator> honestPeers = new HashMap<>();
         final Set<Integer> honestParties = new HashSet<>();
         final Map<Integer, PartialSecretMessageDTO> secretsPedersen = pedersenVSS.getSecrets();
 
-        GennaroFeldmanVSS feldmanVSS = new GennaroFeldmanVSS(broadcaster, incoming,
-                honestPeers, id, params, logPrefix, pol1, secretsPedersen);
+        DishonestGennaroFeldmanVSS feldmanVSS = new DishonestGennaroFeldmanVSS(broadcaster, incoming,
+                honestPeers, id, params, logPrefix, pol1, secretsPedersen, wrongCommitment, complainAgainstHonestParty);
 
         return Arrays.asList(
                 new Step(
@@ -128,30 +102,9 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
         );
     }
 
+    @Override
     PartialKeyPair computeKeyPair(Broadcaster broadcaster, Set<Integer> honestParties, GennaroFeldmanVSS feldmanVSS) {
-        logger.info("Computing PartialKeyPair");
-        BigInteger partialSecretKey = feldmanVSS.output();
-        BigInteger partialPublicKey = g.modPow(partialSecretKey, p);
-
-        // Computes Y = prod_i y_i mod p
-        List<CommitmentDTO> commitments = broadcaster.getCommitments().stream()
-                .filter(c -> GennaroFeldmanVSS.FELDMAN.equals(c.getProtocol()))
-                .collect(Collectors.toList());
-
-        List<BigInteger> partialPublicKeys = new ArrayList<>();
-        for (CommitmentDTO commitment : commitments) {
-            if (honestParties.contains(commitment.getId())) {
-                partialPublicKeys.add(commitment.getCommitment()[0]);
-            }
-        }
-
-        BigInteger publicKey = partialPublicKeys
-                .stream().reduce(BigInteger::multiply).orElse(BigInteger.ZERO).mod(p);
-        return new PartialKeyPair(
-                new PartialSecretKey(partialSecretKey, p),
-                partialPublicKey,
-                new PublicKey(publicKey, g, q)
-        );
+        return super.computeKeyPair(broadcaster, honestParties, feldmanVSS);
     }
 
     private void setResult(PartialKeyPair res) {

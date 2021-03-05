@@ -1,6 +1,5 @@
 package dk.mmj.eevhe.protocols;
 
-import dk.mmj.eevhe.crypto.PedersenVSSUtils;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.entities.CommitmentDTO;
 import dk.mmj.eevhe.entities.FeldmanComplaintDTO;
@@ -8,7 +7,6 @@ import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
 import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
-import dk.mmj.eevhe.protocols.interfaces.VSS;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -17,18 +15,21 @@ import java.util.stream.Collectors;
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.computeCoefficientCommitments;
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.verifyCommitmentRespected;
 
-public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
+public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
     static final String FELDMAN = "FeldmanVSS";
     private final BigInteger[] polynomial;
-    private final BigInteger e;
+    private final boolean wrongCommitment;
+    private final boolean complainAgainstHonestParty;
     private final Set<Integer> honestParties = new HashSet<>();
 
-    public GennaroFeldmanVSS(Broadcaster broadcaster, IncomingChannel incoming,
-                             Map<Integer, PeerCommunicator> peerCommunicatorMap,
-                             int id, ExtendedKeyGenerationParameters params, String logPrefix,
-                             BigInteger[] polynomial, Map<Integer, PartialSecretMessageDTO> secrets) {
-        super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);
-        this.e = params.getGroupElement();
+    public DishonestGennaroFeldmanVSS(Broadcaster broadcaster, IncomingChannel incoming,
+                                      Map<Integer, PeerCommunicator> peerCommunicatorMap,
+                                      int id, ExtendedKeyGenerationParameters params, String logPrefix,
+                                      BigInteger[] polynomial, Map<Integer, PartialSecretMessageDTO> secrets,
+                                      boolean wrongCommitment, boolean complainAgainstHonestParty) {
+        super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix, polynomial, secrets);
+        this.wrongCommitment = wrongCommitment;
+        this.complainAgainstHonestParty = complainAgainstHonestParty;
         if (secrets != null) {
             this.secrets = secrets;
         }
@@ -37,13 +38,17 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
 
     @Override
     public void startProtocol() {
-        logger.info("Initialized GennaroFeldmanVSS");
+        logger.info("Initialized Dishonest GennaroFeldmanVSS");
 
         honestParties.add(id);
         honestParties.addAll(peerMap.keySet());
 
         logger.debug("Calculating coefficient commitments");
         BigInteger[] commitment = computeCoefficientCommitments(g, p, polynomial);
+
+        if (wrongCommitment) {
+            commitment[1] = commitment[1].multiply(BigInteger.valueOf(12314)).mod(p);
+        }
 
         logger.info("Broadcasting commitments");
         broadcaster.commit(new CommitmentDTO(commitment, id, FELDMAN));
@@ -65,8 +70,10 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
 
         for (Map.Entry<Integer, PartialSecretMessageDTO> entry : new ArrayList<>(secrets.entrySet())) {
             int senderId = entry.getKey();
+            if (senderId == id) {
+                continue;
+            }
             BigInteger partialSecret = entry.getValue().getPartialSecret1();
-
 
             BigInteger[] commitment = this.commitments.get(senderId);
             if (commitment == null) {
@@ -82,6 +89,15 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
                         secret.getPartialSecret1(), secret.getPartialSecret2());
                 broadcaster.feldmanComplain(complaint);
             }
+
+            // Complains about honest party with ID = 1
+            if (complainAgainstHonestParty && senderId == 1) {
+                logger.info("" + id + ": Sending complaint about Honest Peer with ID=" + senderId);
+                PartialSecretMessageDTO secret = secrets.get(senderId);
+                final FeldmanComplaintDTO complaint = new FeldmanComplaintDTO(id, senderId,
+                        secret.getPartialSecret1(), secret.getPartialSecret2());
+                broadcaster.feldmanComplain(complaint);
+            }
         }
 
         return true;
@@ -89,45 +105,16 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
 
     @Override
     public void handleComplaints() {
-        logger.info("Fetching complaints");
-        List<FeldmanComplaintDTO> complaints = broadcaster.getFeldmanComplaints();
-
-        logger.debug("Received " + complaints.size() + " complaints");
-        for (FeldmanComplaintDTO complaint : complaints) {
-            // Check 1
-            BigInteger[] commitment = commitments.get(complaint.getTargetId());
-            BigInteger partialSecret1 = complaint.getVal1();
-            BigInteger partialSecret2 = complaint.getVal2();
-
-            BigInteger complainerId = BigInteger.valueOf(complaint.getSenderId());
-            boolean matches1 = PedersenVSSUtils.verifyCommitmentRespected(g, e,
-                    partialSecret1, partialSecret2, commitment, complainerId, p, q);
-            // Check 2
-            boolean matches2 = verifyCommitmentRespected(g, partialSecret1, commitment, complainerId, p, q);
-
-            if (matches1 && !matches2) {
-                logger.info("Removing party with ID " + complaint.getTargetId() + " from honest parties");
-                honestParties.remove(complaint.getTargetId());
-                secrets.remove(complaint.getTargetId());
-            }
-        }
+        super.handleComplaints();
     }
 
     @Override
     public void applyResolves() {
+        super.applyResolves();
     }
 
     @Override
-    public BigInteger output() {
-        logger.info("Combining values, to make partial secret key");
-        // Returns value x_i
-        return secrets.values().stream()
-                .map(PartialSecretMessageDTO::getPartialSecret1)
-                .reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
-    }
-
     public Set<Integer> getHonestParties() {
         return honestParties;
     }
-
 }
