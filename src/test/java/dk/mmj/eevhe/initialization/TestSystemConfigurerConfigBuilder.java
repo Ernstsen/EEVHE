@@ -19,7 +19,7 @@ public class TestSystemConfigurerConfigBuilder extends AbstractConfigTest {
         int duration = 4;
         String params = "--addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 "
                 + "--outputFolder=conf --time -min=" + duration + " -hour=" + duration + " -day=" + duration
-                + " --outputFolder=conf/";
+                + " --outputFolder=conqweff/";
 
         SystemConfigurerConfigBuilder builder = new SystemConfigurerConfigBuilder();
 
@@ -44,7 +44,7 @@ public class TestSystemConfigurerConfigBuilder extends AbstractConfigTest {
                     estEndTime <= config.getEndTime() + 5 && estEndTime >= config.getEndTime() - 5
             );
 
-            assertEquals("Did not respect output path", "conf", config.getOutputFolderPath().getFileName().toString());
+            assertEquals("Did not respect output path", "conqweff", config.getOutputFolderPath().getFileName().toString());
 
             assertNotNull("Should be able to construct configurer", config.produceInstance());
         } catch (WrongFormatException | NoSuchBuilderException e) {

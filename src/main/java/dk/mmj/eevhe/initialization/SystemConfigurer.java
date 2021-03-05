@@ -5,8 +5,6 @@ import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.Application;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParametersImpl;
-import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParametersImpl;
-import dk.mmj.eevhe.crypto.keygeneration.PersistedKeyParameters;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInfo;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
 import org.apache.logging.log4j.LogManager;
@@ -60,7 +58,6 @@ public class SystemConfigurer implements Application {
             mapper.writeValue(ous, daInput);
         } catch (IOException e) {
             logger.error("Failed to write common input to file. Terminating", e);
-            System.exit(-1);
             return;
         }
 
