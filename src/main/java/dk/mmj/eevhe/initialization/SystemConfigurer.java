@@ -35,13 +35,13 @@ public class SystemConfigurer implements Application {
         this.endTime = config.endTime;
         this.outputFolderPath = config.outputFolderPath;
         this.daAddresses = config.daAddresses;
-
-        createIfNotExists(outputFolderPath);
     }
 
 
     @Override
     public void run() {
+        createIfNotExists(outputFolderPath);
+
         ObjectMapper mapper = new ObjectMapper();
         logger.info("Starting key-param generation");
         ExtendedKeyGenerationParameters params = new ExtendedKeyGenerationParametersImpl(1024, 50);
@@ -104,6 +104,18 @@ public class SystemConfigurer implements Application {
             this.outputFolderPath = candidateListPath;
             this.daAddresses = daAddresses;
             this.endTime = endTime;
+        }
+
+        public long getEndTime() {
+            return endTime;
+        }
+
+        public Map<Integer, String> getDaAddresses() {
+            return daAddresses;
+        }
+
+        public Path getOutputFolderPath() {
+            return outputFolderPath;
         }
     }
 }
