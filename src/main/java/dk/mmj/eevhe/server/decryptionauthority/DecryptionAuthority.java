@@ -3,11 +3,7 @@ package dk.mmj.eevhe.server.decryptionauthority;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
-import dk.mmj.eevhe.client.FetchingUtilities;
-import dk.mmj.eevhe.crypto.ElGamal;
-import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
-import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.protocols.GennaroDKG;
@@ -46,16 +42,13 @@ public class DecryptionAuthority extends AbstractServer {
     private final int port;
     private final Integer id;
     private final ObjectMapper mapper = new ObjectMapper();
-    private final Decrypter decrypter;
+    private Decrypter decrypter;
     private final KeyGenParams params;
     private final DecryptionAuthorityInput input;
     private final long endTime;
     private final List<Candidate> candidates;
     private DKG<PartialKeyPair> dkg;
     private boolean timeCorrupt = false;
-    private PartialSecretKey sk;
-    private PublicKey pk;
-    private BigInteger partialPublicKey;
     private Iterator<DKG.Step> dkgSteps;
     private PartialKeyPair keyPair;
 
@@ -107,12 +100,6 @@ public class DecryptionAuthority extends AbstractServer {
             logger.error("Failed to read authorities input file", e);
             throw new RuntimeException("Failed to read DecryptionAuthorityInput from file", e);
         }
-
-        decrypter = new DecrypterIml(id,
-                this::getBallots,
-                b -> VoteProofUtils.verifyBallot(b, pk),
-                candidates
-        );
     }
 
     @Override
@@ -158,6 +145,12 @@ public class DecryptionAuthority extends AbstractServer {
             logger.info("Retrieving keys from DKG and sending to BulletinBoard");
             keyPair = dkg.output();
             PartialPublicInfo ppi = new PartialPublicInfo(id, keyPair.getPublicKey(), keyPair.getPartialPublicKey(), candidates, endTime);
+
+            decrypter = new DecrypterIml(id,
+                    this::getBallots,
+                    b -> VoteProofUtils.verifyBallot(b, keyPair.getPublicKey()),
+                    candidates
+            );
 
             Response resp = bulletinBoard.path("publicInfo").request().post(Entity.entity(ppi, MediaType.APPLICATION_JSON));
             if (resp.getStatus() != 204) {

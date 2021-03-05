@@ -40,15 +40,15 @@ public class DecrypterIml implements Decrypter {
         PartialSecretKey sk = keyPair.getPartialSecretKey();
 
         logger.info("Terminating voting - Fetching ballots");
-        List<PersistedBallot> ballots = ballotFetcher.getBallots();
+        List<PersistedBallot> receivedBallots = ballotFetcher.getBallots();
 
-        if (ballots == null || ballots.size() < 1) {
+        if (receivedBallots == null || receivedBallots.size() < 1) {
             logger.error("No votes registered. Terminating server without result");
             return null;
         }
 
         logger.info("Verifying ballots");
-        ballots = ballots.parallelStream()
+        List<PersistedBallot> ballots = receivedBallots.parallelStream()
                 .filter(v -> v.getTs().getTime() < endTime)
                 .filter(ballotVerifier::verifyBallot).collect(Collectors.toList());
 

@@ -1,6 +1,8 @@
 package dk.mmj.eevhe.server.decryptionauthority;
 
+import dk.mmj.eevhe.crypto.ElGamal;
 import dk.mmj.eevhe.crypto.SecurityUtils;
+import dk.mmj.eevhe.crypto.exceptions.UnableToDecryptException;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedPersistedKeyParameters;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
@@ -14,10 +16,10 @@ import dk.mmj.eevhe.protocols.interfaces.DKG;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigInteger;
 import java.util.*;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class TestDecrypterIml {
 
@@ -94,14 +96,27 @@ public class TestDecrypterIml {
         DecrypterIml decrypterIml2 = new DecrypterIml(2, () -> ballots, b -> VoteProofUtils.verifyBallot(b, pk), candidates);
         DecrypterIml decrypterIml3 = new DecrypterIml(3, () -> ballots, b -> VoteProofUtils.verifyBallot(b, pk), candidates);
 
-        PartialResultList partialResultList1 = decrypterIml1.generatePartialResult(new Date().getTime() - 10, dkgRes.get(1));
-        PartialResultList partialResultList2 = decrypterIml2.generatePartialResult(new Date().getTime() - 10, dkgRes.get(2));
-        PartialResultList partialResultList3 = decrypterIml3.generatePartialResult(new Date().getTime() - 10, dkgRes.get(3));
+        PartialResultList partialResultList1 = decrypterIml1.generatePartialResult(new Date().getTime() - 1, dkgRes.get(1));
+        PartialResultList partialResultList2 = decrypterIml2.generatePartialResult(new Date().getTime() - 1, dkgRes.get(2));
+        PartialResultList partialResultList3 = decrypterIml3.generatePartialResult(new Date().getTime() - 1, dkgRes.get(3));
 
         partialResultList1.getResults().forEach(this::assertResultPasses);
         partialResultList2.getResults().forEach(this::assertResultPasses);
         partialResultList3.getResults().forEach(this::assertResultPasses);
 
+        //Decryption successful
+        HashMap<Integer, BigInteger> partials = new HashMap<>();
+        partials.put(1, partialResultList1.getResults().get(0).getResult());
+        partials.put(2, partialResultList2.getResults().get(0).getResult());
+        partials.put(3, partialResultList3.getResults().get(0).getResult());
+        BigInteger cs = SecurityUtils.lagrangeInterpolate(partials, pk.getP());
+        try {
+            CipherText sum = partialResultList1.getResults().get(0).getCipherText();
+            int result = ElGamal.homomorphicDecryptionFromPartials(sum.getD(), cs, pk.getG(), pk.getP(), 15);
+            assertEquals("Results was incorrect", 1, result);
+        } catch (UnableToDecryptException e) {
+            fail(e.getMessage());
+        }
 
     }
 
