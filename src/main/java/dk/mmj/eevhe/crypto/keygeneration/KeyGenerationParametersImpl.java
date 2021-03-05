@@ -9,8 +9,8 @@ import java.util.Random;
 import static dk.mmj.eevhe.crypto.SecurityUtils.getRandomNumModN;
 
 public class KeyGenerationParametersImpl implements KeyGenerationParameters {
-    private BigInteger g;
-    private PrimePair primePair;
+    private final BigInteger g;
+    private final PrimePair primePair;
 
     public KeyGenerationParametersImpl(int primeBitLength, int primeCertainty) {
         primePair = findPrimes(primeBitLength, primeCertainty);
