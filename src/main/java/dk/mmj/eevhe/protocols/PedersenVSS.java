@@ -3,9 +3,9 @@ package dk.mmj.eevhe.protocols;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.entities.CommitmentDTO;
-import dk.mmj.eevhe.entities.PedersenComplaintDTO;
 import dk.mmj.eevhe.entities.ComplaintResolveDTO;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
+import dk.mmj.eevhe.entities.PedersenComplaintDTO;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
 import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
@@ -26,12 +26,14 @@ import static dk.mmj.eevhe.crypto.PedersenVSSUtils.verifyCommitmentRespected;
  * J Cryptology 20, 51–83 (2007). <a href="https://doi.org/10.1007/s00145-006-0347-3">https://doi.org/10.1007/s00145-006-0347-3</a>
  */
 public class PedersenVSS extends AbstractVSS implements VSS {
-    private static final String PEDERSEN = "PedersenVSS";
+    static final String PEDERSEN = "PedersenVSS";
     private final Set<Integer> honestParties = new HashSet<>();
     private final BigInteger e;
     private final int t;
     private final BigInteger[] pol1;
     private final BigInteger[] pol2;
+    private final Map<Integer, BigInteger[]> commitments = new HashMap<>();
+
 
     public PedersenVSS(Broadcaster broadcaster, IncomingChannel incoming,
                        Map<Integer, PeerCommunicator> peerCommunicatorMap,
@@ -47,6 +49,7 @@ public class PedersenVSS extends AbstractVSS implements VSS {
     public void startProtocol() {
         logger.info("Initialized PedersenVSS");
 
+        honestParties.add(id);
         honestParties.addAll(peerMap.keySet());
 
         logger.debug("Calculating coefficient commitments.");

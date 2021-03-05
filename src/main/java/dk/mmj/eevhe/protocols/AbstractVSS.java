@@ -16,7 +16,6 @@ public class AbstractVSS {
     protected final Broadcaster broadcaster;
     protected final IncomingChannel incoming;
     protected final Map<Integer, PeerCommunicator> peerMap;
-    protected final Map<Integer, BigInteger[]> commitments = new HashMap<>();
     protected final int id;
     protected final BigInteger g;
     protected final BigInteger q;
