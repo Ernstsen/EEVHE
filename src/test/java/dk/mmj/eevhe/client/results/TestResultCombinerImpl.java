@@ -5,6 +5,7 @@ import dk.mmj.eevhe.entities.*;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import static dk.mmj.eevhe.TestHelper.computePartialDecryptions;
@@ -62,6 +63,66 @@ public class TestResultCombinerImpl {
                 endTime);
 
         ElectionResult electionResult = combiner.computeResult(new ArrayList<>(partialResultsMap.values()));
+
+        assertEquals("4 votes were cast", 4, electionResult.getVotesTotal());
+        assertEquals("Candidate 0 should have 1 vote", 1, electionResult.getCandidateVotes().get(0).intValue());
+        assertEquals("Candidate 1 should have 1 vote", 1, electionResult.getCandidateVotes().get(1).intValue());
+        assertEquals("Candidate 2 should have 2 votes", 2, electionResult.getCandidateVotes().get(2).intValue());
+    }
+
+    @Test
+    public void testCombineStillWorkWhenDAsDisagreeOnVoteCount() {
+        long endTime = new Date().getTime();
+        ArrayList<PartialPublicInfo> publicInfos = new ArrayList<>();
+        for (int i = 1; i < 4; i++) {
+            PartialKeyPair partialKeyPair = dkgRes.get(i);
+            publicInfos.add(new PartialPublicInfo(i, partialKeyPair.getPublicKey(),
+                    partialKeyPair.getPartialPublicKey(), candidates, endTime));
+        }
+
+        ResultCombinerImpl combiner = new ResultCombinerImpl(
+                false,
+                pk,
+                candidates,
+                () -> publicInfos,
+                () -> ballots,
+                endTime);
+
+        ArrayList<PartialResultList> res = new ArrayList<>(partialResultsMap.values());
+        res.get(0).setVoteCount(88);
+        res.get(1).setVoteCount(8);
+        res.get(2).setVoteCount(882);
+        ElectionResult electionResult = combiner.computeResult(res);
+
+        assertEquals("4 votes were cast", 4, electionResult.getVotesTotal());
+        assertEquals("Candidate 0 should have 1 vote", 1, electionResult.getCandidateVotes().get(0).intValue());
+        assertEquals("Candidate 1 should have 1 vote", 1, electionResult.getCandidateVotes().get(1).intValue());
+        assertEquals("Candidate 2 should have 2 votes", 2, electionResult.getCandidateVotes().get(2).intValue());
+    }
+
+    @Test
+    public void testCombineStillWorkWhenDAsDisagreeOnCiphertext() {
+        long endTime = new Date().getTime();
+        ArrayList<PartialPublicInfo> publicInfos = new ArrayList<>();
+        for (int i = 1; i < 4; i++) {
+            PartialKeyPair partialKeyPair = dkgRes.get(i);
+            publicInfos.add(new PartialPublicInfo(i, partialKeyPair.getPublicKey(),
+                    partialKeyPair.getPartialPublicKey(), candidates, endTime));
+        }
+
+        ResultCombinerImpl combiner = new ResultCombinerImpl(
+                false,
+                pk,
+                candidates,
+                () -> publicInfos,
+                () -> ballots,
+                endTime);
+
+        ArrayList<PartialResultList> res = new ArrayList<>(partialResultsMap.values());
+        res.get(0).getResults().get(0).getCipherText().setC(res.get(0).getResults().get(0).getCipherText().getC().add(BigInteger.valueOf(5)));
+        res.get(1).getResults().get(1).getCipherText().setC(res.get(1).getResults().get(1).getCipherText().getC().add(BigInteger.valueOf(12)));
+        res.get(2).getResults().get(2).getCipherText().setC(res.get(2).getResults().get(2).getCipherText().getC().add(BigInteger.valueOf(25)));
+        ElectionResult electionResult = combiner.computeResult(res);
 
         assertEquals("4 votes were cast", 4, electionResult.getVotesTotal());
         assertEquals("Candidate 0 should have 1 vote", 1, electionResult.getCandidateVotes().get(0).intValue());
