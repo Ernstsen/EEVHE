@@ -4,6 +4,8 @@ import dk.eSoftware.commandLineParser.*;
 import dk.mmj.eevhe.Application;
 import dk.mmj.eevhe.client.Client;
 import dk.mmj.eevhe.client.ClientConfigBuilder;
+import dk.mmj.eevhe.client.ResultFetcher;
+import dk.mmj.eevhe.client.Voter;
 import dk.mmj.eevhe.initialization.SystemConfigurer;
 import dk.mmj.eevhe.initialization.SystemConfigurerConfigBuilder;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoard;
@@ -13,9 +15,7 @@ import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthorityConfigBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -33,12 +33,17 @@ public class IntegrationTest implements Application {
     private final List<Integer> decryptionAuthorities;
     private final List<Integer> voteDelays;
     private final int duration;
-    private final Map<Integer, DecryptionAuthority> authorityInstances = new HashMap<>();
+    private Observer observer;
+    private Thread bbThread;
 
     public IntegrationTest(IntegrationTest.IntegrationTestConfiguration configuration) {
         this.decryptionAuthorities = configuration.decryptionAuthorities;
         this.duration = configuration.duration;
         this.voteDelays = configuration.voteDelays;
+    }
+
+    public void setObserver(Observer observer) {
+        this.observer = observer;
     }
 
     @Override
@@ -67,9 +72,19 @@ public class IntegrationTest implements Application {
         retrieveVotes(duration + 1);
 
         scheduler.schedule(this::twoMinHook, 2, TimeUnit.MINUTES);
+
+        if (observer != null) {
+            scheduler.schedule(observer::finalizationHook, duration + 1, TimeUnit.MINUTES);
+        }
+
+        try {
+            bbThread.join();
+        } catch (InterruptedException e) {
+            logger.error("Interrupted when waiting for bb to terminate");
+        }
     }
 
-    private void twoMinHook(){
+    private void twoMinHook() {
         logger.debug("Two Minute Hook");
     }
 
@@ -90,6 +105,10 @@ public class IntegrationTest implements Application {
 
         Client voter = parse.produceInstance();
 
+        if(observer != null && voter instanceof ResultFetcher){
+            observer.registerResultFetcher((ResultFetcher) voter);
+        }
+
         scheduler.schedule(voter, timeOffset, TimeUnit.MINUTES);
     }
 
@@ -109,6 +128,9 @@ public class IntegrationTest implements Application {
         }
 
         Client voter = parse.produceInstance();
+        if (observer != null && voter instanceof Voter) {
+            observer.registerMultiVoter((Voter) voter);
+        }
 
         scheduler.schedule(voter, timeOffset, TimeUnit.MILLISECONDS);
     }
@@ -121,7 +143,14 @@ public class IntegrationTest implements Application {
         } catch (NoSuchBuilderException | WrongFormatException e) {
             throw new RuntimeException("Failed parsing bulletin board conf", e);
         }
-        scheduler.execute(conf.produceInstance());
+
+        BulletinBoard bb = conf.produceInstance();
+        if (observer != null) {
+            observer.registerBulletinBoard(bb);
+        }
+
+        bbThread = new Thread(bb);
+        bbThread.start();
     }
 
     /**
@@ -155,8 +184,50 @@ public class IntegrationTest implements Application {
             throw new RuntimeException("Failed parsing decryption authority conf.", e);
         }
         DecryptionAuthority da = conf.produceInstance();
-        authorityInstances.put(id, da);
+
+        if (observer != null) {
+            observer.registerDecryptionAuthority(da);
+        }
         scheduler.execute(da);
+    }
+
+    /**
+     * Observer-pattern for being able to extract and assert on state in tests
+     */
+    interface Observer {
+
+        /**
+         * Registers a Decryption Authority
+         *
+         * @param authority authority
+         */
+        void registerDecryptionAuthority(DecryptionAuthority authority);
+
+        /**
+         * Registers a voter-instance with multi-vote set to true
+         *
+         * @param multiVoter voter instance
+         */
+        void registerMultiVoter(Voter multiVoter);
+
+        /**
+         * Registers the bulletinBoard
+         *
+         * @param bulletinBoard the instance
+         */
+        void registerBulletinBoard(BulletinBoard bulletinBoard);
+
+        /**
+         * Register resultFetcher
+         *
+         * @param resultFetcher resultsFetcher
+         */
+        void registerResultFetcher(ResultFetcher resultFetcher);
+
+        /**
+         * Called when voting has been finished - signalizes the end of the test-run
+         */
+        void finalizationHook();
     }
 
     public static class IntegrationTestConfiguration extends AbstractInstanceCreatingConfiguration<IntegrationTest> {
@@ -174,6 +245,18 @@ public class IntegrationTest implements Application {
             this.decryptionAuthorities = decryptionAuthorities;
             this.duration = duration;
             this.voteDelays = voteDelays;
+        }
+
+        List<Integer> getDecryptionAuthorities() {
+            return decryptionAuthorities;
+        }
+
+        List<Integer> getVoteDelays() {
+            return voteDelays;
+        }
+
+        int getDuration() {
+            return duration;
         }
     }
 }

@@ -5,20 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.entities.BallotList;
 import dk.mmj.eevhe.entities.PartialPublicInfo;
 import dk.mmj.eevhe.entities.PersistedBallot;
-import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
-import org.bouncycastle.crypto.util.PublicKeyFactory;
-import org.bouncycastle.util.encoders.Base64;
 
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -92,8 +84,7 @@ public class FetchingUtilities {
             });
         } catch (IOException e) {
             logger.error("FetchingUtilities: Failed to deserialize public informations list retrieved from bulletin board", e);
-            System.exit(-1);
-            return null;
+            throw new RuntimeException("Failed to fet public infos list");
         }
         return publicInfoList;
     }
@@ -123,34 +114,5 @@ public class FetchingUtilities {
 //        };
         return (i) -> true;
     }
-
-    /**
-     * Loads public-key from disk
-     *
-     * @param logger        logger for reporting errors
-     * @param publicKeyName name of the file in the <i>RSA</i> folder, containing the public-key
-     * @return publicKey loaded from given file
-     * @deprecated public key no longer kept at disc - to be replaced by certificate and certificate chains!
-     */
-    @Deprecated
-    private static AsymmetricKeyParameter loadPublicKey(Logger logger, String publicKeyName) {
-        File keyFile = Paths.get("rsa").resolve(publicKeyName).toFile();
-        if (!keyFile.exists()) {
-            logger.error("Unable to locate RSA public key from Trusted Dealer");
-            return null;
-        }
-
-        try {
-            byte[] bytes = new byte[2048];
-            int len = IOUtils.readFully(new FileInputStream(keyFile), bytes);
-            byte[] actualBytes = Arrays.copyOfRange(bytes, 0, len);
-
-            return PublicKeyFactory.createKey(Base64.decode(actualBytes));
-        } catch (IOException e) {
-            logger.error("Failed to load key from disk", e);
-            return null;
-        }
-    }
-
 
 }

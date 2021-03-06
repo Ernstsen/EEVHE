@@ -15,6 +15,7 @@ import java.util.List;
 public class ResultFetcher extends Client {
     private static final Logger logger = LogManager.getLogger(ResultFetcher.class);
     private final boolean forceCalculation;
+    private ElectionResult electionResult;
 
     public ResultFetcher(ResultFetcherConfiguration configuration) {
         super(configuration);
@@ -51,7 +52,7 @@ public class ResultFetcher extends Client {
                 endTime);
 
         List<Candidate> candidates = getCandidates();
-        ElectionResult electionResult = combiner.computeResult(results);
+        electionResult = combiner.computeResult(results);
 
         StringBuilder resBuilder = new StringBuilder().append("Results:\n-----------------------------\n");
 
@@ -67,6 +68,15 @@ public class ResultFetcher extends Client {
                     .append(" cast in total\n\n");
         }
         logger.info(resBuilder.toString());
+    }
+
+    /**
+     * Enables extraction of election results
+     *
+     * @return results of the election - null if fetch was unsuccessful
+     */
+    public ElectionResult getElectionResult() {
+        return electionResult;
     }
 
     /**

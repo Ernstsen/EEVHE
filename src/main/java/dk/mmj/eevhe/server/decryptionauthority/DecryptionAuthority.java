@@ -7,6 +7,7 @@ import dk.mmj.eevhe.client.FetchingUtilities;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.interfaces.Decrypter;
 import dk.mmj.eevhe.protocols.GennaroDKG;
 import dk.mmj.eevhe.protocols.connectors.BulletinBoardBroadcaster;
 import dk.mmj.eevhe.protocols.connectors.RestPeerCommunicator;
@@ -14,7 +15,6 @@ import dk.mmj.eevhe.protocols.connectors.ServerStateIncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.DKG;
 import dk.mmj.eevhe.server.AbstractServer;
-import dk.mmj.eevhe.interfaces.Decrypter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.util.encoders.Hex;
@@ -27,7 +27,10 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -41,11 +44,11 @@ public class DecryptionAuthority extends AbstractServer {
     private final JerseyWebTarget bulletinBoard;
     private final int port;
     private final Integer id;
-    private Decrypter decrypter;
     private final KeyGenParams params;
     private final DecryptionAuthorityInput input;
     private final long endTime;
     private final List<Candidate> candidates;
+    private Decrypter decrypter;
     private DKG<PartialKeyPair> dkg;
     private boolean timeCorrupt = false;
     private Iterator<DKG.Step> dkgSteps;
@@ -101,6 +104,10 @@ public class DecryptionAuthority extends AbstractServer {
             logger.error("Failed to read authorities input file", e);
             throw new RuntimeException("Failed to read DecryptionAuthorityInput from file", e);
         }
+    }
+
+    public Integer getId() {
+        return id;
     }
 
     @Override
@@ -188,7 +195,7 @@ public class DecryptionAuthority extends AbstractServer {
         }
 
         PartialResultList res = decrypter.generatePartialResult(endTime, keyPair);
-        if(res == null){
+        if (res == null) {
             logger.info("No result to post");
             return;
         }

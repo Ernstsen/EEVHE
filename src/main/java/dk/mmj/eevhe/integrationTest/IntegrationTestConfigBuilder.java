@@ -1,13 +1,15 @@
 package dk.mmj.eevhe.integrationTest;
 
 import dk.eSoftware.commandLineParser.CommandLineParser;
+import dk.mmj.eevhe.TestableConfigurationBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBuilder<IntegrationTest.IntegrationTestConfiguration> {
+public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBuilder<IntegrationTest.IntegrationTestConfiguration>, TestableConfigurationBuilder {
     private static final Logger logger = LogManager.getLogger(IntegrationTestConfigBuilder.class);
     private static final String SELF = "integrationTest";
 
@@ -101,7 +103,7 @@ public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBui
     private List<Integer> getVoteDelays() {
         ArrayList<Integer> voteDelays = new ArrayList<>();
         if (voteStart) {
-            voteDelays.add(4 * 60_000);
+            voteDelays.add(2 * 60_000);
         }
         if (voteEnd) {
             voteDelays.add((duration * 60_000) - 15_000);//approx. 15. sec before termination
@@ -122,5 +124,20 @@ public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBui
                 + VOTE_AFTER + ": approx. 15 sec after termination\n" +
                 "\t  --" + DISABLED_DECRYPTION_AUTHORITIES + "\t Which DA's should not be executed by the automatic test.\n" +
                 "\t\t\t " + DA_1 + ", " + DA_2 + " and " + DA_3 + " are the options available";
+    }
+
+    @Override
+    public List<String> getParameters() {
+        return Arrays.asList(
+                DURATION,
+                VOTE,
+                VOTE_START,
+                VOTE_END,
+                VOTE_AFTER,
+                DISABLED_DECRYPTION_AUTHORITIES,
+                DA_1,
+                DA_2,
+                DA_3
+        );
     }
 }

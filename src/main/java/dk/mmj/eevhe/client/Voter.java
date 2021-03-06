@@ -22,6 +22,7 @@ public class Voter extends Client {
     private final Integer multi;
     private String id;
     private Integer vote;
+    private int[] castVotes;
 
 
     /**
@@ -64,7 +65,7 @@ public class Voter extends Client {
     private void doMultiVote(PublicKey publicKey) {
         int size = getCandidates().size();
         Random random = new Random();
-        int[] castVotes = new int[size];
+        castVotes = new int[size];
         Arrays.fill(castVotes, 0);
 
         for (int i = 0; i < multi; i++) {
@@ -77,6 +78,13 @@ public class Voter extends Client {
             doVote(vote, publicKey);
         }
         System.out.println("Dispatched " + multi + " votes with distribution: " + Arrays.toString(castVotes));
+    }
+
+    /**
+     * @return array of cast votes for each candidate
+     */
+    public int[] getCastVotes() {
+        return castVotes;
     }
 
     /**
