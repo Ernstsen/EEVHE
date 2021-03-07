@@ -19,6 +19,7 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
     static final String FELDMAN = "FeldmanVSS";
     private final BigInteger[] polynomial;
     private final boolean wrongCommitment;
+    private final boolean noCommitment;
     private final boolean complainAgainstHonestParty;
     private final Set<Integer> honestParties = new HashSet<>();
 
@@ -26,9 +27,10 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
                                       Map<Integer, PeerCommunicator> peerCommunicatorMap,
                                       int id, ExtendedKeyGenerationParameters params, String logPrefix,
                                       BigInteger[] polynomial, Map<Integer, PartialSecretMessageDTO> secrets,
-                                      boolean wrongCommitment, boolean complainAgainstHonestParty) {
+                                      boolean wrongCommitment, boolean noCommitment, boolean complainAgainstHonestParty) {
         super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix, polynomial, secrets);
         this.wrongCommitment = wrongCommitment;
+        this.noCommitment = noCommitment;
         this.complainAgainstHonestParty = complainAgainstHonestParty;
         if (secrets != null) {
             this.secrets = secrets;
@@ -48,6 +50,9 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
 
         if (wrongCommitment) {
             commitment[1] = commitment[1].multiply(BigInteger.valueOf(12314)).mod(p);
+        }
+        if (noCommitment) {
+            commitment = null;
         }
 
         logger.info("Broadcasting commitments");
@@ -83,32 +88,30 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
 
             BigInteger[] feldmanCommitment = this.feldmanCommitments.get(senderId);
             if (feldmanCommitment == null) {
-                logger.error("Peer with id=" + senderId + ", had no corresponding commitment," +
-                        " and has been removed from honest parties.");
-                honestParties.remove(senderId);
+                logger.error("Peer with id=" + senderId + ", had no corresponding commitment");
+                complain(senderId);
                 continue;
             }
 
             boolean matches = verifyCommitmentRespected(g, partialSecret, feldmanCommitment, BigInteger.valueOf(id), p, q);
             if (!matches) {
-                logger.info("" + id + ": Sending complaint about Peer with ID=" + senderId);
-                PartialSecretMessageDTO secret = secrets.get(senderId);
-                final FeldmanComplaintDTO complaint = new FeldmanComplaintDTO(id, senderId,
-                        secret.getPartialSecret1(), secret.getPartialSecret2());
-                broadcaster.feldmanComplain(complaint);
+                complain(senderId);
             }
 
-            // Complains about honest party with ID = 1
-            if (complainAgainstHonestParty && senderId == 1) {
-                logger.info("" + id + ": Sending complaint about Honest Peer with ID=" + senderId);
-                PartialSecretMessageDTO secret = secrets.get(senderId);
-                final FeldmanComplaintDTO complaint = new FeldmanComplaintDTO(id, senderId,
-                        secret.getPartialSecret1(), secret.getPartialSecret2());
-                broadcaster.feldmanComplain(complaint);
+            // Complains about honest party with ID = 2
+            if (complainAgainstHonestParty && senderId == 2) {
+                complain(senderId);
             }
         }
-
         return true;
+    }
+
+    private void complain(int senderId) {
+        logger.info("" + id + ": Sending complaint about Peer with ID=" + senderId);
+        PartialSecretMessageDTO secret = secrets.get(senderId);
+        final FeldmanComplaintDTO complaint = new FeldmanComplaintDTO(id, senderId,
+                secret.getPartialSecret1(), secret.getPartialSecret2());
+        broadcaster.feldmanComplain(complaint);
     }
 
     @Override

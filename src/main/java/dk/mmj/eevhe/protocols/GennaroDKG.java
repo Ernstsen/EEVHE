@@ -143,7 +143,9 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
         List<BigInteger> partialPublicKeys = new ArrayList<>();
         for (CommitmentDTO commitment : commitments) {
             if (honestParties.contains(commitment.getId())) {
-                partialPublicKeys.add(commitment.getCommitment()[0]);
+                if (commitment.getCommitment() != null) {
+                    partialPublicKeys.add(commitment.getCommitment()[0]);
+                }
             }
         }
 

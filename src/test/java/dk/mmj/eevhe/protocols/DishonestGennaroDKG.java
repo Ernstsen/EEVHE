@@ -23,6 +23,7 @@ public class DishonestGennaroDKG extends GennaroDKG {
     private final ExtendedKeyGenerationParameters params;
     private final String logPrefix;
     private final boolean wrongCommitment;
+    private final boolean noCommitment;
     private final boolean complainAgainstHonestParty;
     private Set<Integer> honestPartiesPedersen;
     private Set<Integer> honestPartiesFeldman;
@@ -40,7 +41,7 @@ public class DishonestGennaroDKG extends GennaroDKG {
     public DishonestGennaroDKG(Broadcaster broadcaster, IncomingChannel incoming,
                                Map<Integer, PeerCommunicator> peerCommunicatorMap,
                                int id, ExtendedKeyGenerationParameters params, String logPrefix,
-                               boolean wrongCommitment, boolean complainAgainstHonestParty) {
+                               boolean wrongCommitment, boolean noCommitment, boolean complainAgainstHonestParty) {
         super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);
         this.broadcaster = broadcaster;
         this.incoming = incoming;
@@ -49,6 +50,7 @@ public class DishonestGennaroDKG extends GennaroDKG {
         this.params = params;
         this.logPrefix = logPrefix;
         this.wrongCommitment = wrongCommitment;
+        this.noCommitment = noCommitment;
         this.complainAgainstHonestParty = complainAgainstHonestParty;
 
         logger = LogManager.getLogger(PedersenVSS.class.getName() + ". " + logPrefix + ":");
@@ -87,7 +89,8 @@ public class DishonestGennaroDKG extends GennaroDKG {
         final Map<Integer, PartialSecretMessageDTO> secretsPedersen = pedersenVSS.getSecrets();
 
         DishonestGennaroFeldmanVSS feldmanVSS = new DishonestGennaroFeldmanVSS(broadcaster, incoming,
-                honestPeers, id, params, logPrefix, pol1, secretsPedersen, wrongCommitment, complainAgainstHonestParty);
+                honestPeers, id, params, logPrefix, pol1, secretsPedersen,
+                wrongCommitment, noCommitment, complainAgainstHonestParty);
 
         return Arrays.asList(
                 new Step(

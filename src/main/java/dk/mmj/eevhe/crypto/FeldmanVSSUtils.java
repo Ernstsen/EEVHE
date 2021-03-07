@@ -37,6 +37,9 @@ public class FeldmanVSSUtils {
         BigInteger acc = BigInteger.ONE;
 
         for (int t = 0; t < coefficientCommitments.length; t++) {
+            if (coefficientCommitments[t] == null) {
+                continue;
+            }
             BigInteger jExp = j.pow(t);
             acc = acc.multiply(coefficientCommitments[t].modPow(jExp, p));
         }
@@ -56,6 +59,10 @@ public class FeldmanVSSUtils {
      */
     public static boolean verifyCommitmentRespected(BigInteger g, BigInteger u, BigInteger[] coefficientCommitments,
                                                     BigInteger j, BigInteger p, BigInteger q) {
+        if (coefficientCommitments == null) {
+            return false;
+        }
+
         BigInteger combinedCoefficientCommitments = combineCoefficientCommitments(coefficientCommitments, j, p, q);
 
         BigInteger gU = g.modPow(u, p);

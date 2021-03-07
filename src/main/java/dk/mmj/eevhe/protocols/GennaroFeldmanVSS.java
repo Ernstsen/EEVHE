@@ -82,23 +82,26 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
 
             BigInteger[] feldmanCommitment = this.feldmanCommitments.get(senderId);
             if (feldmanCommitment == null) {
-                logger.error("Peer with id=" + senderId + ", had no corresponding commitment," +
-                        " and has been removed from honest parties.");
-                honestParties.remove(senderId);
+                logger.error("Peer with id=" + senderId + ", had no corresponding commitment");
+                complain(senderId);
                 continue;
             }
 
             boolean matches = verifyCommitmentRespected(g, partialSecret, feldmanCommitment, BigInteger.valueOf(id), p, q);
             if (!matches) {
-                logger.info("" + id + ": Sending complaint about Peer with ID=" + senderId);
-                PartialSecretMessageDTO secret = secrets.get(senderId);
-                final FeldmanComplaintDTO complaint = new FeldmanComplaintDTO(id, senderId,
-                        secret.getPartialSecret1(), secret.getPartialSecret2());
-                broadcaster.feldmanComplain(complaint);
+                complain(senderId);
             }
         }
 
         return true;
+    }
+
+    private void complain(int senderId) {
+        logger.info("" + id + ": Sending complaint about Peer with ID=" + senderId);
+        PartialSecretMessageDTO secret = secrets.get(senderId);
+        final FeldmanComplaintDTO complaint = new FeldmanComplaintDTO(id, senderId,
+                secret.getPartialSecret1(), secret.getPartialSecret2());
+        broadcaster.feldmanComplain(complaint);
     }
 
     @Override
