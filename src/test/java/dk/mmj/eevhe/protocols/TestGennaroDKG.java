@@ -142,55 +142,6 @@ public class TestGennaroDKG {
         assertEncryptDecrypt(output1, partialSecretKeys, p, g);
     }
 
-    private void assertInvariants(List<PublicKey> publicKeys,
-                                  HashMap<Integer, BigInteger> partialPublicKeys,
-                                  HashMap<Integer, BigInteger> partialSecrets,
-                                  BigInteger p, BigInteger q, BigInteger g) {
-        // Compute public key
-        final BigInteger publicKey = partialPublicKeys.values().stream().reduce(BigInteger.ONE, BigInteger::multiply).mod(p);
-        final BigInteger x = partialSecrets.values().stream().reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
-
-        final BigInteger testPublicKey = g.modPow(x, p);
-
-        // Assert that partials match
-        for (Map.Entry<Integer, BigInteger> entry : partialPublicKeys.entrySet()) {
-            Integer key = entry.getKey();
-            BigInteger value = entry.getValue();
-
-            assertEquals("partials for player " + key + " did not match",
-                    value, g.modPow(partialSecrets.get(key), p));
-
-        }
-
-        // Assert that y = g^x mod p
-        assertEquals("Public key Y and g^x did not match", testPublicKey, publicKey);
-        // Assert that public keys all match
-        assertTrue("PublicKey did not match for all instances", publicKeys.stream()
-                .allMatch(publicKeys.get(0)::equals));
-    }
-
-    private void assertEncryptDecrypt(PartialKeyPair output, HashMap<Integer, BigInteger> partialSecretKeys,
-                                      BigInteger p, BigInteger g) {
-        //Asserts that encryption and subsequent decryption is possible
-        BigInteger msg = new BigInteger("15");
-        CipherText cipherText = ElGamal.homomorphicEncryption(output.getPublicKey(), msg);
-
-        Map<Integer, BigInteger> partials;
-
-        partials = partialSecretKeys.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        e -> ElGamal.partialDecryption(cipherText.getC(), partialSecretKeys.get(e.getKey()), p)
-                ));
-
-        BigInteger cs = SecurityUtils.lagrangeInterpolate(partials, p);
-        try {
-            int result = ElGamal.homomorphicDecryptionFromPartials(cipherText.getD(), cs, g, p, 15);
-            assertEquals("Results was incorrect", 15, result);
-        } catch (UnableToDecryptException e) {
-            fail(e.getMessage());
-        }
-    }
 
     @Test
     public void testSteps() {
@@ -535,4 +486,55 @@ public class TestGennaroDKG {
         assertInvariants(publicKeys, partialPublicKeys, partialSecrets, p, q, g);
         assertEncryptDecrypt(output2, partialSecretKeys, p, g);
     }
+
+    private void assertEncryptDecrypt(PartialKeyPair output, HashMap<Integer, BigInteger> partialSecretKeys,
+                                      BigInteger p, BigInteger g) {
+        //Asserts that encryption and subsequent decryption is possible
+        BigInteger msg = new BigInteger("15");
+        CipherText cipherText = ElGamal.homomorphicEncryption(output.getPublicKey(), msg);
+
+        Map<Integer, BigInteger> partials;
+
+        partials = partialSecretKeys.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> ElGamal.partialDecryption(cipherText.getC(), partialSecretKeys.get(e.getKey()), p)
+                ));
+
+        BigInteger cs = SecurityUtils.lagrangeInterpolate(partials, p);
+        try {
+            int result = ElGamal.homomorphicDecryptionFromPartials(cipherText.getD(), cs, g, p, 15);
+            assertEquals("Results was incorrect", 15, result);
+        } catch (UnableToDecryptException e) {
+            fail(e.getMessage());
+        }
+    }
+
+    private void assertInvariants(List<PublicKey> publicKeys,
+                                  HashMap<Integer, BigInteger> partialPublicKeys,
+                                  HashMap<Integer, BigInteger> partialSecrets,
+                                  BigInteger p, BigInteger q, BigInteger g) {
+        // Compute public key
+        final BigInteger publicKey = partialPublicKeys.values().stream().reduce(BigInteger.ONE, BigInteger::multiply).mod(p);
+        final BigInteger x = partialSecrets.values().stream().reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
+
+        final BigInteger testPublicKey = g.modPow(x, p);
+
+        // Assert that partials match
+        for (Map.Entry<Integer, BigInteger> entry : partialPublicKeys.entrySet()) {
+            Integer key = entry.getKey();
+            BigInteger value = entry.getValue();
+
+            assertEquals("partials for player " + key + " did not match",
+                    value, g.modPow(partialSecrets.get(key), p));
+
+        }
+
+        // Assert that y = g^x mod p
+        assertEquals("Public key Y and g^x did not match", testPublicKey, publicKey);
+        // Assert that public keys all match
+        assertTrue("PublicKey did not match for all instances", publicKeys.stream()
+                .allMatch(publicKeys.get(0)::equals));
+    }
+
 }
