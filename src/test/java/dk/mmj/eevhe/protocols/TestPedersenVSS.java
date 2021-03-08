@@ -7,7 +7,6 @@ import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.VSS;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.math.BigInteger;
@@ -16,7 +15,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static java.math.BigInteger.valueOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class TestPedersenVSS {
     private ExtendedPersistedKeyParameters params;
@@ -53,7 +54,7 @@ public class TestPedersenVSS {
         commMap3.put(1, channel1);
         commMap3.put(2, channel2);
 
-        //Creating players TODO: use GennaroDKG instead
+        //Creating players
         final PedersenVSS player1 = new PedersenVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
         final PedersenVSS player2 = new PedersenVSS(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2, null, null);
         final PedersenVSS player3 = new PedersenVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
@@ -86,7 +87,7 @@ public class TestPedersenVSS {
     }
 
     @Test
-    public void testProtocolWith1NonParticipant() {
+    public void testProtocolWithOneNonParticipant() {
         //Modelling communications channels
         final TestBroadcaster testBroadcaster = new TestBroadcaster();
         final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
@@ -110,7 +111,7 @@ public class TestPedersenVSS {
 
         players.forEach(VSS::startProtocol);
 
-        assertEquals("All players should have broadcasted their commitments", 2, testBroadcaster.commitments.size());
+        assertEquals("All players should have broadcast their commitments", 2, testBroadcaster.commitments.size());
 
         players.forEach(VSS::handleReceivedValues);
 
@@ -121,6 +122,9 @@ public class TestPedersenVSS {
         //No change in state, as no complaints has been registered
 
         players.forEach(VSS::applyResolves);
+
+        assertEquals("Honest parties should be of size 2", 2, player1.getHonestParties().size());
+        assertEquals("Honest parties should be of size 2", 2, player3.getHonestParties().size());
 
         //No change in state, as there were no complaints to be resolved
 
@@ -200,10 +204,174 @@ public class TestPedersenVSS {
         assertNotNull("Partial secret was null", partialSecret3);
     }
 
-    @Ignore
     @Test
-    public void testProtocol1Corrupt() {
-        //TODO!
+    public void testProtocolOneCorrupt() {
+        //Modelling communications channels
+        final TestBroadcaster testBroadcaster = new TestBroadcaster();
+        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
+        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
+        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+
+        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+
+        commMap1.put(2, (msg) -> channel2.sendSecret(
+                new PartialSecretMessageDTO(msg.getPartialSecret1().add(valueOf(5)), msg.getPartialSecret2(), 2, 1)));
+        commMap1.put(3, channel3);
+
+        commMap2.put(1, channel1);
+        commMap2.put(3, channel3);
+
+        commMap3.put(1, channel1);
+        commMap3.put(2, channel2);
+
+        //Creating players
+        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
+        final PedersenVSS player2 = new PedersenVSS(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2, null, null);
+        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
+
+        final List<PedersenVSS> players = Arrays.asList(player1, player2, player3);
+
+        players.forEach(VSS::startProtocol);
+
+        assertEquals("All players should have broadcast their commitments",
+                3, testBroadcaster.commitments.size());
+
+        players.forEach(VSS::handleReceivedValues);
+
+        assertEquals("Player 2 should have lodged a complaint against player 1",
+                1, testBroadcaster.pedersenComplaints.size());
+
+        players.forEach(VSS::handleComplaints);
+
+        testBroadcaster.resolves.get(0).setValue(
+                new PartialSecretMessageDTO(valueOf(123124), valueOf(242242), 2, 1));
+
+        players.forEach(VSS::applyResolves);
+
+        assertEquals("Should have disqualified player 1", 2, player2.getHonestParties().size());
+        assertEquals("Should have disqualified player 1", 2, player3.getHonestParties().size());
+
+        final BigInteger partialSecret1 = player1.output();
+        final BigInteger partialSecret2 = player2.output();
+        final BigInteger partialSecret3 = player3.output();
+
+        assertNotNull("Partial secret 1 was null", partialSecret1);
+        assertNotNull("Partial secret 2 was null", partialSecret2);
+        assertNotNull("Partial secret 3 was null", partialSecret3);
+    }
+
+    @Test
+    public void testProtocolOnePartyBecomesInactive() {
+        //Modelling communications channels
+        final TestBroadcaster testBroadcaster = new TestBroadcaster();
+        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
+        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
+        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+
+        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+
+        commMap1.put(2, (msg) -> channel2.sendSecret(
+                new PartialSecretMessageDTO(msg.getPartialSecret1().add(valueOf(5)), msg.getPartialSecret2(), 2, 1)));
+        commMap1.put(3, channel3);
+
+        commMap2.put(1, channel1);
+        commMap2.put(3, channel3);
+
+        commMap3.put(1, channel1);
+        commMap3.put(2, channel2);
+
+        //Creating players
+        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
+        final PedersenVSS player2 = new PedersenVSS(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2, null, null);
+        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
+
+        final List<PedersenVSS> players = Arrays.asList(player1, player2, player3);
+
+        players.forEach(VSS::startProtocol);
+
+        assertEquals("All players should have broadcast their commitments",
+                3, testBroadcaster.commitments.size());
+
+        players.forEach(VSS::handleReceivedValues);
+
+        assertEquals("Player 2 should have lodged a complaint against player 1",
+                1, testBroadcaster.pedersenComplaints.size());
+
+        players.forEach(VSS::handleComplaints);
+
+        testBroadcaster.resolves.remove(0);
+
+        players.forEach(VSS::applyResolves);
+
+        assertEquals("Should have disqualified player 1", 2, player2.getHonestParties().size());
+        assertEquals("Should have disqualified player 1", 2, player3.getHonestParties().size());
+
+        final BigInteger partialSecret1 = player1.output();
+        final BigInteger partialSecret2 = player2.output();
+        final BigInteger partialSecret3 = player3.output();
+
+        assertNotNull("Partial secret 1 was null", partialSecret1);
+        assertNotNull("Partial secret 2 was null", partialSecret2);
+        assertNotNull("Partial secret 3 was null", partialSecret3);
+    }
+
+    @Test
+    public void testProtocolWithOnePartySendingNullCommitment() {
+        //Modelling communications channels
+        final TestBroadcaster testBroadcaster = new TestBroadcaster();
+        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
+        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
+        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+
+        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+
+        commMap1.put(2, channel2);
+        commMap1.put(3, channel3);
+
+        commMap2.put(1, channel1);
+        commMap2.put(3, channel3);
+
+        commMap3.put(1, channel1);
+        commMap3.put(2, channel2);
+
+        //Creating players
+        final PedersenVSS player1 = new PedersenVSS(testBroadcaster, channel1, commMap1, 1, params, "ID=" + 1, null, null);
+        final PedersenVSS player2 = new PedersenVSS(testBroadcaster, channel2, commMap2, 2, params, "ID=" + 2, null, null);
+        final PedersenVSS player3 = new PedersenVSS(testBroadcaster, channel3, commMap3, 3, params, "ID=" + 3, null, null);
+
+        final List<PedersenVSS> players = Arrays.asList(player1, player2, player3);
+
+        players.forEach(VSS::startProtocol);
+
+        testBroadcaster.commitments.get(0).setCommitment(null);
+
+        assertEquals("All players should have broadcast their commitments",
+                3, testBroadcaster.commitments.size());
+
+        players.forEach(VSS::handleReceivedValues);
+
+        assertEquals("No player should have lodged a complaint", 0, testBroadcaster.pedersenComplaints.size());
+
+        players.forEach(VSS::handleComplaints);
+
+        players.forEach(VSS::applyResolves);
+
+        assertEquals("Should have disqualified player 1", 2, player2.getHonestParties().size());
+        assertEquals("Should have disqualified player 1", 2, player3.getHonestParties().size());
+
+        final BigInteger partialSecret1 = player1.output();
+        final BigInteger partialSecret2 = player2.output();
+        final BigInteger partialSecret3 = player3.output();
+
+        assertNotNull("Partial secret 1 was null", partialSecret1);
+        assertNotNull("Partial secret 2 was null", partialSecret2);
+        assertNotNull("Partial secret 3 was null", partialSecret3);
     }
 
     static class TestBroadcaster implements Broadcaster {

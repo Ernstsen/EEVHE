@@ -88,13 +88,6 @@ public class PedersenVSS extends AbstractVSS implements VSS {
             secrets.put(secret.getSender(), secret);
         }
 
-        boolean hasReceivedFromAll = secrets.size() == peerMap.size() + 1;//Peers + self
-        //TODO: When should we just ignore the missing value(s)? Otherwise risk corruption killing election by non-participation
-        if (!hasReceivedFromAll) {
-            logger.info("Has not received all commitments - should retry");
-            return false;
-        }
-
         logger.info("Reading commitments");
         final List<CommitmentDTO> commitments = broadcaster.getCommitments().stream()
                 .filter(c -> PEDERSEN.equals(c.getProtocol()))
@@ -105,6 +98,8 @@ public class PedersenVSS extends AbstractVSS implements VSS {
             this.commitments.put(commitment.getId(), commitment.getCommitment());
         }
 
+        honestParties.removeIf(i -> !this.commitments.containsKey(i));
+
         for (Map.Entry<Integer, PartialSecretMessageDTO> entry : new ArrayList<>(secrets.entrySet())) {
             int senderId = entry.getKey();
 
@@ -113,8 +108,9 @@ public class PedersenVSS extends AbstractVSS implements VSS {
 
             BigInteger[] commitment = this.commitments.get(senderId);
             if (commitment == null) {
-                logger.error("Peer with id=" + senderId + ", had no corresponding commitment!");
-                continue;//TODO: What to do?
+                logger.error("Peer with id=" + senderId + ", had no corresponding commitment");
+                honestParties.remove(senderId);
+                continue;
             }
 
             boolean matches = verifyCommitmentRespected(
@@ -122,9 +118,15 @@ public class PedersenVSS extends AbstractVSS implements VSS {
             if (!matches) {
                 logger.info("" + this.id + ": Sending complaint about DA=" + senderId);
                 final PedersenComplaintDTO complaint = new PedersenComplaintDTO(this.id, senderId);
-                secrets.remove(senderId); //remove secret, as it's garbage
                 broadcaster.pedersenComplain(complaint);
             }
+        }
+
+        boolean hasReceivedSecretsFromAll = secrets.size() == peerMap.size() + 1;//Peers + self
+        boolean hasReceivedCommitmentsFromAll = commitments.size() == peerMap.size() + 1;//Peers + self
+        if (!hasReceivedSecretsFromAll || !hasReceivedCommitmentsFromAll) {
+            logger.info("Has not received information from all - should retry");
+            return false;
         }
 
         return true;
@@ -160,9 +162,20 @@ public class PedersenVSS extends AbstractVSS implements VSS {
     public void applyResolves() {
         logger.info("Checking for complaint resolves");
         List<ComplaintResolveDTO> resolves = broadcaster.getResolves();
+        List<PedersenComplaintDTO> complaints = broadcaster.getPedersenComplaints();
+
+        // If a party does not send a resolve after being complained about, he is removed from honest parties.
+        List<Integer> resolverIds = resolves.stream().map(ComplaintResolveDTO::getComplaintResolverId).collect(Collectors.toList());
+        for (PedersenComplaintDTO complaint : complaints) {
+            int complaintId = complaint.getTargetId();
+            if (!resolverIds.contains(complaintId)) {
+                honestParties.remove(complaintId);
+            }
+        }
 
         for (ComplaintResolveDTO resolve : resolves) {
             int resolverId = resolve.getComplaintResolverId();
+
             BigInteger[] commit = commitments.get(resolverId);
             boolean resolveIsVerifiable = verifyCommitmentRespected(
                     g, e, resolve.getValue().getPartialSecret1(), resolve.getValue().getPartialSecret2(),
