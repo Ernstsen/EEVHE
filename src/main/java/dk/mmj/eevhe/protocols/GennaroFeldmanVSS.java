@@ -1,6 +1,7 @@
 package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.crypto.PedersenVSSUtils;
+import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.entities.CommitmentDTO;
 import dk.mmj.eevhe.entities.FeldmanComplaintDTO;
@@ -36,7 +37,9 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
         if (secrets != null) {
             this.secrets = secrets;
         }
-        this.polynomial = polynomial;
+
+        int t = ((peerMap.size()) / 2);
+        this.polynomial = polynomial  != null ? polynomial : SecurityUtils.generatePolynomial(t, params.getPrimePair().getQ());
     }
 
     @Override
