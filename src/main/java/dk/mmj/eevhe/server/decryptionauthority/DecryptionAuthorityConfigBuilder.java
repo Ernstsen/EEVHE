@@ -63,7 +63,7 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
     @Override
     public String help() {
         return "" +
-                "\tMODE: " + SELF.substring(2) + "\n" +
+                "\tMODE: " + SELF + "\n" +
                 "\t  --" + ID + "int\t\tSpecifies the authority's ID in the system. Used in key-generation protocol\n" +
                 "\t  --" + PORT + "int\t\tSpecifies port to be used. Standard=8081\n" +
                 "\t  --" + BULLETIN_BOARD_2 + "/" + BULLETIN_BOARD_1 + "ip:port location bulletin board to be used\n" +

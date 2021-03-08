@@ -1,5 +1,6 @@
 package dk.mmj.eevhe.entities;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
