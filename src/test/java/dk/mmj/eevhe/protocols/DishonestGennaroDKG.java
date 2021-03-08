@@ -6,29 +6,15 @@ import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
 import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
-import java.math.BigInteger;
 import java.util.*;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class DishonestGennaroDKG extends GennaroDKG {
-    private final Broadcaster broadcaster;
-    private final IncomingChannel incoming;
-    private final Map<Integer, PeerCommunicator> peerMap;
-    private final Logger logger;
-    private final int id;
-    private final ExtendedKeyGenerationParameters params;
-    private final String logPrefix;
     private final boolean wrongCommitment;
     private final boolean noCommitment;
     private final boolean complainAgainstHonestParty;
-    private Set<Integer> honestPartiesPedersen;
-    private Set<Integer> honestPartiesFeldman;
-    private PartialKeyPair output;
-
 
     /**
      * @param broadcaster         Broadcaster instance
@@ -43,17 +29,9 @@ public class DishonestGennaroDKG extends GennaroDKG {
                                int id, ExtendedKeyGenerationParameters params, String logPrefix,
                                boolean wrongCommitment, boolean noCommitment, boolean complainAgainstHonestParty) {
         super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);
-        this.broadcaster = broadcaster;
-        this.incoming = incoming;
-        this.peerMap = peerCommunicatorMap;
-        this.id = id;
-        this.params = params;
-        this.logPrefix = logPrefix;
         this.wrongCommitment = wrongCommitment;
         this.noCommitment = noCommitment;
         this.complainAgainstHonestParty = complainAgainstHonestParty;
-
-        logger = LogManager.getLogger(PedersenVSS.class.getName() + ". " + logPrefix + ":");
     }
 
     @Override
@@ -63,7 +41,7 @@ public class DishonestGennaroDKG extends GennaroDKG {
 
     @Override
     public PartialKeyPair output() {
-        return output;
+        return super.output();
     }
 
     @Override
@@ -80,11 +58,9 @@ public class DishonestGennaroDKG extends GennaroDKG {
      * - Generates output
      */
     List<Step> extractionPhase() {
-        BigInteger[] pol1 = super.pol1;
-        PedersenVSS pedersenVSS = super.pedersenVSS;
-
         honestPartiesPedersen = pedersenVSS.getHonestParties();
         honestPartiesFeldman = new HashSet<>();
+
         final Map<Integer, PeerCommunicator> honestPeers = new HashMap<>();
         final Map<Integer, PartialSecretMessageDTO> secretsPedersen = pedersenVSS.getSecrets();
 
@@ -114,7 +90,7 @@ public class DishonestGennaroDKG extends GennaroDKG {
 
     private void setResult(PartialKeyPair res) {
         logger.info("Output has ben set");
-        this.output = res;
+        super.output = res;
     }
 
     public Set<Integer> getHonestPartiesPedersen() {

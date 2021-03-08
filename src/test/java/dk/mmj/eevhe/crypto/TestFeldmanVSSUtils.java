@@ -50,7 +50,7 @@ public class TestFeldmanVSSUtils {
         BigInteger[] polynomial = new BigInteger[]{valueOf(11), valueOf(2), valueOf(2)};
         BigInteger[] coefficientCommitments = FeldmanVSSUtils.computeCoefficientCommitments(g, p, polynomial);
 
-        BigInteger actualResult = FeldmanVSSUtils.combineCoefficientCommitments(coefficientCommitments, j, p, q);
+        BigInteger actualResult = FeldmanVSSUtils.combineCoefficientCommitments(coefficientCommitments, j, p);
 
         BigInteger jExp = j.modPow(valueOf(2), q);
         BigInteger expectedResult = coefficientCommitments[0]
@@ -70,7 +70,7 @@ public class TestFeldmanVSSUtils {
         BigInteger[] polynomial = new BigInteger[]{valueOf(3000), valueOf(100), valueOf(2)};
         BigInteger[] coefficientCommitments = FeldmanVSSUtils.computeCoefficientCommitments(g, p, polynomial);
 
-        BigInteger actualResult = FeldmanVSSUtils.combineCoefficientCommitments(coefficientCommitments, j, p, q);
+        BigInteger actualResult = FeldmanVSSUtils.combineCoefficientCommitments(coefficientCommitments, j, p);
 
         BigInteger jExp = j.modPow(valueOf(2), q);
         BigInteger expectedResult = coefficientCommitments[0]

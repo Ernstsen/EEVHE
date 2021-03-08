@@ -53,7 +53,7 @@ public class PedersenVSSUtils {
      * @return Combined coefficient commitments g^(f_i(j)) * e^(f'_i(j))
      */
     public static BigInteger combineCoefficientCommitments(BigInteger[] coefficientCommitments, BigInteger j, BigInteger p, BigInteger q) {
-        return FeldmanVSSUtils.combineCoefficientCommitments(coefficientCommitments, j, p, q);
+        return FeldmanVSSUtils.combineCoefficientCommitments(coefficientCommitments, j, p);
     }
 
     /**

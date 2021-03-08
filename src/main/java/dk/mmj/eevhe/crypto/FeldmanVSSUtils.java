@@ -30,16 +30,12 @@ public class FeldmanVSSUtils {
      * @param coefficientCommitments Coefficient commitments
      * @param j                      DA id > 0
      * @param p                      Prime modulus p
-     * @param q                      Prime modulus q = (p-1) / 2
      * @return Combined coefficient commitments g^f_i(j)
      */
-    static BigInteger combineCoefficientCommitments(BigInteger[] coefficientCommitments, BigInteger j, BigInteger p, BigInteger q) {
+    static BigInteger combineCoefficientCommitments(BigInteger[] coefficientCommitments, BigInteger j, BigInteger p) {
         BigInteger acc = BigInteger.ONE;
 
         for (int t = 0; t < coefficientCommitments.length; t++) {
-            if (coefficientCommitments[t] == null) {
-                continue;
-            }
             BigInteger jExp = j.pow(t);
             acc = acc.multiply(coefficientCommitments[t].modPow(jExp, p));
         }
@@ -59,11 +55,7 @@ public class FeldmanVSSUtils {
      */
     public static boolean verifyCommitmentRespected(BigInteger g, BigInteger u, BigInteger[] coefficientCommitments,
                                                     BigInteger j, BigInteger p, BigInteger q) {
-        if (coefficientCommitments == null) {
-            return false;
-        }
-
-        BigInteger combinedCoefficientCommitments = combineCoefficientCommitments(coefficientCommitments, j, p, q);
+        BigInteger combinedCoefficientCommitments = combineCoefficientCommitments(coefficientCommitments, j, p);
 
         BigInteger gU = g.modPow(u, p);
 

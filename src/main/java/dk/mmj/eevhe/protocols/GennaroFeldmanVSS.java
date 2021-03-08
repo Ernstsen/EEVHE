@@ -16,15 +16,15 @@ import java.util.stream.Collectors;
 
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.computeCoefficientCommitments;
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.verifyCommitmentRespected;
+import static dk.mmj.eevhe.protocols.PedersenVSS.PEDERSEN;
 
 public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
     static final String FELDMAN = "FeldmanVSS";
-    static final String PEDERSEN = "PedersenVSS";
     protected final Map<Integer, BigInteger[]> feldmanCommitments = new HashMap<>();
     protected final Map<Integer, BigInteger[]> pedersenCommitments = new HashMap<>();
-    private final BigInteger[] polynomial;
+    final BigInteger[] polynomial;
     private final BigInteger e;
-    private final Set<Integer> honestParties = new HashSet<>();
+    protected final Set<Integer> honestParties = new HashSet<>();
 
 
     public GennaroFeldmanVSS(Broadcaster broadcaster, IncomingChannel incoming,
@@ -72,6 +72,8 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
             this.pedersenCommitments.put(commitment.getId(), commitment.getCommitment());
         }
 
+        honestParties.removeIf(i -> !this.feldmanCommitments.containsKey(i) || !this.pedersenCommitments.containsKey(i));
+
         logger.info("Verifying secret shares, using commitments");
         for (Map.Entry<Integer, PartialSecretMessageDTO> entry : new ArrayList<>(secrets.entrySet())) {
             int senderId = entry.getKey();
@@ -83,7 +85,7 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
             BigInteger[] feldmanCommitment = this.feldmanCommitments.get(senderId);
             if (feldmanCommitment == null) {
                 logger.error("Peer with id=" + senderId + ", had no corresponding commitment");
-                complain(senderId);
+                honestParties.remove(senderId);
                 continue;
             }
 
@@ -126,7 +128,6 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
             if (matches1 && !matches2) {
                 logger.info("Removing party with ID " + complaint.getTargetId() + " from honest parties");
                 honestParties.remove(complaint.getTargetId());
-                secrets.remove(complaint.getTargetId());
             }
         }
     }
@@ -140,6 +141,7 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
         logger.info("Combining values, to make partial secret key");
         // Returns value x_i
         return secrets.values().stream()
+                .filter(e -> honestParties.contains(e.getSender()))
                 .map(PartialSecretMessageDTO::getPartialSecret1)
                 .reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
     }

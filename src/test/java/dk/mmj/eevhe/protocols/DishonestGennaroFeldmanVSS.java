@@ -9,19 +9,21 @@ import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
 
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.computeCoefficientCommitments;
 import static dk.mmj.eevhe.crypto.FeldmanVSSUtils.verifyCommitmentRespected;
+import static dk.mmj.eevhe.protocols.PedersenVSS.PEDERSEN;
 
 public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
     static final String FELDMAN = "FeldmanVSS";
-    private final BigInteger[] polynomial;
     private final boolean wrongCommitment;
     private final boolean noCommitment;
     private final boolean complainAgainstHonestParty;
-    private final Set<Integer> honestParties = new HashSet<>();
 
     public DishonestGennaroFeldmanVSS(Broadcaster broadcaster, IncomingChannel incoming,
                                       Map<Integer, PeerCommunicator> peerCommunicatorMap,
@@ -32,10 +34,6 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
         this.wrongCommitment = wrongCommitment;
         this.noCommitment = noCommitment;
         this.complainAgainstHonestParty = complainAgainstHonestParty;
-        if (secrets != null) {
-            this.secrets = secrets;
-        }
-        this.polynomial = polynomial;
     }
 
     @Override
@@ -72,11 +70,13 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
                 .collect(Collectors.toList());
 
         for (CommitmentDTO commitment : feldmanCommitments) {
-            this.feldmanCommitments.put(commitment.getId(), commitment.getCommitment());
+            super.feldmanCommitments.put(commitment.getId(), commitment.getCommitment());
         }
         for (CommitmentDTO commitment : pedersenCommitments) {
-            this.pedersenCommitments.put(commitment.getId(), commitment.getCommitment());
+            super.pedersenCommitments.put(commitment.getId(), commitment.getCommitment());
         }
+
+        honestParties.removeIf(i -> !super.feldmanCommitments.containsKey(i) || !super.pedersenCommitments.containsKey(i));
 
         logger.info("Verifying secret shares, using commitments");
         for (Map.Entry<Integer, PartialSecretMessageDTO> entry : new ArrayList<>(secrets.entrySet())) {
@@ -86,10 +86,10 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
             }
             BigInteger partialSecret = entry.getValue().getPartialSecret1();
 
-            BigInteger[] feldmanCommitment = this.feldmanCommitments.get(senderId);
+            BigInteger[] feldmanCommitment = super.feldmanCommitments.get(senderId);
             if (feldmanCommitment == null) {
                 logger.error("Peer with id=" + senderId + ", had no corresponding commitment");
-                complain(senderId);
+                honestParties.remove(senderId);
                 continue;
             }
 
@@ -126,6 +126,6 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
 
     @Override
     public Set<Integer> getHonestParties() {
-        return honestParties;
+        return super.getHonestParties();
     }
 }

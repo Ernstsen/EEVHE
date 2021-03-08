@@ -17,23 +17,23 @@ import java.util.stream.Collectors;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class GennaroDKG implements DKG<PartialKeyPair> {
-    private final Broadcaster broadcaster;
-    private final IncomingChannel incoming;
-    private final Map<Integer, PeerCommunicator> peerMap;
-    private final Logger logger;
-    private final int id;
-    private final ExtendedKeyGenerationParameters params;
-    private final String logPrefix;
+    protected final Broadcaster broadcaster;
+    protected final IncomingChannel incoming;
+    protected final Map<Integer, PeerCommunicator> peerMap;
+    protected final Logger logger;
+    protected final int id;
+    protected final ExtendedKeyGenerationParameters params;
+    protected final String logPrefix;
     private final BigInteger g;
     private final BigInteger q;
     private final BigInteger p;
     private final int t;
-    BigInteger[] pol1;
-    PedersenVSS pedersenVSS;
-    BigInteger partialSecret;
-    private Set<Integer> honestPartiesPedersen;
-    private Set<Integer> honestPartiesFeldman;
-    private PartialKeyPair output;
+    protected BigInteger[] pol1;
+    protected PedersenVSS pedersenVSS;
+    protected BigInteger partialSecret;
+    protected Set<Integer> honestPartiesPedersen;
+    protected Set<Integer> honestPartiesFeldman;
+    protected PartialKeyPair output;
 
 
     /**
@@ -163,11 +163,11 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
         this.output = res;
     }
 
-    public Set<Integer> getHonestPartiesPedersen() {
+    Set<Integer> getHonestPartiesPedersen() {
         return honestPartiesPedersen;
     }
 
-    public Set<Integer> getHonestPartiesFeldman() {
+    Set<Integer> getHonestPartiesFeldman() {
         return honestPartiesFeldman;
     }
 }
