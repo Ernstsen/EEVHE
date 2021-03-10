@@ -58,7 +58,9 @@ public abstract class Client implements Application {
      */
     protected List<Candidate> getCandidates() {
         PartialPublicInfo info = fetchPublicInfo();
-
+        if (info == null) {
+            return null;
+        }
         return info.getCandidates();
     }
 

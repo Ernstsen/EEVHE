@@ -68,8 +68,7 @@ public class FetchingUtilities {
 
         if (!any.isPresent()) {
             logger.error("No public information retrieved from the server was signed by the trusted dealer. Terminating");
-            System.exit(-1);
-            return null;//Never happens
+            return null;
         }
         return any.get();
     }

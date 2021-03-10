@@ -29,6 +29,11 @@ public class ResultFetcher extends Client {
 
         logger.info("Fetching public information");
         PartialPublicInfo publicInformationEntity = fetchPublicInfo();
+        if(publicInformationEntity == null){
+            logger.error("Failed to fetch public information");
+            return;
+        }
+
         long endTime = publicInformationEntity.getEndTime();
         if (new Date().getTime() < endTime) {
             long diff = (endTime - new Date().getTime()) / 60_000;
@@ -45,13 +50,20 @@ public class ResultFetcher extends Client {
             return;
         }
 
+        List<Candidate> candidates = getCandidates();
+
+        if(candidates == null){
+            logger.error("Failed to fetch list of candidates");
+            return;
+        }
+
         ResultCombinerImpl combiner = new ResultCombinerImpl(
-                forceCalculation, publicKey, getCandidates(),
+                forceCalculation, publicKey, candidates,
                 () -> FetchingUtilities.getPublicInfos(logger, target),
                 () -> FetchingUtilities.getBallots(logger, target),
                 endTime);
 
-        List<Candidate> candidates = getCandidates();
+
         electionResult = combiner.computeResult(results);
 
         StringBuilder resBuilder = new StringBuilder().append("Results:\n-----------------------------\n");
