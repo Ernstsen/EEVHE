@@ -29,7 +29,7 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
                 Arrays.asList(
                         new DecryptionAuthorityInfo(1, "https://localhost:8081"),
                         new DecryptionAuthorityInfo(2, "https://localhost:8082")
-                ));
+                ), "FOO");
 
         confPath = "temp_conf/";
         File file = new File(confPath);

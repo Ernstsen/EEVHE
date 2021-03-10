@@ -30,6 +30,7 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.*;
 import java.util.Date;
 import java.util.List;
@@ -70,7 +71,15 @@ public class SystemConfigurer implements Application {
                 .stream().map(e -> new DecryptionAuthorityInfo(e.getKey(), e.getValue()))
                 .collect(Collectors.toList());
 
-        DecryptionAuthorityInput daInput = new DecryptionAuthorityInput(pHex, gHex, eHex, endTime, daInfos);
+
+        String certPem;
+        try {
+            certPem = new String(Files.readAllBytes(Paths.get("certs/test_glob.pem")));
+        } catch (IOException e) {
+            logger.error("Failed to read certificate file");
+            return;
+        }
+        DecryptionAuthorityInput daInput = new DecryptionAuthorityInput(pHex, gHex, eHex, endTime, daInfos, certPem);
 
         logger.info("Writing file");
         try (OutputStream ous = Files.newOutputStream(outputFolderPath.resolve("common_input.json"))) {

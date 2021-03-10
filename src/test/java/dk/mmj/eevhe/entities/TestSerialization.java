@@ -90,7 +90,7 @@ public class TestSerialization {
         PartialSecretMessageDTO partialSecretMessageDTO = new PartialSecretMessageDTO(new BigInteger("56138131"), new BigInteger("2342429"), 1123, 12412);
         serializables.add(partialSecretMessageDTO);
         serializables.add(new ComplaintResolveDTO(5874767, 1298376192, partialSecretMessageDTO));
-        serializables.add(new DecryptionAuthorityInput("wiughweiugnwe", "woegnweoginw", "woegnweoginwqwf", 54684654, Arrays.asList(daInfo1, daInfo2)));
+        serializables.add(new DecryptionAuthorityInput("wiughweiugnwe", "woegnweoginw", "woegnweoginwqwf", 54684654, Arrays.asList(daInfo1, daInfo2), "Some CERT"));
 
         serializables.add(new PartialKeyPair(new PartialSecretKey(new BigInteger("123521"), new BigInteger("98273523"))
                 , new BigInteger("123456789"), publicKey));
