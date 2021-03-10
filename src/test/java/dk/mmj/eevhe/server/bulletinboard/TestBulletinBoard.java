@@ -45,8 +45,7 @@ public class TestBulletinBoard {
         thread.start();
 
         JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
-        String type = target
-                .path("type").request().get(String.class);
+        String type = target.path("type").request().get(String.class);
         assertEquals("Wrong type string returned", "<b>ServerType:</b> Bulletin Board", type);
 
         Long time = target.path("getCurrentTime").request().get(Long.class);
