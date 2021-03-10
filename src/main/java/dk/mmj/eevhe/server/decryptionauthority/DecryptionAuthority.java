@@ -78,7 +78,7 @@ public class DecryptionAuthority extends AbstractServer {
             candidates = mapper.readValue(conf.resolve("candidates.json").toFile(), new TypeReference<List<Candidate>>() {
             });
         } catch (IOException e) {
-            logger.error("You moved the file, and are yet to do this properly!");
+            logger.error("Unable to read candidates from file: " + conf.resolve("candidates.json"));
             throw new RuntimeException("Failed to load file for candidates", e);
         }
 

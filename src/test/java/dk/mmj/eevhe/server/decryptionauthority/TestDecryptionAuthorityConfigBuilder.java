@@ -5,6 +5,7 @@ import dk.eSoftware.commandLineParser.NoSuchBuilderException;
 import dk.eSoftware.commandLineParser.SingletonCommandLineParser;
 import dk.eSoftware.commandLineParser.WrongFormatException;
 import dk.mmj.eevhe.AbstractConfigTest;
+import dk.mmj.eevhe.entities.Candidate;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInfo;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
 import org.junit.After;
@@ -30,14 +31,18 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
                         new DecryptionAuthorityInfo(2, "https://localhost:8082")
                 ));
 
-        confPath = "./conf/testConf.json";
+        confPath = "temp_conf/";
         File file = new File(confPath);
 
         //noinspection ResultOfMethodCallIgnored
-        file.getParentFile().mkdirs();
+        file.mkdirs();
 
 
-        new ObjectMapper().writeValue(file, input);
+        new ObjectMapper().writeValue(new File(file, "common_input.json"), input);
+        new ObjectMapper().writeValue(new File(file, "candidates.json"), Arrays.asList(
+                new Candidate(0, "name", "desc"),
+                new Candidate(1, "name2", "desc2")
+        ));
     }
 
     @Test
