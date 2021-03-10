@@ -60,7 +60,7 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
     }
 
     @Override
-    public boolean handleReceivedValues() {
+    public void handleReceivedValues() {
         logger.info("Reading commitments");
         final List<CommitmentDTO> feldmanCommitments = broadcaster.getCommitments().stream()
                 .filter(c -> FELDMAN.equals(c.getProtocol()))
@@ -103,7 +103,6 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
                 complain(senderId);
             }
         }
-        return true;
     }
 
     private void complain(int senderId) {

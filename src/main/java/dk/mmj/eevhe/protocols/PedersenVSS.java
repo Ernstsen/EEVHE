@@ -79,7 +79,7 @@ public class PedersenVSS extends AbstractVSS implements VSS {
     }
 
     @Override
-    public boolean handleReceivedValues() {
+    public void handleReceivedValues() {
         logger.info("Checking received secret values");
 
         List<PartialSecretMessageDTO> incomingSecrets = incoming.receiveSecrets();
@@ -126,10 +126,7 @@ public class PedersenVSS extends AbstractVSS implements VSS {
         boolean hasReceivedCommitmentsFromAll = commitments.size() == peerMap.size() + 1;//Peers + self
         if (!hasReceivedSecretsFromAll || !hasReceivedCommitmentsFromAll) {
             logger.info("Has not received information from all - should retry");
-            return false;
         }
-
-        return true;
     }
 
     @Override

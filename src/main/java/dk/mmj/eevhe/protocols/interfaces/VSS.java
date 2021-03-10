@@ -1,8 +1,5 @@
 package dk.mmj.eevhe.protocols.interfaces;
 
-
-import dk.mmj.eevhe.entities.PartialKeyPair;
-
 import java.math.BigInteger;
 
 /**
@@ -29,9 +26,8 @@ public interface VSS {
      * <br>
      * Will often verify received values, using commitments made by other participants
      *
-     * @return true if method was run to completion, false to signal retry, as not enough data was received
      */
-    boolean handleReceivedValues();
+    void handleReceivedValues();
 
     /**
      * Third step in the protocol
