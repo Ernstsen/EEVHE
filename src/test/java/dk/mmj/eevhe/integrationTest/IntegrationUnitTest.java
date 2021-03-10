@@ -9,8 +9,12 @@ import dk.mmj.eevhe.client.results.ElectionResult;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoard;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority;
 import joptsimple.internal.Strings;
+import org.junit.After;
 import org.junit.Test;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +22,23 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class IntegrationUnitTest {
+
+    @After
+    public void tearDown() throws Exception {
+        Path conf = Paths.get("conf");
+
+        List<Path> paths = Arrays.asList(
+                conf.resolve("DA1.zip"),
+                conf.resolve("DA2.zip"),
+                conf.resolve("DA3.zip")
+        );
+
+        for (Path path : paths) {
+            if (Files.exists(path)) {
+                Files.delete(path);
+            }
+        }
+    }
 
     @Test
     public void runTestElection() {
@@ -113,12 +134,12 @@ public class IntegrationUnitTest {
                     electionResult = resultFetcher.getElectionResult();
                 }
 
-                if(electionResult == null){
+                if (electionResult == null) {
                     errors.add("Failed to extract electionResult");
                     return;
                 }
                 int[] extracted = electionResult.getCandidateVotes().stream().mapToInt(Integer::valueOf).toArray();
-                if(!Arrays.equals(votes, extracted)){
+                if (!Arrays.equals(votes, extracted)) {
                     errors.add("Extracted votes did not match those cast. Expected: " + Arrays.toString(votes) +
                             " Actual: " + Arrays.toString(extracted));
                 }
