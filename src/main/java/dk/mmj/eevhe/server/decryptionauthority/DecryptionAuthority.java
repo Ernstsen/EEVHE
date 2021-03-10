@@ -24,9 +24,11 @@ import org.glassfish.jersey.client.JerseyWebTarget;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -64,23 +66,25 @@ public class DecryptionAuthority extends AbstractServer {
         }
 
         bulletinBoard = configureWebTarget(logger, configuration.bulletinBoard);
+
+        Path conf = Paths.get(configuration.confPath);
+        if (!Files.exists(conf) || !Files.exists(conf)) {
+            logger.error("Configuration folder either did not exists or were not a folder. Path: " + conf + "\n");
+            terminate();
+        }
+
         ObjectMapper mapper = new ObjectMapper();
         try {
-            candidates = mapper.readValue(new File("/testing_candidates.json"), new TypeReference<List<Candidate>>() {
+            candidates = mapper.readValue(conf.resolve("candidates.json").toFile(), new TypeReference<List<Candidate>>() {
             });
         } catch (IOException e) {
             logger.error("You moved the file, and are yet to do this properly!");
             throw new RuntimeException("Failed to load file for candidates", e);
         }
 
-        File conf = new File(configuration.confPath);
-        if (!conf.exists() || !conf.isFile()) {
-            logger.error("Configuration file either did not exists or were not a file. Path: " + conf.getAbsolutePath() + "\nTerminating");
-            System.exit(-1);
-        }
 
         try {
-            input = mapper.readValue(conf, DecryptionAuthorityInput.class);
+            input = mapper.readValue(conf.resolve("common_input.json").toFile(), DecryptionAuthorityInput.class);
 
             BigInteger p = new BigInteger(Hex.decode(input.getpHex()));
             BigInteger g = new BigInteger(Hex.decode(input.getgHex()));
@@ -96,7 +100,8 @@ public class DecryptionAuthority extends AbstractServer {
 
             if (input.getInfos().stream().anyMatch(i -> i.getId() == 0)) {
                 logger.error("Found DA with id=0, which is illegal!. Terminating");
-                System.exit(-1);
+                terminate();
+                return;
             }
 
             scheduler.schedule(this::terminateVoting, relativeEndTime, TimeUnit.MILLISECONDS);

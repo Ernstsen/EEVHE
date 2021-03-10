@@ -173,7 +173,7 @@ public class IntegrationTest implements Application {
     }
 
     private void launchDecryptionAuthority(Integer id) {
-        String params = "--authority --conf=conf/common_input.json --port=808" + id + " --id=" + id;
+        String params = "--authority --conf=conf/ --port=808" + id + " --id=" + id;
         SingletonCommandLineParser<DecryptionAuthority.DecryptionAuthorityConfiguration> parser =
                 new SingletonCommandLineParser<>(new DecryptionAuthorityConfigBuilder());
 
