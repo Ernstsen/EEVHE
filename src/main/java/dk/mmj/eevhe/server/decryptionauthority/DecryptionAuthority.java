@@ -66,7 +66,7 @@ public class DecryptionAuthority extends AbstractServer {
         bulletinBoard = configureWebTarget(logger, configuration.bulletinBoard);
         ObjectMapper mapper = new ObjectMapper();
         try {
-            candidates = mapper.readValue(new File("conf/testing_candidates.json"), new TypeReference<List<Candidate>>() {
+            candidates = mapper.readValue(new File("/testing_candidates.json"), new TypeReference<List<Candidate>>() {
             });
         } catch (IOException e) {
             logger.error("You moved the file, and are yet to do this properly!");

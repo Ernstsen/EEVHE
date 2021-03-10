@@ -46,10 +46,12 @@ public class SystemConfigurer implements Application {
     private final long endTime;
     private final Path outputFolderPath;
     private final Map<Integer, String> daAddresses;
+    private final Path certFolderPath;
 
     public SystemConfigurer(SystemConfiguration config) {
         this.endTime = config.endTime;
         this.outputFolderPath = config.outputFolderPath;
+        this.certFolderPath = config.certFolderPath;
         this.daAddresses = config.daAddresses;
     }
 
@@ -81,7 +83,7 @@ public class SystemConfigurer implements Application {
         logger.info("Loading global private key");
         AsymmetricKeyParameter globalSk;
         try {
-            globalSk = KeyHelper.readKey(outputFolderPath.resolve("../certs").resolve("test_glob_key.pem"));
+            globalSk = KeyHelper.readKey(certFolderPath);
         } catch (IOException e) {
             logger.error("Failed to load secretKey from disk", e);
             return;
@@ -152,20 +154,24 @@ public class SystemConfigurer implements Application {
         private final long endTime;
         private final Map<Integer, String> daAddresses;
         private final Path outputFolderPath;
+        private final Path certFolderPath;
 
         /**
          * Constructor for the Trusted Dealer configuration
          *
          * @param candidateListPath path to json file containing candidate information
+         * @param certFolderPath    path to certificate private key as .pem file
          * @param daAddresses       Map linking ids to addresses for DAs
          * @param endTime           When the vote comes to an end. ms since January 1, 1970, 00:00:00 GMT
          */
         SystemConfiguration(
                 Path candidateListPath,
+                Path certFolderPath,
                 Map<Integer, String> daAddresses,
                 long endTime) {
             super(SystemConfigurer.class);
             this.outputFolderPath = candidateListPath;
+            this.certFolderPath = certFolderPath;
             this.daAddresses = daAddresses;
             this.endTime = endTime;
         }
@@ -180,6 +186,10 @@ public class SystemConfigurer implements Application {
 
         public Path getOutputFolderPath() {
             return outputFolderPath;
+        }
+
+        public Path getCertFolderPath() {
+            return certFolderPath;
         }
     }
 }

@@ -6,6 +6,7 @@ import dk.eSoftware.commandLineParser.WrongFormatException;
 import dk.mmj.eevhe.AbstractConfigTest;
 import org.junit.Test;
 
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -19,7 +20,7 @@ public class TestSystemConfigurerConfigBuilder extends AbstractConfigTest {
         int duration = 4;
         String params = "--addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 "
                 + "--outputFolder=conf --time -min=" + duration + " -hour=" + duration + " -day=" + duration
-                + " --outputFolder=conqweff/";
+                + " --outputFolder=conqweff/ --certKey=certs/test_glob_key.pem";
 
         SystemConfigurerConfigBuilder builder = new SystemConfigurerConfigBuilder();
 
@@ -45,6 +46,7 @@ public class TestSystemConfigurerConfigBuilder extends AbstractConfigTest {
             );
 
             assertEquals("Did not respect output path", "conqweff", config.getOutputFolderPath().getFileName().toString());
+            assertEquals("Did not respect output path", Paths.get("certs/test_glob_key.pem"), config.getCertFolderPath());
 
             assertNotNull("Should be able to construct configurer", config.produceInstance());
         } catch (WrongFormatException | NoSuchBuilderException e) {
