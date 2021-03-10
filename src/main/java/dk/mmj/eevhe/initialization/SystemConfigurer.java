@@ -5,20 +5,38 @@ import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.Application;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParametersImpl;
+import dk.mmj.eevhe.crypto.signature.CertificateHelper;
+import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInfo;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.bouncycastle.util.encoders.Hex;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.*;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Helper class for creating configuration file(s) to be used in running the system
@@ -34,7 +52,6 @@ public class SystemConfigurer implements Application {
         this.outputFolderPath = config.outputFolderPath;
         this.daAddresses = config.daAddresses;
     }
-
 
     @Override
     public void run() {
@@ -58,6 +75,56 @@ public class SystemConfigurer implements Application {
             mapper.writeValue(ous, daInput);
         } catch (IOException e) {
             logger.error("Failed to write common input to file. Terminating", e);
+            return;
+        }
+
+        logger.info("Loading global private key");
+        AsymmetricKeyParameter globalSk;
+        try {
+            globalSk = KeyHelper.readKey(outputFolderPath.resolve("../certs").resolve("test_glob_key.pem"));
+        } catch (IOException e) {
+            logger.error("Failed to load secretKey from disk", e);
+            return;
+        }
+
+        AlgorithmIdentifier sha256WithRSASignature = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256WITHRSA");
+        AlgorithmIdentifier digestSha = new DefaultDigestAlgorithmIdentifierFinder().find("SHA-256");
+
+        logger.info("Writing certificates");
+        try {
+            for (DecryptionAuthorityInfo daInfo : daInfos) {
+                KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA", "BC");
+                gen.initialize(2048, new SecureRandom());
+
+                KeyPair keyPair = gen.generateKeyPair();
+                PublicKey pk = keyPair.getPublic();
+                PrivateKey sk = keyPair.getPrivate();
+
+                X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
+                        new X500Name("CN=EEVHE_Configurer"),
+                        BigInteger.valueOf(daInfo.getId()),
+                        new Date(), new Date(endTime + (60 * 1000)),
+                        new X500Name("CN=DA" + daInfo.getId()),
+                        new SubjectPublicKeyInfo(sha256WithRSASignature, pk.getEncoded())
+                );
+
+                ContentSigner signer = new BcRSAContentSignerBuilder(
+                        sha256WithRSASignature,
+                        digestSha
+                ).build(globalSk);
+
+                X509CertificateHolder certificate = cb.build(signer);
+
+                Path targetFile = outputFolderPath.resolve("DA" + daInfo.getId() + ".zip");
+                try (ZipOutputStream ous = new ZipOutputStream(Files.newOutputStream(targetFile))) {
+                    ous.putNextEntry(new ZipEntry("sk.pem"));
+                    ous.write(sk.getEncoded());
+                    ous.putNextEntry(new ZipEntry("cert.pem"));
+                    CertificateHelper.writeCertificate(ous, certificate);
+                }
+            }
+        } catch (NoSuchAlgorithmException | NoSuchProviderException | OperatorCreationException | IOException e) {
+            logger.error("Failed to create certificates for DAs!", e);
             return;
         }
 

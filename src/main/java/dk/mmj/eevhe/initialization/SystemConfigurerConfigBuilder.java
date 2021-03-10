@@ -66,10 +66,11 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
 
     @Override
     public String help() {
-        return "\tMODE: System Configurer (conf) - System Configurer creates files to configure Decryption Authorities \n" +
+        return "\tMODE: System Configurer (configuration) - System Configurer creates files to configure Decryption Authorities \n" +
+                "\t NOTE: System Configurer assumes file 'certs/test_glob_key.pem' to sign generated certificates\n" +
                 "\t  --" + TIME + "\t\t Sets time. Vote ends at current time + time parameters. Standard value: 10 min\n" +
                 "\t\t -" + TIME_DAY + "days, -" + TIME_HR + "hours, -" + TIME_MIN + "minutes\n" +
-                "\t --" + DA_ADDRESSES + "\t\t defines addresses for the DAs. Supplied on the form -id_url\n"+
+                "\t --" + DA_ADDRESSES + "\t\t defines addresses for the DAs. Supplied on the form -id_url\n" +
                 "\t --" + OUTPUT_FOLDER_PATH + "\t\t defines output folder using relative path\n";
     }
 

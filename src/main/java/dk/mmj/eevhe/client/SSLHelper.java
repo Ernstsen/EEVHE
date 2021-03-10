@@ -80,15 +80,8 @@ public class SSLHelper {
 
             return client.target(targetUrl);
 
-        } catch (NoSuchAlgorithmException e) {
-            logger.error("Unrecognized SSL context algorithm:", e);
-            System.exit(-1);
-        } catch (KeyManagementException e) {
-            logger.error("Initializing SSL Context failed: ", e);
-            System.exit(-1);
-        } catch (CertificateException | KeyStoreException | IOException e) {
-            logger.error("Error Initializing the Certificate: ", e);
-            System.exit(-1);
+        } catch (NoSuchAlgorithmException | KeyManagementException | CertificateException | KeyStoreException | IOException e) {
+            logger.error("Failed to create JerseyClient with SSl", e);
         }
 
         return null;
