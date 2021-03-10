@@ -82,8 +82,7 @@ public class SSLHelper {
 
         } catch (NoSuchAlgorithmException | KeyManagementException | CertificateException | KeyStoreException | IOException e) {
             logger.error("Failed to create JerseyClient with SSl", e);
+            throw new RuntimeException(e);
         }
-
-        return null;
     }
 }
