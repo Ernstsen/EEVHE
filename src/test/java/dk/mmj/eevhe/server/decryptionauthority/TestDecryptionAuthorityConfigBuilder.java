@@ -14,6 +14,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -22,6 +23,7 @@ import static org.junit.Assert.*;
 
 public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
     private String confPath;
+    private List<File> files = new ArrayList<>();
 
     @Before
     public void setup() throws IOException {
@@ -38,11 +40,17 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
         file.mkdirs();
 
 
-        new ObjectMapper().writeValue(new File(file, "common_input.json"), input);
-        new ObjectMapper().writeValue(new File(file, "candidates.json"), Arrays.asList(
+        File common = new File(file, "common_input.json");
+        new ObjectMapper().writeValue(common, input);
+        files.add(common);
+
+        File candidates = new File(file, "candidates.json");
+        new ObjectMapper().writeValue(candidates, Arrays.asList(
                 new Candidate(0, "name", "desc"),
                 new Candidate(1, "name2", "desc2")
         ));
+        files.add(candidates);
+        files.add(file);
     }
 
     @Test
@@ -151,8 +159,12 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
 
     @After
     public void tearDown() {
-        if (!new File(confPath).delete()) {
-            System.out.println("Failed to delete temp file! " + confPath);
+        for (File file : files) {
+            try {
+                //noinspection ResultOfMethodCallIgnored
+                file.delete();
+            } catch (Exception ignored) {
+            }
         }
     }
 }

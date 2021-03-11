@@ -73,10 +73,9 @@ public class SystemConfigurer implements Application {
                 .stream().map(e -> new DecryptionAuthorityInfo(e.getKey(), e.getValue()))
                 .collect(Collectors.toList());
 
-
         String certPem;
         try {
-            certPem = new String(Files.readAllBytes(Paths.get("certs/test_glob.pem")));
+            certPem = new String(Files.readAllBytes(certFilePath));
         } catch (IOException e) {
             logger.error("Failed to read certificate file");
             return;
