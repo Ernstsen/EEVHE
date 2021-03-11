@@ -141,7 +141,7 @@ public class TestSystemConfigurer {
         String msg = "This is some message that i want signed";
         byte[] msgBytes = msg.getBytes(StandardCharsets.UTF_8);
         List<byte[]> signedMessage = Collections.singletonList(msgBytes);
-        byte[] signature = SignatureHelper.sign(sk, signedMessage);
+        String signature = SignatureHelper.sign(sk, signedMessage);
 
         AsymmetricKeyParameter pk = CertificateHelper.getPublicKeyFromCertificate(certBytes);
         assertTrue("Signature should pass", SignatureHelper.verifySignature(pk, signedMessage, signature));

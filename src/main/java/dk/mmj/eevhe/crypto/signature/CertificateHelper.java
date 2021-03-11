@@ -16,11 +16,6 @@ import java.nio.file.Path;
  */
 public class CertificateHelper {
 
-    private static X509CertificateHolder readCertificate(Path certificatePath) throws IOException {
-        byte[] bytes = Files.readAllBytes(certificatePath);
-        return readCertificate(bytes);
-    }
-
     /**
      * Reads a X.509 certificateHolder from a bytearray
      *
@@ -32,6 +27,18 @@ public class CertificateHelper {
         byte[] decode = Base64.decode(new String(bytes).replace("-----BEGIN CERTIFICATE-----", "")
                 .replace("-----END CERTIFICATE-----", ""));
         return new X509CertificateHolder(decode);
+    }
+
+    /**
+     * Reads a X.509 certificateHolder from a bytearray
+     *
+     * @param file the cert .pem file
+     * @return the certificateHolder
+     * @throws IOException if creating the CertificateHolder fails
+     */
+    private static X509CertificateHolder readCertificate(Path file) throws IOException {
+        byte[] data = Files.readAllBytes(file);
+        return readCertificate(data);
     }
 
     /**

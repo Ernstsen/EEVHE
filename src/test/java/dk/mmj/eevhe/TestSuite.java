@@ -2,6 +2,7 @@ package dk.mmj.eevhe;
 
 import dk.mmj.eevhe.client.ClientTestSuite;
 import dk.mmj.eevhe.crypto.CryptoTestSuite;
+import dk.mmj.eevhe.entities.EntityTestSuite;
 import dk.mmj.eevhe.entities.TestSerialization;
 import dk.mmj.eevhe.initialization.InitializationTestSuite;
 import dk.mmj.eevhe.integrationTest.IntegrationTestSuite;
@@ -15,7 +16,7 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
         ClientTestSuite.class,
         CryptoTestSuite.class,
-        TestSerialization.class,
+        EntityTestSuite.class,
         InitializationTestSuite.class,
         IntegrationTestSuite.class,
         ProtocolTestSuite.class,
