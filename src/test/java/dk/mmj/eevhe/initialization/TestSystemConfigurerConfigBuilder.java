@@ -20,7 +20,7 @@ public class TestSystemConfigurerConfigBuilder extends AbstractConfigTest {
         int duration = 4;
         String params = "--addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 "
                 + "--outputFolder=conf --time -min=" + duration + " -hour=" + duration + " -day=" + duration
-                + " --outputFolder=conqweff/ --certKey=certs/test_glob_key.pem";
+                + " --outputFolder=conqweff/ --certKey=certs/test_glob_key.pem --cert=certs/test_glob.pem";
 
         SystemConfigurerConfigBuilder builder = new SystemConfigurerConfigBuilder();
 
@@ -46,7 +46,8 @@ public class TestSystemConfigurerConfigBuilder extends AbstractConfigTest {
             );
 
             assertEquals("Did not respect output path", "conqweff", config.getOutputFolderPath().getFileName().toString());
-            assertEquals("Did not respect output path", Paths.get("certs/test_glob_key.pem"), config.getCertFolderPath());
+            assertEquals("Did not respect cert key path", Paths.get("certs/test_glob_key.pem"), config.getSkFilePath());
+            assertEquals("Did not respect cert path", Paths.get("certs/test_glob.pem"), config.getCertFilePath());
 
             assertNotNull("Should be able to construct configurer", config.produceInstance());
         } catch (WrongFormatException | NoSuchBuilderException e) {

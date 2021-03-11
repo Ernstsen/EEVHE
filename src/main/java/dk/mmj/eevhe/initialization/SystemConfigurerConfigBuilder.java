@@ -16,6 +16,7 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
     private static final String SELF = "--configuration";
     private static final String OUTPUT_FOLDER_PATH = "outputFolder=";
     private static final String CERT_KEY_PATH = "certKey=";
+    private static final String CERT_PATH = "cert=";
     private static final String DA_ADDRESSES = "addresses";
     private static final String TIME = "time";
     private static final String TIME_DAY = "day=";
@@ -24,7 +25,8 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
     private final Map<Integer, String> daAddresses = new HashMap<>();
     //state
     private Path outputFolderPath = Paths.get("./conf/");
-    private Path certFolderPath = Paths.get("./certs/test_glob_key.pem");
+    private Path skFilePath = Paths.get("./certs/test_glob_key.pem");
+    private Path certFilePath = Paths.get("./certs/test_glob.pem");
     private long time = 10_000 * 60;
 
     @Override
@@ -53,8 +55,10 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
             }
         } else if (cmd.startsWith(OUTPUT_FOLDER_PATH)) {
             outputFolderPath = Paths.get(cmd.substring(OUTPUT_FOLDER_PATH.length()));
+        } else if (cmd.startsWith(CERT_PATH)) {
+            certFilePath = Paths.get(cmd.substring(CERT_PATH.length()));
         } else if (cmd.startsWith(CERT_KEY_PATH)) {
-            certFolderPath = Paths.get(cmd.substring(CERT_KEY_PATH.length()));
+            skFilePath = Paths.get(cmd.substring(CERT_KEY_PATH.length()));
         } else if (!cmd.equals(SELF)) {
             logger.warn("Did not recognize command " + command.getCommand());
         }
@@ -64,7 +68,8 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
     public SystemConfigurer.SystemConfiguration build() {
         return new SystemConfigurer.SystemConfiguration(
                 outputFolderPath,
-                certFolderPath,
+                skFilePath,
+                certFilePath,
                 daAddresses,
                 new Date().getTime() + time);
     }
@@ -77,6 +82,7 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
                 "\t\t -" + TIME_DAY + "days, -" + TIME_HR + "hours, -" + TIME_MIN + "minutes\n" +
                 "\t --" + DA_ADDRESSES + "\t\t defines addresses for the DAs. Supplied on the form -id_url\n" +
                 "\t --" + OUTPUT_FOLDER_PATH + "\t\t defines output folder using relative path\n" +
+                "\t --" + CERT_PATH + "\t\t specifies .pem file with certificate" +
                 "\t --" + CERT_KEY_PATH + "\t\t specifies .pem file with certificate private-key\n";
     }
 
