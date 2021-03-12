@@ -80,6 +80,6 @@ public class DecrypterImpl implements Decrypter {
             logger.info("Partially decrypted " + (i + 1) + "/" + candidates.size() + " candidates");
         }
 
-        return new PartialResultList(partialResults, ballots.size());
+        return new PartialResultList(partialResults, ballots.size(), id);
     }
 }

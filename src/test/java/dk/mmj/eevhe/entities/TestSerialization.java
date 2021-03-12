@@ -3,13 +3,18 @@ package dk.mmj.eevhe.entities;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.results.ElectionResult;
+import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,7 +35,7 @@ public class TestSerialization {
     }
 
     @Before
-    public void setup() {
+    public void setup() throws IOException {
         this.serializables = new ArrayList<>();
         CipherText cipherText = new CipherText(new BigInteger("13524651410"), new BigInteger("846021531684652196874"));
         serializables.add(cipherText);
@@ -70,8 +75,8 @@ public class TestSerialization {
         PartialResult partialResult2 = new PartialResult(54, new BigInteger("234221"), dlogProof, cipherText);
         serializables.add(partialResult);
 
-        PartialResultList partialResultList = new PartialResultList(Arrays.asList(partialResult, partialResult2), 5);
-        PartialResultList partialResultList2 = new PartialResultList(Arrays.asList(partialResult2, partialResult), 94);
+        PartialResultList partialResultList = new PartialResultList(Arrays.asList(partialResult, partialResult2), 5, 1);
+        PartialResultList partialResultList2 = new PartialResultList(Arrays.asList(partialResult2, partialResult), 94, 2);
         serializables.add(partialResultList);
         serializables.add(new PartialSecretKey(new BigInteger("23422"), new BigInteger("2342124")));
 
@@ -80,7 +85,10 @@ public class TestSerialization {
         serializables.add(pv1);
         serializables.add(new PrimePair(new BigInteger("3253"), new BigInteger("3298573493")));
 
-        serializables.add(new ResultList(Arrays.asList(partialResultList, partialResultList2)));
+        AsymmetricKeyParameter sk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
+        String cert = new String(Files.readAllBytes(Paths.get("certs/test_glob_key.pem")));
+
+        serializables.add(new ResultList(Arrays.asList(new SignedEntity<>(partialResultList, sk), new SignedEntity<>(partialResultList2, sk))));
         DecryptionAuthorityInfo daInfo1 = new DecryptionAuthorityInfo(0, "127.0.0.1:8080");
         DecryptionAuthorityInfo daInfo2 = new DecryptionAuthorityInfo(1, "127.0.0.1:8081");
         serializables.add(daInfo1);
@@ -94,8 +102,8 @@ public class TestSerialization {
 
         serializables.add(new PartialKeyPair(new PartialSecretKey(new BigInteger("123521"), new BigInteger("98273523"))
                 , new BigInteger("123456789"), publicKey));
-        serializables.add(new PartialPublicInfo(1, publicKey, new BigInteger("6513894"), Arrays.asList(cand1, cand2), 16318));
-        serializables.add(new ElectionResult(Arrays.asList(1,2, 41, 12, 12541), 12412134));
+        serializables.add(new PartialPublicInfo(1, publicKey, new BigInteger("6513894"), Arrays.asList(cand1, cand2), 16318, cert));
+        serializables.add(new ElectionResult(Arrays.asList(1, 2, 41, 12, 12541), 12412134));
     }
 
     @Test

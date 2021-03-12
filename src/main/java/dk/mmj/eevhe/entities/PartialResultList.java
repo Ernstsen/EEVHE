@@ -3,13 +3,16 @@ package dk.mmj.eevhe.entities;
 import java.util.List;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class PartialResultList {
     private List<PartialResult> results;
     private int voteCount;
+    private int daId;
 
-    public PartialResultList(List<PartialResult> results, int voteCount) {
+    public PartialResultList(List<PartialResult> results, int voteCount, int daId) {
         this.results = results;
         this.voteCount = voteCount;
+        this.daId = daId;
     }
 
     public PartialResultList() {
@@ -19,25 +22,24 @@ public class PartialResultList {
         return results;
     }
 
-    public PartialResultList setResults(List<PartialResult> results) {
+    public void setResults(List<PartialResult> results) {
         this.results = results;
-        return this;
     }
 
     public int getVoteCount() {
         return voteCount;
     }
 
-    public PartialResultList setVoteCount(int voteCount) {
+    public void setVoteCount(int voteCount) {
         this.voteCount = voteCount;
-        return this;
     }
 
-    @Override
-    public String toString() {
-        return "PartialResultList{" +
-                "results=" + results +
-                '}';
+    public int getDaId() {
+        return daId;
+    }
+
+    protected void setDaId(int daId) {
+        this.daId = daId;
     }
 
     @Override
@@ -45,11 +47,20 @@ public class PartialResultList {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PartialResultList that = (PartialResultList) o;
-        return Objects.equals(results, that.results);
+        return voteCount == that.voteCount && daId == that.daId && Objects.equals(results, that.results);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(results);
+        return Objects.hash(results, voteCount, daId);
+    }
+
+    @Override
+    public String toString() {
+        return "PartialResultList{" +
+                "results=" + results +
+                ", voteCount=" + voteCount +
+                ", daId=" + daId +
+                '}';
     }
 }

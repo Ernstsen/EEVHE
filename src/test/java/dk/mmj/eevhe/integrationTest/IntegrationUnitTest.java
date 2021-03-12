@@ -68,6 +68,8 @@ public class IntegrationUnitTest {
 
         test.run();
 
+        assertTrue("Did not finalize election",observer.finalized);
+
         assertNotNull("ErrorList was not initialized - finalization was not executed", observer.errors);
         if (!observer.errors.isEmpty()) {
             fail(Strings.join(observer.errors, "\n"));
@@ -81,6 +83,7 @@ public class IntegrationUnitTest {
         private BulletinBoard bulletinBoard;
         private ResultFetcher resultFetcher;
         private List<String> errors;
+        private boolean finalized = false;
 
         public TestObserver() {
         }
@@ -136,6 +139,7 @@ public class IntegrationUnitTest {
 
                 if (electionResult == null) {
                     errors.add("Failed to extract electionResult");
+                    finalized = true;
                     return;
                 }
                 int[] extracted = electionResult.getCandidateVotes().stream().mapToInt(Integer::valueOf).toArray();
@@ -143,6 +147,7 @@ public class IntegrationUnitTest {
                     errors.add("Extracted votes did not match those cast. Expected: " + Arrays.toString(votes) +
                             " Actual: " + Arrays.toString(extracted));
                 }
+                finalized = true;
             } finally {
                 terminate();
             }

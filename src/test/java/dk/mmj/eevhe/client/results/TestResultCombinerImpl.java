@@ -48,7 +48,7 @@ public class TestResultCombinerImpl {
         for (int i = 1; i < 4; i++) {
             PartialKeyPair partialKeyPair = dkgRes.get(i);
             publicInfos.add(new PartialPublicInfo(i, partialKeyPair.getPublicKey(),
-                    partialKeyPair.getPartialPublicKey(), candidates, endTime));
+                    partialKeyPair.getPartialPublicKey(), candidates, endTime, null));
         }
 
         ResultCombinerImpl combiner = new ResultCombinerImpl(
@@ -77,7 +77,7 @@ public class TestResultCombinerImpl {
         for (int i = 1; i < 4; i++) {
             PartialKeyPair partialKeyPair = dkgRes.get(i);
             publicInfos.add(new PartialPublicInfo(i, partialKeyPair.getPublicKey(),
-                    partialKeyPair.getPartialPublicKey(), candidates, endTime));
+                    partialKeyPair.getPartialPublicKey(), candidates, endTime, null));
         }
 
         ResultCombinerImpl combiner = new ResultCombinerImpl(
@@ -107,7 +107,7 @@ public class TestResultCombinerImpl {
         for (int i = 1; i < 4; i++) {
             PartialKeyPair partialKeyPair = dkgRes.get(i);
             publicInfos.add(new PartialPublicInfo(i, partialKeyPair.getPublicKey(),
-                    partialKeyPair.getPartialPublicKey(), candidates, endTime));
+                    partialKeyPair.getPartialPublicKey(), candidates, endTime, null));
         }
 
         ResultCombinerImpl combiner = new ResultCombinerImpl(
@@ -137,7 +137,7 @@ public class TestResultCombinerImpl {
         for (int i = 1; i < 4; i++) {
             PartialKeyPair partialKeyPair = dkgRes.get(i);
             publicInfos.add(new PartialPublicInfo(i, partialKeyPair.getPublicKey(),
-                    partialKeyPair.getPartialPublicKey(), candidates, endTime));
+                    partialKeyPair.getPartialPublicKey(), candidates, endTime, null));
         }
 
         ResultCombinerImpl combiner = new ResultCombinerImpl(

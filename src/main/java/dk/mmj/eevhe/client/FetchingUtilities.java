@@ -1,19 +1,30 @@
 package dk.mmj.eevhe.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.entities.BallotList;
 import dk.mmj.eevhe.entities.PartialPublicInfo;
 import dk.mmj.eevhe.entities.PersistedBallot;
+import dk.mmj.eevhe.entities.SignedEntity;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.CertException;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.operator.ContentVerifierProvider;
+import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.OperatorCreationException;
+import org.bouncycastle.operator.bc.BcRSAContentVerifierProviderBuilder;
 
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Utility class for fetching information from the <i>BulletinBoard</i>
@@ -21,9 +32,41 @@ import java.util.function.Predicate;
 public class FetchingUtilities {
 
     /**
+     * Fetches and verifies certificate for da with given id, and extracts it's publicKey
+     *
+     * @param daInfo            PartialPublicInfo for the DA
+     * @param electionPublicKey certificate for the election
+     * @param logger            logger to be used in error reporting
+     * @return the public key, from the verified certificate
+     */
+    public static AsymmetricKeyParameter getSignaturePublicKey(
+            PartialPublicInfo daInfo,
+            AsymmetricKeyParameter electionPublicKey,
+            Logger logger) {
+
+        String certificateString = daInfo.getCertificate();
+        try {
+            X509CertificateHolder certificate = CertificateHelper.readCertificate(certificateString.getBytes(StandardCharsets.UTF_8));
+
+            ContentVerifierProvider verifier = new BcRSAContentVerifierProviderBuilder(new DefaultDigestAlgorithmIdentifierFinder())
+                    .build(electionPublicKey);
+
+            boolean ownCertificate = certificate.getSubject().equals(new X500Name("CN=DA" + daInfo.getSenderId()));
+            if (ownCertificate && certificate.isSignatureValid(verifier)) {
+                return CertificateHelper.getPublicKeyFromCertificate(certificate);
+            } else {
+                logger.error("Invalid certificate for da with id=" + daInfo.getSenderId());
+            }
+        } catch (IOException | OperatorCreationException | CertException e) {
+            logger.error("Failed to verify signature for certificate for da=" + daInfo.getSenderId(), e);
+        }
+        return null;
+    }
+
+    /**
      * Retrieves cast ballots from BulletinBoard
      *
-     * @param logger logger to be used in giving feedback
+     * @param logger        logger to be used in giving feedback
      * @param bulletinBoard WebTarget pointing at bulletinBoard
      * @return list of ballots from BulletinBoard
      */
@@ -49,69 +92,38 @@ public class FetchingUtilities {
         }
     }
 
-
     /**
-     * Fetches a list of  {@link PartialPublicInfo}s from the BulletinBoard, supplied as a {@link WebTarget}.
+     * Retrieves a list of partialPublicInfos from the bulletinBoard
+     * <br>
+     * Only those with a valid signature by the sender is included in the list
      *
-     * @param logger        logger for reporting errors
-     * @param publicKeyName name of the file in the <i>RSA</i> folder, containing the public-key
-     * @param target        webTarget pointing at the <i>BulletinBoard</i>
-     * @return a public information signed by the Trusted Dealer, if any is found. Null otherwise
+     * @param logger       logger used in error reporting
+     * @param target       the webTarget to be used in fetching the information entities
+     * @param electionPk the parent certificate for the election
+     * @return list of PartialPublicInformation entities, which was properly signed by their senders
      */
-    public static PartialPublicInfo fetchPublicInfo(Logger logger, String publicKeyName, WebTarget target) {
-        List<PartialPublicInfo> publicInfoList = getPublicInfos(logger, target);
-        if (publicInfoList == null) return null;//Never happens
-
-        Optional<PartialPublicInfo> any = publicInfoList.stream()
-                .filter(getVerifier(logger, publicKeyName))
-                .findAny();
-
-        if (!any.isPresent()) {
-            logger.error("No public information retrieved from the server was signed by the trusted dealer. Terminating");
-            return null;
-        }
-        return any.get();
-    }
-
-    public static List<PartialPublicInfo> getPublicInfos(Logger logger, WebTarget target) {
-        Response response = target.path("publicInfo").request().buildGet().invoke();
+    public static List<PartialPublicInfo> getPublicInfos(Logger logger, WebTarget target, AsymmetricKeyParameter electionPk) {
+        Response response = target.path("publicInfo").request().get();
         String responseString = response.readEntity(String.class);
 
-        List<PartialPublicInfo> publicInfoList;
+        List<SignedEntity<PartialPublicInfo>> publicInfoList;
         try {
-            publicInfoList = new ObjectMapper().readValue(responseString, new TypeReference<List<PartialPublicInfo>>() {
+            publicInfoList = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {
             });
         } catch (IOException e) {
             logger.error("FetchingUtilities: Failed to deserialize public informations list retrieved from bulletin board", e);
             throw new RuntimeException("Failed to fet public infos list");
         }
-        return publicInfoList;
-    }
 
-    /**
-     * Creates a predicate, returning true if the public keys loads without error,
-     * and a given {@link PartialPublicInfo} is signed with the corresponding secret-key
-     *
-     * @param logger        logger for reporting errors
-     * @param publicKeyName name of the file in the <i>RSA</i> folder, containing the public-key
-     * @return Predicate returning true if a publicInformationEntity is verified, false otherwise
-     */
-    private static Predicate<PartialPublicInfo> getVerifier(Logger logger, String publicKeyName) {
-//        AsymmetricKeyParameter pk = loadPublicKey(logger, publicKeyName);
-//
-//        if (pk == null) {
-//            return (info) -> false;
-//        }
-//
-//        return informationEntity -> {
-//            RSADigestSigner digest = new RSADigestSigner(new SHA256Digest());
-//            digest.init(false, pk);
-//            informationEntity.updateSigner(digest);
-//            byte[] encodedSignature = informationEntity.getSignature().getBytes();
-//
-//            return digest.verifySignature(Base64.decode(encodedSignature));
-//        };
-        return (i) -> true;
+        return publicInfoList.stream().filter(
+                i -> {
+                    try {
+                        return i.verifySignature(getSignaturePublicKey(i.getEntity(), electionPk, logger));
+                    } catch (JsonProcessingException e) {
+                        logger.error("Failed to verify signature, due to JSON processing", e);
+                        return false;
+                    }
+                }
+        ).map(SignedEntity::getEntity).collect(Collectors.toList());
     }
-
 }

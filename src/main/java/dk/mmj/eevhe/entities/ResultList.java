@@ -6,20 +6,20 @@ import java.util.Objects;
 @SuppressWarnings("JavaDocs, unused")
 public class ResultList {
 
-    private List<PartialResultList> results;
+    private List<SignedEntity<PartialResultList>> results;
 
     public ResultList() {
     }
 
-    public ResultList(List<PartialResultList> results) {
+    public ResultList(List<SignedEntity<PartialResultList>> results) {
         this.results = results;
     }
 
-    public List<PartialResultList> getResults() {
+    public List<SignedEntity<PartialResultList>> getResults() {
         return results;
     }
 
-    public void setResults(List<PartialResultList> results) {
+    public void setResults(List<SignedEntity<PartialResultList>> results) {
         this.results = results;
     }
 

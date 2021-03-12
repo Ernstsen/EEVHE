@@ -8,6 +8,7 @@ import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import java.util.Collections;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class SignedEntity<T> {
 
     private T entity;
@@ -16,13 +17,17 @@ public class SignedEntity<T> {
     protected SignedEntity() {
     }
 
-    public SignedEntity(T entity, AsymmetricKeyParameter sk) throws JsonProcessingException {
+    public SignedEntity(T entity, AsymmetricKeyParameter sk) {
         this(entity, sk, new ObjectMapper());
     }
 
-    public SignedEntity(T entity, AsymmetricKeyParameter sk, ObjectMapper mapper) throws JsonProcessingException {
-        this.entity = entity;
-        signature = SignatureHelper.sign(sk, Collections.singletonList(mapper.writeValueAsBytes(entity)));
+    public SignedEntity(T entity, AsymmetricKeyParameter sk, ObjectMapper mapper) {
+        try {
+            this.entity = entity;
+            signature = SignatureHelper.sign(sk, Collections.singletonList(mapper.writeValueAsBytes(entity)));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize", e);
+        }
     }
 
     public T getEntity() {
@@ -62,6 +67,12 @@ public class SignedEntity<T> {
                 '}';
     }
 
+    /**
+     * Verifies signature with given pk
+     * @param pk corresponding public key
+     * @return whether signature is valid
+     * @throws JsonProcessingException if serialization fails
+     */
     public boolean verifySignature(AsymmetricKeyParameter pk) throws JsonProcessingException {
         ObjectMapper mapper = new ObjectMapper();
         return SignatureHelper.verifySignature(pk, Collections.singletonList(mapper.writeValueAsBytes(entity)), signature);

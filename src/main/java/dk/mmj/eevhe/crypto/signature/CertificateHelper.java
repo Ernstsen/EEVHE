@@ -49,13 +49,22 @@ public class CertificateHelper {
      * @throws IOException if creating the CertificateHolder fails
      */
     public static void writeCertificate(OutputStream output, X509CertificateHolder certificateHolder) throws IOException {
+        output.write(certificateToPem(certificateHolder).getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Writes a cert to a .pem formatted string
+     *
+     * @param certificateHolder certificate to be writtes as .pem
+     * @return Certificate om .pem format
+     * @throws IOException if unable to get Encoded cert from certificateHolder
+     */
+    public static String certificateToPem(X509CertificateHolder certificateHolder) throws IOException {
         byte[] encoded = Base64.encode(certificateHolder.getEncoded());
 
-        String res = "-----BEGIN CERTIFICATE-----" + System.lineSeparator()
+        return "-----BEGIN CERTIFICATE-----\n" + System.lineSeparator()
                 + new String(encoded).replaceAll("(.{65})", "$1" + System.lineSeparator())
-                + "-----END CERTIFICATE-----";
-
-        output.write(res.getBytes(StandardCharsets.UTF_8));
+                + "\n-----END CERTIFICATE-----";
     }
 
     /**
@@ -67,10 +76,22 @@ public class CertificateHelper {
      */
     public static AsymmetricKeyParameter getPublicKeyFromCertificate(Path certificatePath) throws IOException {
         X509CertificateHolder cert = readCertificate(certificatePath);
+        return getPublicKeyFromCertificate(cert);
+    }
+
+
+    /**
+     * Extracts the public key from a certificate
+     *
+     * @param cert the certificate
+     * @return public key from the certificate
+     * @throws IOException if reading certificate fails
+     */
+    public static AsymmetricKeyParameter getPublicKeyFromCertificate(X509CertificateHolder cert) throws IOException {
         try {
             return PublicKeyFactory.createKey(cert.getSubjectPublicKeyInfo());
         } catch (Exception e) {
-            return PublicKeyFactory.createKey(cert.getSubjectPublicKeyInfo().getEncoded());
+            return PublicKeyFactory.createKey(cert.getSubjectPublicKeyInfo().getPublicKeyData().getBytes());
         }
     }
 
@@ -83,10 +104,6 @@ public class CertificateHelper {
      */
     public static AsymmetricKeyParameter getPublicKeyFromCertificate(byte[] data) throws IOException {
         X509CertificateHolder cert = readCertificate(data);
-        try {
-            return PublicKeyFactory.createKey(cert.getSubjectPublicKeyInfo());
-        } catch (Exception e) {
-            return PublicKeyFactory.createKey(cert.getSubjectPublicKeyInfo().getPublicKeyData().getBytes());
-        }
+        return getPublicKeyFromCertificate(cert);
     }
 }

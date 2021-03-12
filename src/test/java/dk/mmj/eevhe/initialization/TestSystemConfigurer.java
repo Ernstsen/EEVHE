@@ -2,7 +2,9 @@ package dk.mmj.eevhe.initialization;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.SingletonCommandLineParser;
+import dk.mmj.eevhe.TestUsingBouncyCastle;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
+import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.signature.SignatureHelper;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInfo;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
@@ -11,8 +13,6 @@ import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.CertException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
-import org.bouncycastle.crypto.util.PrivateKeyFactory;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.OperatorCreationException;
@@ -29,7 +29,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Security;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -40,12 +39,7 @@ import java.util.zip.ZipInputStream;
 
 import static org.junit.Assert.*;
 
-public class TestSystemConfigurer {
-
-    static {
-        //Register BouncyCastle as SecurityProvider
-        Security.addProvider(new BouncyCastleProvider());
-    }
+public class TestSystemConfigurer extends TestUsingBouncyCastle {
 
     private String conf;
 
@@ -108,7 +102,7 @@ public class TestSystemConfigurer {
                 assertEquals("First entry should be secret key", nextEntry.getName(), "sk.pem");
 
                 byte[] skBytes = IOUtils.toByteArray(zis);
-                AsymmetricKeyParameter sk = PrivateKeyFactory.createKey(skBytes);
+                AsymmetricKeyParameter sk = KeyHelper.readKey(skBytes);
                 assertNotNull(sk);
 
                 nextEntry = zis.getNextEntry();

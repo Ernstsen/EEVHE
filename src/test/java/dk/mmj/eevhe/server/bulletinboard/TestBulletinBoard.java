@@ -1,13 +1,14 @@
 package dk.mmj.eevhe.server.bulletinboard;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.SSLHelper;
+import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.entities.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.glassfish.jersey.client.JerseyWebTarget;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,7 +16,10 @@ import org.junit.Test;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -58,7 +62,7 @@ public class TestBulletinBoard {
     }
 
     @Test
-    public void postAndRetrieve() throws InterruptedException, JsonProcessingException {
+    public void postAndRetrieve() throws InterruptedException, IOException {
         Thread thread = new Thread(bulletinBoard);
         thread.start();
 
@@ -84,33 +88,33 @@ public class TestBulletinBoard {
 
         DLogProofUtils.Proof dp1 = new DLogProofUtils.Proof(valueOf(54), valueOf(9846));
         DLogProofUtils.Proof dp2 = new DLogProofUtils.Proof(valueOf(62968), valueOf(613658874));
-        PartialResultList partialResultList = new PartialResultList(
+
+        AsymmetricKeyParameter sk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
+        String cert = new String(Files.readAllBytes(Paths.get("certs/test_glob_key.pem")));
+
+        SignedEntity<PartialResultList> partialResultList = new SignedEntity<>(new PartialResultList(
                 Arrays.asList(
                         new PartialResult(1, valueOf(234), dp1, c),
                         new PartialResult(2, valueOf(6854), dp2, c2)),
-                2
-        );
+                58,
+                18
+        ), sk);
 
-        CommitmentDTO commitmentDTO = new CommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1, "BAR");
+        SignedEntity<CommitmentDTO> commitmentDTO = new SignedEntity<>(new CommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1, "BAR"), sk);
 
-        PedersenComplaintDTO pedersenComplaint = new PedersenComplaintDTO(1, 2);
-        FeldmanComplaintDTO feldmanComplaint = new FeldmanComplaintDTO(1, 2, valueOf(123), valueOf(123));
-        ComplaintResolveDTO resolve = new ComplaintResolveDTO(1, 2, new PartialSecretMessageDTO(valueOf(564), valueOf(568), 2, 1));
+        SignedEntity<PedersenComplaintDTO> pedersenComplaint = new SignedEntity<>(new PedersenComplaintDTO(1, 2), sk);
+        SignedEntity<FeldmanComplaintDTO> feldmanComplaint = new SignedEntity<>(new FeldmanComplaintDTO(1, 2, valueOf(123), valueOf(123)), sk);
+        SignedEntity<ComplaintResolveDTO> resolve = new SignedEntity<>(new ComplaintResolveDTO(1, 2, new PartialSecretMessageDTO(valueOf(564), valueOf(568), 2, 1)), sk);
 
-        PartialPublicInfo partialPublicInfo = new PartialPublicInfo(
+        SignedEntity<PartialPublicInfo> partialPublicInfo = new SignedEntity<>(new PartialPublicInfo(
                 1, pk, valueOf(124121),
                 Arrays.asList(new Candidate(1, "name", "desc"), new Candidate(2, "name2", "desc2")),
-                6584198494L
-        );
+                6584198494L, cert
+        ), sk);
+
 
         //Do POSTs
         String mediaType = MediaType.APPLICATION_JSON;
-        assertEquals("should be disallowed, as was null", 405,
-                target.path("publicKey").request().post(Entity.entity(null, mediaType)).getStatus()
-        );
-        assertEquals("should be successful post", 204,
-                target.path("publicKey").request().post(Entity.entity(pk, mediaType)).getStatus()
-        );
         assertEquals("should be successful post", 204,
                 target.path("postBallot").request().post(Entity.entity(ballotDTO, mediaType)).getStatus()
         );
@@ -139,12 +143,9 @@ public class TestBulletinBoard {
         //Do gets and compares
         ObjectMapper mapper = new ObjectMapper();
 
-        PublicKey fetchedPk = target.path("publicKey").request().get(PublicKey.class);
-        assertEquals("fetched pk did not match posted one", pk, fetchedPk);
-
         String publicInfoString = target.path("getPublicInfo").request()
                 .get(String.class);
-        List<PartialPublicInfo> fetchedPublicInfos = mapper.readValue(publicInfoString, new TypeReference<List<PartialPublicInfo>>() {
+        List<SignedEntity<PartialPublicInfo>> fetchedPublicInfos = mapper.readValue(publicInfoString, new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {
         });
         assertEquals("Unexpected list size", 1, fetchedPublicInfos.size());
         assertEquals("Fetched publicInfo did not match posted one", partialPublicInfo, fetchedPublicInfos.get(0));
@@ -165,28 +166,28 @@ public class TestBulletinBoard {
 
         String commitmentsString = target.path("commitments").request()
                 .get(String.class);
-        List<CommitmentDTO> fetchedCommitmentList = mapper.readValue(commitmentsString, new TypeReference<List<CommitmentDTO>>() {
+        List<SignedEntity<CommitmentDTO>> fetchedCommitmentList = mapper.readValue(commitmentsString, new TypeReference<List<SignedEntity<CommitmentDTO>>>() {
         });
         assertEquals("Unexpected list size", 1, fetchedCommitmentList.size());
         assertEquals("Fetched commitment did not match posted one", commitmentDTO, fetchedCommitmentList.get(0));
 
         String complaintsString = target.path("pedersenComplaints").request()
                 .get(String.class);
-        List<PedersenComplaintDTO> fetchedComplaintList = mapper.readValue(complaintsString, new TypeReference<List<PedersenComplaintDTO>>() {
+        List<SignedEntity<PedersenComplaintDTO>> fetchedComplaintList = mapper.readValue(complaintsString, new TypeReference<List<SignedEntity<PedersenComplaintDTO>>>() {
         });
         assertEquals("Unexpected list size", 1, fetchedComplaintList.size());
         assertEquals("Fetched complaint did not match posted one", pedersenComplaint, fetchedComplaintList.get(0));
 
         String feldmanComplaintsString = target.path("feldmanComplaints").request()
                 .get(String.class);
-        List<FeldmanComplaintDTO> feldmanFetchedComplaintList = mapper.readValue(feldmanComplaintsString, new TypeReference<List<FeldmanComplaintDTO>>() {
+        List<SignedEntity<FeldmanComplaintDTO>> feldmanFetchedComplaintList = mapper.readValue(feldmanComplaintsString, new TypeReference<List<SignedEntity<FeldmanComplaintDTO>>>() {
         });
         assertEquals("Unexpected list size", 1, feldmanFetchedComplaintList.size());
         assertEquals("Fetched complaint did not match posted one", feldmanComplaint, feldmanFetchedComplaintList.get(0));
 
         String complaintResolvesString = target.path("complaintResolves").request()
                 .get(String.class);
-        List<ComplaintResolveDTO> fetchedResolvesList = mapper.readValue(complaintResolvesString, new TypeReference<List<ComplaintResolveDTO>>() {
+        List<SignedEntity<ComplaintResolveDTO>> fetchedResolvesList = mapper.readValue(complaintResolvesString, new TypeReference<List<SignedEntity<ComplaintResolveDTO>>>() {
         });
         assertEquals("Unexpected list size", 1, fetchedResolvesList.size());
         assertEquals("Fetched resolve did not match posted one", resolve, fetchedResolvesList.get(0));
@@ -194,7 +195,7 @@ public class TestBulletinBoard {
 
         String partialPublicInfoString = target.path("publicInfo").request()
                 .get(String.class);
-        List<PartialPublicInfo> fetchedPublicInfoList = mapper.readValue(partialPublicInfoString, new TypeReference<List<PartialPublicInfo>>() {
+        List<SignedEntity<PartialPublicInfo>> fetchedPublicInfoList = mapper.readValue(partialPublicInfoString, new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {
         });
         assertEquals("Unexpected list size", 1, fetchedPublicInfoList.size());
         assertEquals("Fetched partial public info did not match posted one", partialPublicInfo, fetchedPublicInfoList.get(0));

@@ -1,10 +1,14 @@
 package dk.mmj.eevhe.server.decryptionauthority;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.client.FetchingUtilities;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
+import dk.mmj.eevhe.crypto.signature.CertificateHelper;
+import dk.mmj.eevhe.crypto.signature.CertificateProviderImpl;
+import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.interfaces.Decrypter;
@@ -15,8 +19,10 @@ import dk.mmj.eevhe.protocols.connectors.ServerStateIncomingChannel;
 import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.DKG;
 import dk.mmj.eevhe.server.AbstractServer;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.client.JerseyWebTarget;
@@ -25,7 +31,9 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -37,6 +45,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
@@ -50,6 +60,9 @@ public class DecryptionAuthority extends AbstractServer {
     private final DecryptionAuthorityInput input;
     private final long endTime;
     private final List<Candidate> candidates;
+    private String certString;
+    private AsymmetricKeyParameter electionPk;
+    private AsymmetricKeyParameter sk;
     private Decrypter decrypter;
     private DKG<PartialKeyPair> dkg;
     private boolean timeCorrupt = false;
@@ -71,6 +84,24 @@ public class DecryptionAuthority extends AbstractServer {
         if (!Files.exists(conf) || !Files.exists(conf)) {
             logger.error("Configuration folder either did not exists or were not a folder. Path: " + conf + "\n");
             terminate();
+        }
+
+        Path privateInput = conf.resolve("DA" + id + ".zip");
+        logger.info("Reading private input from file: " + privateInput);
+        try (ZipFile zipFile = new ZipFile(privateInput.toFile())) {
+            ZipEntry skEntry = zipFile.getEntry("sk.pem");
+            ZipEntry certEntry = zipFile.getEntry("cert.pem");
+
+            try (InputStream is = zipFile.getInputStream(skEntry)) {
+                sk = KeyHelper.readKey(IOUtils.toByteArray(is));
+            }
+
+            try (InputStream is = zipFile.getInputStream(certEntry)) {
+                certString = new String(IOUtils.toByteArray(is));
+            }
+
+        } catch (IOException e) {
+            logger.error("Error occured while reading private input file from " + privateInput, e);
         }
 
         ObjectMapper mapper = new ObjectMapper();
@@ -104,6 +135,9 @@ public class DecryptionAuthority extends AbstractServer {
                 return;
             }
 
+            electionPk = CertificateHelper
+                    .getPublicKeyFromCertificate(input.getEncodedElectionCertificate().getBytes(StandardCharsets.UTF_8));
+
             scheduler.schedule(this::terminateVoting, relativeEndTime, TimeUnit.MILLISECONDS);
         } catch (IOException e) {
             logger.error("Failed to read authorities input file", e);
@@ -117,6 +151,12 @@ public class DecryptionAuthority extends AbstractServer {
 
     @Override
     protected void afterStart() {
+        logger.info("Posting ");
+        Entity<SignedEntity<CertificateDTO>> entity = Entity.entity(
+                new SignedEntity<>(new CertificateDTO(certString, id), sk),
+                MediaType.APPLICATION_JSON);
+        bulletinBoard.path("certificates").request().post(entity);
+
         logger.info("Starting keyGeneration protocol for DA id=" + id);
         scheduler.execute(this::scheduleDKG);
     }
@@ -129,22 +169,40 @@ public class DecryptionAuthority extends AbstractServer {
         logger.info("Started keygen protocol for DA with id=" + id);
         Map<Integer, PeerCommunicator> communicators = input.getInfos()
                 .stream()
-                .collect(Collectors.toMap(DecryptionAuthorityInfo::getId, inf -> new RestPeerCommunicator(configureWebTarget(logger, inf.getAddress()))));
+                .collect(Collectors.toMap(DecryptionAuthorityInfo::getId, inf -> new RestPeerCommunicator(configureWebTarget(logger, inf.getAddress()), sk)));
         communicators.remove(id);//We remove ourself, to be able to iterate without
+        CertificateProviderImpl certProvider = new CertificateProviderImpl(this::getCertificates, electionPk);
         final ServerStateIncomingChannel incoming = new ServerStateIncomingChannel(
                 input.getInfos().stream()
                         .map(DecryptionAuthorityInfo::getId)
                         .map(this::partialSecretKey)
-                        .collect(Collectors.toList())
+                        .collect(Collectors.toList()),
+                certProvider
         );
 
-        dkg = new GennaroDKG(new BulletinBoardBroadcaster(bulletinBoard),
+        dkg = new GennaroDKG(new BulletinBoardBroadcaster(bulletinBoard, sk, certProvider),
                 incoming, communicators, id, params, "ID:" + id);
         dkgSteps = dkg.getSteps().iterator();
 
         logger.info("scheduling verification of received values. DA with id=" + id);
 
         executeDKGStep();
+    }
+
+    /**
+     * Fetches certificates
+     *
+     * @return list of signed certificates
+     */
+    private List<SignedEntity<CertificateDTO>> getCertificates() {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String certificates = bulletinBoard.path("certificates").request().get(String.class);
+            return mapper.readValue(certificates, new TypeReference<List<SignedEntity<CertificateDTO>>>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to fetch certificates", e);
+        }
     }
 
     /**
@@ -157,7 +215,11 @@ public class DecryptionAuthority extends AbstractServer {
         } else {
             logger.info("Retrieving keys from DKG and sending to BulletinBoard");
             keyPair = dkg.output();
-            PartialPublicInfo ppi = new PartialPublicInfo(id, keyPair.getPublicKey(), keyPair.getPartialPublicKey(), candidates, endTime);
+            PartialPublicInfo ppi = new PartialPublicInfo(
+                    id, keyPair.getPublicKey(),
+                    keyPair.getPartialPublicKey(),
+                    candidates, endTime, certString
+            );
 
             decrypter = new DecrypterImpl(id,
                     () -> FetchingUtilities.getBallots(logger, bulletinBoard),
@@ -165,7 +227,7 @@ public class DecryptionAuthority extends AbstractServer {
                     candidates
             );
 
-            Response resp = bulletinBoard.path("publicInfo").request().post(Entity.entity(ppi, MediaType.APPLICATION_JSON));
+            Response resp = bulletinBoard.path("publicInfo").request().post(Entity.entity(new SignedEntity<>(ppi, sk), MediaType.APPLICATION_JSON));
             if (resp.getStatus() != 204) {
                 logger.error("Failed to post public info to bulletinBoard! Status was: " + resp.getStatus());
             }
@@ -206,7 +268,7 @@ public class DecryptionAuthority extends AbstractServer {
         }
 
         logger.info("Posting to bulletin board");
-        Entity<PartialResultList> resultEntity = Entity.entity(res, MediaType.APPLICATION_JSON);
+        Entity<SignedEntity<PartialResultList>> resultEntity = Entity.entity(new SignedEntity<>(res, sk), MediaType.APPLICATION_JSON);
         Response post = bulletinBoard.path("result").request().post(resultEntity);
 
         if (post.getStatus() < 200 || post.getStatus() > 300) {

@@ -5,8 +5,11 @@ import org.bouncycastle.crypto.util.PrivateKeyFactory;
 import org.bouncycastle.util.encoders.Base64;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.*;
 
 /**
  * Helper class for key-related functionality
@@ -28,6 +31,14 @@ public class KeyHelper {
         return PrivateKeyFactory.createKey(decode);
     }
 
+    public static void writeKey(OutputStream ous, byte[] key) throws IOException {
+        String val = "-----BEGIN PRIVATE KEY-----\n" +
+                new String(Base64.encode(key)).replaceAll("(.{65})", "$1" + System.lineSeparator()) +
+                "\n-----END PRIVATE KEY-----";
+
+        ous.write(val.getBytes(StandardCharsets.UTF_8));
+    }
+
     /**
      * Reads key from file
      *
@@ -39,5 +50,12 @@ public class KeyHelper {
     public static AsymmetricKeyParameter readKey(Path keyFile) throws IOException {
         byte[] data = Files.readAllBytes(keyFile);
         return readKey(data);
+    }
+
+    public static KeyPair generateRSAKeyPair() throws NoSuchProviderException, NoSuchAlgorithmException {
+        KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA", "BC");
+        gen.initialize(2048, new SecureRandom());
+
+        return gen.generateKeyPair();
     }
 }

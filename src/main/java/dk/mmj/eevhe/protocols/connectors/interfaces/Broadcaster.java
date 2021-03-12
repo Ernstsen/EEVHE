@@ -35,18 +35,18 @@ public interface Broadcaster {
     void pedersenComplain(PedersenComplaintDTO complaint);
 
     /**
-     * Broadcast a complaint in the Feldman protocol
-     *
-     * @param complaint complaint to be broadcasted
-     */
-    void feldmanComplain(FeldmanComplaintDTO complaint);
-
-    /**
      * Delivers all broadcasted pedersen complaints
      *
      * @return list of all broadcasted complaints
      */
     List<PedersenComplaintDTO> getPedersenComplaints();
+
+    /**
+     * Broadcast a complaint in the Feldman protocol
+     *
+     * @param complaint complaint to be broadcasted
+     */
+    void feldmanComplain(FeldmanComplaintDTO complaint);
 
     /**
      * Delivers all broadcasted feldman complaints

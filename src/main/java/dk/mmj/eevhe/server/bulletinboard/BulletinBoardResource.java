@@ -15,7 +15,6 @@ import static dk.mmj.eevhe.server.bulletinboard.BulletinBoard.*;
 
 @Path("/")
 public class BulletinBoardResource {
-    private final static String PUBLIC_INFO = "publicInfo";
     private final static Logger logger = LogManager.getLogger(BulletinBoardResource.class);
     private final ServerState state = ServerState.getInstance();
 
@@ -28,38 +27,11 @@ public class BulletinBoardResource {
     }
 
     @GET
-    @Path("publicKey")
-    @Produces(MediaType.APPLICATION_JSON)
-    public PublicKey getPublicKey() {
-        PublicKey publicKey = state.get(PUBLIC_KEY, PublicKey.class);
-
-        if (publicKey == null) {
-            logger.warn("A request was made for a public key but none was found");
-            throw new NotFoundException("Currently the server has no public key");
-        }
-
-        return publicKey;
-    }
-
-    @POST
-    @Path("publicKey")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public void setPublicKey(PublicKey publicKey) {
-        if (publicKey == null) {
-            logger.warn("A submitted key CANNOT be null");
-            throw new NotAllowedException("Key was null");
-
-        }
-
-        state.put(PUBLIC_KEY, publicKey);
-    }
-
-    @GET
     @Path("getPublicInfo")
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
-    public List<PartialPublicInfo> getPublicInfos() {
-        List<PartialPublicInfo> list = state.get(PUBLIC_INFO, List.class);
+    public List<SignedEntity<PartialPublicInfo>> getPublicInfos() {
+        List<SignedEntity<PartialPublicInfo>> list = state.get(PUBLIC_INFO, List.class);
 
         if (list == null) {
             logger.warn("Attempt to fetch public infos before they were created");
@@ -94,13 +66,18 @@ public class BulletinBoardResource {
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
     public ResultList getResult() {
-        return new ResultList(state.get(RESULT, List.class));
+        try {
+            return new ResultList(state.get(RESULT, List.class));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     @POST
     @Path("result")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void postResult(PartialResultList partialDecryptions) {
+    public void postResult(SignedEntity<PartialResultList> partialDecryptions) {
         addToList(RESULT, partialDecryptions);
     }
 
@@ -125,8 +102,9 @@ public class BulletinBoardResource {
     @POST
     @Path("commitments")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void postCommitments(CommitmentDTO commitment) {
-        logger.debug("Received commitment from DA with id=" + commitment.getId() + ", for protocol=" + commitment.getProtocol());
+    public void postCommitments(SignedEntity<CommitmentDTO> commitment) {
+        logger.debug("Received commitment from DA with id=" + commitment.getEntity().getId() +
+                ", for protocol=" + commitment.getEntity().getProtocol());
         addToList(COEFFICIENT_COMMITMENT, commitment);
     }
 
@@ -134,8 +112,8 @@ public class BulletinBoardResource {
     @GET
     @Path("commitments")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<CommitmentDTO> getCommitments() {
-        List<CommitmentDTO> list = state.get(COEFFICIENT_COMMITMENT, List.class);
+    public List<SignedEntity<CommitmentDTO>> getCommitments() {
+        List<SignedEntity<CommitmentDTO>> list = state.get(COEFFICIENT_COMMITMENT, List.class);
 
         if (list == null) {
             throw new NotFoundException("Voting has not been initialized");
@@ -147,14 +125,14 @@ public class BulletinBoardResource {
     @POST
     @Path("pedersenComplain")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void postComplaint(PedersenComplaintDTO complaint) {
+    public void postPedersenComplaint(SignedEntity<PedersenComplaintDTO> complaint) {
         addToList(PEDERSEN_COMPLAINTS, complaint);
     }
 
     @POST
     @Path("feldmanComplain")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void postComplaint(FeldmanComplaintDTO complaint) {
+    public void postFeldmanComplaint(SignedEntity<FeldmanComplaintDTO> complaint) {
         addToList(FELDMAN_COMPLAINTS, complaint);
     }
 
@@ -162,8 +140,8 @@ public class BulletinBoardResource {
     @GET
     @Path("pedersenComplaints")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<PedersenComplaintDTO> getPedersenComplaints() {
-        List<PedersenComplaintDTO> list = state.get(PEDERSEN_COMPLAINTS, List.class);
+    public List<SignedEntity<PedersenComplaintDTO>> getPedersenComplaints() {
+        List<SignedEntity<PedersenComplaintDTO>> list = state.get(PEDERSEN_COMPLAINTS, List.class);
 
         return list != null ? list : new ArrayList<>();
     }
@@ -172,8 +150,8 @@ public class BulletinBoardResource {
     @GET
     @Path("feldmanComplaints")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<FeldmanComplaintDTO> getFeldmanComplaints() {
-        List<FeldmanComplaintDTO> list = state.get(FELDMAN_COMPLAINTS, List.class);
+    public List<SignedEntity<FeldmanComplaintDTO>> getFeldmanComplaints() {
+        List<SignedEntity<FeldmanComplaintDTO>> list = state.get(FELDMAN_COMPLAINTS, List.class);
 
         return list != null ? list : new ArrayList<>();
     }
@@ -181,7 +159,7 @@ public class BulletinBoardResource {
     @POST
     @Path("resolveComplaint")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void resolveComplaint(ComplaintResolveDTO resolveDTO) {
+    public void resolveComplaint(SignedEntity<ComplaintResolveDTO> resolveDTO) {
         addToList(RESOLVED_COMPLAINTS, resolveDTO);
     }
 
@@ -189,8 +167,8 @@ public class BulletinBoardResource {
     @GET
     @Path("complaintResolves")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<ComplaintResolveDTO> getComplaintResolves() {
-        List<ComplaintResolveDTO> list = state.get(RESOLVED_COMPLAINTS, List.class);
+    public List<SignedEntity<ComplaintResolveDTO>> getComplaintResolves() {
+        List<SignedEntity<ComplaintResolveDTO>> list = state.get(RESOLVED_COMPLAINTS, List.class);
 
         return list != null ? list : new ArrayList<>();
     }
@@ -198,15 +176,33 @@ public class BulletinBoardResource {
     @POST
     @Path("publicInfo")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void postPublicInfo(PartialPublicInfo info) {
+    public void postPublicInfo(SignedEntity<PartialPublicInfo> info) {
         addToList(PUBLIC_INFO, info);
     }
 
+    @SuppressWarnings("unchecked")
     @GET
     @Path("publicInfo")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<PartialPublicInfo> getPublicInfo() {
-        List<PartialPublicInfo> list = state.get(PUBLIC_INFO, List.class);
+    public List<SignedEntity<PartialPublicInfo>> getPublicInfo() {
+        List<SignedEntity<PartialPublicInfo>> list = state.get(PUBLIC_INFO, List.class);
+
+        return list != null ? list : new ArrayList<>();
+    }
+
+    @POST
+    @Path("certificates")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void postCertificate(SignedEntity<CertificateDTO> cert) {
+        addToList(CERTIFICATE, cert);
+    }
+
+    @SuppressWarnings("unchecked")
+    @GET
+    @Path("certificates")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<SignedEntity<CertificateDTO>> getCertificate() {
+        List<SignedEntity<CertificateDTO>> list = state.get(CERTIFICATE, List.class);
 
         return list != null ? list : new ArrayList<>();
     }

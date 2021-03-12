@@ -12,8 +12,9 @@ import java.util.HashSet;
 
 
 public class BulletinBoard extends AbstractServer {
-    static final String PUBLIC_KEY = "publicKey";
     static final String HAS_VOTED = "hasVoted";
+    static final String PUBLIC_INFO = "publicInfo";
+    static final String CERTIFICATE = "certificate";
     static final String RESULT = "result";
     static final String BALLOTS = "ballots";
     static final String COEFFICIENT_COMMITMENT = "coefficient commitment";

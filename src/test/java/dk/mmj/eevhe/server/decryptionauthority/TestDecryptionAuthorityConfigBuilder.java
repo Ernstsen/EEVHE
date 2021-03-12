@@ -8,22 +8,29 @@ import dk.mmj.eevhe.AbstractConfigTest;
 import dk.mmj.eevhe.entities.Candidate;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInfo;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
+import org.apache.commons.compress.utils.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.junit.Assert.*;
 
 public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
     private String confPath;
-    private List<File> files = new ArrayList<>();
+    private final List<File> files = new ArrayList<>();
+    private final int id = 54;
 
     @Before
     public void setup() throws IOException {
@@ -31,7 +38,7 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
                 Arrays.asList(
                         new DecryptionAuthorityInfo(1, "https://localhost:8081"),
                         new DecryptionAuthorityInfo(2, "https://localhost:8082")
-                ), "FOO");
+                ), new String(Files.readAllBytes(Paths.get("certs/test_glob.pem"))));
 
         confPath = "temp_conf/";
         File file = new File(confPath);
@@ -50,6 +57,17 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
                 new Candidate(1, "name2", "desc2")
         ));
         files.add(candidates);
+
+        File zip = new File(file, "DA" + id + ".zip");
+
+        try (ZipOutputStream ous = new ZipOutputStream(new FileOutputStream(zip))) {
+            ous.putNextEntry(new ZipEntry("sk.pem"));
+            IOUtils.copy(Files.newInputStream(Paths.get("certs/test_glob_key.pem")), ous);
+            ous.putNextEntry(new ZipEntry("cert.pem"));
+            IOUtils.copy(Files.newInputStream(Paths.get("certs/test_glob.pem")), ous);
+        }
+
+        files.add(zip);
         files.add(file);
     }
 
@@ -72,7 +90,6 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
     public void parametersAreRespected() {
         Random rand = new Random();
         int port = rand.nextInt();
-        int id = rand.nextInt();
         String bulletinBoard = "BBPath";
         int corrupt = rand.nextInt();
 
@@ -102,7 +119,6 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
     public void bb2IsRespected() {
         Random rand = new Random();
         int port = rand.nextInt();
-        int id = rand.nextInt();
         String bulletinBoard = "BBPath";
 
         DecryptionAuthorityConfigBuilder builder = new DecryptionAuthorityConfigBuilder();

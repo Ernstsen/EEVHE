@@ -2,6 +2,7 @@ package dk.mmj.eevhe.integrationTest;
 
 import dk.eSoftware.commandLineParser.*;
 import dk.mmj.eevhe.Application;
+import dk.mmj.eevhe.Main;
 import dk.mmj.eevhe.client.Client;
 import dk.mmj.eevhe.client.ClientConfigBuilder;
 import dk.mmj.eevhe.client.ResultFetcher;
@@ -35,6 +36,11 @@ public class IntegrationTest implements Application {
     private final int duration;
     private Observer observer;
     private Thread bbThread;
+
+    static {
+        //noinspection InstantiationOfUtilityClass
+        new Main();//Trigger static codeBlock in Main
+    }
 
     public IntegrationTest(IntegrationTest.IntegrationTestConfiguration configuration) {
         this.decryptionAuthorities = configuration.decryptionAuthorities;

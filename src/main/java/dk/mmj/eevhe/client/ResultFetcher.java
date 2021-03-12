@@ -1,5 +1,6 @@
 package dk.mmj.eevhe.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import dk.mmj.eevhe.client.results.ElectionResult;
 import dk.mmj.eevhe.client.results.ResultCombinerImpl;
 import dk.mmj.eevhe.entities.*;
@@ -8,6 +9,8 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * Class for retrieving vote results
@@ -29,7 +32,7 @@ public class ResultFetcher extends Client {
 
         logger.info("Fetching public information");
         PartialPublicInfo publicInformationEntity = fetchPublicInfo();
-        if(publicInformationEntity == null){
+        if (publicInformationEntity == null) {
             logger.error("Failed to fetch public information");
             return;
         }
@@ -44,22 +47,27 @@ public class ResultFetcher extends Client {
 
         logger.info("Fetching partial results");
         ResultList fetchedResultList = target.path("result").request().get(ResultList.class);
-        List<PartialResultList> results = fetchedResultList.getResults();
-        if (results == null || results.isEmpty()) {
+        List<SignedEntity<PartialResultList>> signedResults = fetchedResultList.getResults();
+        if (signedResults == null || signedResults.isEmpty()) {
             logger.info("Did not fetch any results. Probable cause is unfinished decryption. Try again later");
             return;
         }
 
+        List<PartialResultList> results = signedResults.stream()
+                .filter(this::verifySignature)
+                .map(SignedEntity::getEntity)
+                .collect(Collectors.toList());
+
         List<Candidate> candidates = getCandidates();
 
-        if(candidates == null){
+        if (candidates == null) {
             logger.error("Failed to fetch list of candidates");
             return;
         }
 
         ResultCombinerImpl combiner = new ResultCombinerImpl(
                 forceCalculation, publicKey, candidates,
-                () -> FetchingUtilities.getPublicInfos(logger, target),
+                () -> FetchingUtilities.getPublicInfos(logger, target, cert),
                 () -> FetchingUtilities.getBallots(logger, target),
                 endTime);
 
@@ -80,6 +88,24 @@ public class ResultFetcher extends Client {
                     .append(" cast in total\n\n");
         }
         logger.info(resBuilder.toString());
+    }
+
+    private boolean verifySignature(SignedEntity<PartialResultList> entity) {
+        try {
+            int daId = entity.getEntity().getDaId();
+            Optional<PartialPublicInfo> any = fetchPublicInfos().stream().filter(inf -> inf.getSenderId() == daId).findAny();
+
+            if (any.isPresent()) {
+                return entity.verifySignature(FetchingUtilities.getSignaturePublicKey(any.get(), cert, logger));
+            } else {
+                logger.error("Failed to find PartialPublicInfo for da with id=" + daId);
+                return false;
+            }
+
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to verify signature of entity: " + entity + ", due to exception", e);
+            return false;
+        }
     }
 
     /**

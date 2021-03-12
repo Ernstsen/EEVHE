@@ -1,6 +1,9 @@
 package dk.mmj.eevhe.protocols.connectors;
 
+import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
+import dk.mmj.eevhe.entities.SignedEntity;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -8,10 +11,13 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static java.math.BigInteger.valueOf;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -25,7 +31,8 @@ public class TestRestPeerCommunicator {
     @Before
     public void setUp() throws Exception {
         peer = mock(WebTarget.class);
-        communicator = new RestPeerCommunicator(peer);
+        AsymmetricKeyParameter sk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
+        communicator = new RestPeerCommunicator(peer, sk);
         target = mock(WebTarget.class);
 
         when(peer.path("partialSecret")).thenReturn(target);
@@ -36,10 +43,10 @@ public class TestRestPeerCommunicator {
         final Invocation.Builder commitBuilder = mock(Invocation.Builder.class);
         when(target.request()).thenReturn(commitBuilder);
 
-        final List<PartialSecretMessageDTO> secrets = new ArrayList<>();
+        final List<SignedEntity<PartialSecretMessageDTO>> secrets = new ArrayList<>();
         when(peer.path("partialSecret").request().post(any()))
                 .then(invocationOnMock -> {
-                    final Entity<PartialSecretMessageDTO> argument = invocationOnMock.getArgument(0);
+                    final Entity<SignedEntity<PartialSecretMessageDTO>> argument = invocationOnMock.getArgument(0);
                     secrets.add(argument.getEntity());
                     final Response resp = mock(Response.class);
                     when(resp.getStatus()).thenReturn(204);
@@ -51,8 +58,10 @@ public class TestRestPeerCommunicator {
 
         communicator.sendSecret(s1);
         communicator.sendSecret(s2);
-        assertTrue("First secret not properly handled", secrets.contains(s1));
-        assertTrue("Second secret not properly handled", secrets.contains(s2));
+        List<PartialSecretMessageDTO> sent = Arrays.asList(s1, s2);
+        assertEquals("Only two secrets has been sent",secrets.size(), 2);
+        assertTrue("First secret not properly handled", sent.contains(secrets.get(0).getEntity()));
+        assertTrue("Second secret not properly handled",sent.contains(secrets.get(1).getEntity()));
 
     }
 

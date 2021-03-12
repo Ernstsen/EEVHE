@@ -2,13 +2,17 @@ package dk.mmj.eevhe.client;
 
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.Application;
+import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.entities.Candidate;
 import dk.mmj.eevhe.entities.PartialPublicInfo;
 import dk.mmj.eevhe.entities.PublicKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,14 +20,20 @@ import java.util.Map;
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
 public abstract class Client implements Application {
-    private static final String PUBLIC_KEY_NAME = "rsa";
     private static final Logger logger = LogManager.getLogger(Client.class);
+    protected final AsymmetricKeyParameter cert;
     protected JerseyWebTarget target;
     private PublicKey publicKey;
     private PartialPublicInfo publicInfo;
+    private List<PartialPublicInfo> publicInfos;
 
     public Client(ClientConfiguration<?> configuration) {
         target = configureWebTarget(logger, configuration.targetUrl);
+        try {
+            cert = CertificateHelper.getPublicKeyFromCertificate(Paths.get("certs/test_glob.pem"));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load election certificate");
+        }
     }
 
     /**
@@ -35,22 +45,8 @@ public abstract class Client implements Application {
         if (publicKey != null) {
             return publicKey;
         }
-        List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, target);
 
-        HashMap<PublicKey, Integer> pkCount = new HashMap<>();
-        for (PartialPublicInfo info : publicInfos) {
-            pkCount.compute(info.getPublicKey(), (pk, v) -> v != null ? v + 1 : 1);
-        }
-
-        int t = publicInfos.size() / 2;
-        for (Map.Entry<PublicKey, Integer> e : pkCount.entrySet()) {
-            if (e.getValue() > t) {
-                return this.publicKey = e.getKey();
-            }
-        }
-
-        logger.error("Failed to find valid Public-key");
-        return null;
+        return publicKey = fetchPublicInfo().getPublicKey();
     }
 
     /**
@@ -69,7 +65,33 @@ public abstract class Client implements Application {
             return publicInfo;
         }
 
-        return publicInfo = FetchingUtilities.fetchPublicInfo(logger, PUBLIC_KEY_NAME, target);
+        List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, target, cert);
+
+        HashMap<PublicKey, Integer> pkCount = new HashMap<>();
+        for (PartialPublicInfo info : publicInfos) {
+            pkCount.compute(info.getPublicKey(), (pk, v) -> v != null ? v + 1 : 1);
+        }
+
+        int t = publicInfos.size() / 2;
+        for (Map.Entry<PublicKey, Integer> e : pkCount.entrySet()) {
+            if (e.getValue() > t) {
+                PublicKey key = e.getKey();
+                return this.publicInfo = publicInfos.stream()
+                        .filter(i -> key.equals(i.getPublicKey()))
+                        .findAny().orElse(null);
+            }
+        }
+
+        logger.error("Failed to find valid Public-Information");
+        return null;
+    }
+
+    protected List<PartialPublicInfo> fetchPublicInfos() {
+        if (publicInfos != null) {
+            return publicInfos;
+        }
+
+        return publicInfos = FetchingUtilities.getPublicInfos(logger, target, cert);
     }
 
 

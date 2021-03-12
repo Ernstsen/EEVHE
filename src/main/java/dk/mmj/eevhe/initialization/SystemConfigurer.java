@@ -30,7 +30,6 @@ import java.io.OutputStream;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.*;
 import java.util.Date;
 import java.util.List;
@@ -54,7 +53,7 @@ public class SystemConfigurer implements Application {
         this.endTime = config.endTime;
         this.outputFolderPath = config.outputFolderPath;
         this.skFilePath = config.skFilePath;
-        this.certFilePath = config.skFilePath;
+        this.certFilePath = config.certFilePath;
         this.daAddresses = config.daAddresses;
     }
 
@@ -105,10 +104,7 @@ public class SystemConfigurer implements Application {
         logger.info("Writing certificates");
         try {
             for (DecryptionAuthorityInfo daInfo : daInfos) {
-                KeyPairGenerator gen = KeyPairGenerator.getInstance("RSA", "BC");
-                gen.initialize(2048, new SecureRandom());
-
-                KeyPair keyPair = gen.generateKeyPair();
+                KeyPair keyPair = KeyHelper.generateRSAKeyPair();
                 PublicKey pk = keyPair.getPublic();
                 PrivateKey sk = keyPair.getPrivate();
 
@@ -130,7 +126,7 @@ public class SystemConfigurer implements Application {
                 Path targetFile = outputFolderPath.resolve("DA" + daInfo.getId() + ".zip");
                 try (ZipOutputStream ous = new ZipOutputStream(Files.newOutputStream(targetFile))) {
                     ous.putNextEntry(new ZipEntry("sk.pem"));
-                    ous.write(sk.getEncoded());
+                    KeyHelper.writeKey(ous, sk.getEncoded());
                     ous.putNextEntry(new ZipEntry("cert.pem"));
                     CertificateHelper.writeCertificate(ous, certificate);
                 }
