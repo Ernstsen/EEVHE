@@ -10,6 +10,7 @@ import org.junit.runners.Suite;
         TestResultCombinerImpl.class,
         TestClientConfigBuilder.class,
         TestFetchingUtilities.class,
+        TestSSLHelper.class,
         TestVoter.class,
 })
 public class ClientTestSuite {
