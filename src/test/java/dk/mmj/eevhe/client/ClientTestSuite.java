@@ -8,8 +8,10 @@ import org.junit.runners.Suite;
 
 @Suite.SuiteClasses({
         TestResultCombinerImpl.class,
+        TestClientConfigBuilder.class,
+        TestFetchingUtilities.class,
         TestVoter.class,
-        TestClientConfigBuilder.class
 })
 public class ClientTestSuite {
 }
+

@@ -8,8 +8,8 @@ import java.math.BigInteger;
 import static java.math.BigInteger.ONE;
 
 public class PersistedKeyParameters implements KeyGenerationParameters {
-    private PrimePair primePair;
-    private BigInteger g;
+    private final PrimePair primePair;
+    private final BigInteger g;
 
     /**
      * Generates persisted key parameters from a prime p and a generator g

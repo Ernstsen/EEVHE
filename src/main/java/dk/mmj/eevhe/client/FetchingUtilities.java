@@ -1,6 +1,5 @@
 package dk.mmj.eevhe.client;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
@@ -10,19 +9,15 @@ import dk.mmj.eevhe.entities.PersistedBallot;
 import dk.mmj.eevhe.entities.SignedEntity;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.cert.CertException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.bc.BcRSAContentVerifierProviderBuilder;
 
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,7 +52,7 @@ public class FetchingUtilities {
             } else {
                 logger.error("Invalid certificate for da with id=" + daInfo.getSenderId());
             }
-        } catch (IOException | OperatorCreationException | CertException e) {
+        } catch (Exception e) {
             logger.error("Failed to verify signature for certificate for da=" + daInfo.getSenderId(), e);
         }
         return null;
@@ -75,17 +70,7 @@ public class FetchingUtilities {
         try {
             String getVotes = bulletinBoard.path("getBallots").request().get(String.class);
             BallotList voteObjects = mapper.readValue(getVotes, BallotList.class);
-            ArrayList<PersistedBallot> ballots = new ArrayList<>();
-
-            for (Object ballot : voteObjects.getBallots()) {
-                if (ballot instanceof PersistedBallot) {
-                    ballots.add((PersistedBallot) ballot);
-                } else {
-                    logger.error("Found ballot that was not correct class. Was " + ballot.getClass() + ". Terminating server");
-                    return null;
-                }
-            }
-            return ballots;
+            return voteObjects.getBallots();
         } catch (IOException e) {
             logger.error("Failed to read BallotList from JSON string", e);
             return null;
@@ -97,14 +82,13 @@ public class FetchingUtilities {
      * <br>
      * Only those with a valid signature by the sender is included in the list
      *
-     * @param logger       logger used in error reporting
-     * @param target       the webTarget to be used in fetching the information entities
+     * @param logger     logger used in error reporting
+     * @param target     the webTarget to be used in fetching the information entities
      * @param electionPk the parent certificate for the election
      * @return list of PartialPublicInformation entities, which was properly signed by their senders
      */
     public static List<PartialPublicInfo> getPublicInfos(Logger logger, WebTarget target, AsymmetricKeyParameter electionPk) {
-        Response response = target.path("publicInfo").request().get();
-        String responseString = response.readEntity(String.class);
+        String responseString = target.path("publicInfo").request().get(String.class);
 
         List<SignedEntity<PartialPublicInfo>> publicInfoList;
         try {
@@ -112,14 +96,14 @@ public class FetchingUtilities {
             });
         } catch (IOException e) {
             logger.error("FetchingUtilities: Failed to deserialize public informations list retrieved from bulletin board", e);
-            throw new RuntimeException("Failed to fet public infos list");
+            return null;
         }
 
         return publicInfoList.stream().filter(
                 i -> {
                     try {
                         return i.verifySignature(getSignaturePublicKey(i.getEntity(), electionPk, logger));
-                    } catch (JsonProcessingException e) {
+                    } catch (Exception e) {
                         logger.error("Failed to verify signature, due to JSON processing", e);
                         return false;
                     }

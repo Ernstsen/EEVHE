@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-class TestUtils {
+public class TestUtils {
     private static KeyPair generateKeysForTesting(KeyGenerationParameters params) {
         BigInteger g = params.getGenerator();
         PrimePair primePair = params.getPrimePair();
@@ -41,7 +41,7 @@ class TestUtils {
         return generateKeysForTesting(getKeyGenParamsFromP11G2());
     }
 
-    static KeyPair generateKeysFromP2048bitsG2() {
+    public static KeyPair generateKeysFromP2048bitsG2() {
         return generateKeysForTesting(getKeyGenParamsFromP2048bitsG2());
     }
 
