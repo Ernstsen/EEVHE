@@ -66,6 +66,9 @@ public abstract class Client implements Application {
         }
 
         List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, target, cert);
+        if (publicInfos == null){
+            return null;
+        }
 
         HashMap<PublicKey, Integer> pkCount = new HashMap<>();
         for (PartialPublicInfo info : publicInfos) {

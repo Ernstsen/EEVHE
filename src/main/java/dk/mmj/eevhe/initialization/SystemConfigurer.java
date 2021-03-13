@@ -103,6 +103,7 @@ public class SystemConfigurer implements Application {
 
         logger.info("Writing certificates");
         try {
+            Date notAfter = new Date(endTime + (60 * 1000));
             for (DecryptionAuthorityInfo daInfo : daInfos) {
                 KeyPair keyPair = KeyHelper.generateRSAKeyPair();
                 PublicKey pk = keyPair.getPublic();
@@ -111,7 +112,7 @@ public class SystemConfigurer implements Application {
                 X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
                         new X500Name("CN=EEVHE_Configurer"),
                         BigInteger.valueOf(daInfo.getId()),
-                        new Date(), new Date(endTime + (60 * 1000)),
+                        new Date(), notAfter,
                         new X500Name("CN=DA" + daInfo.getId()),
                         new SubjectPublicKeyInfo(sha256WithRSASignature, pk.getEncoded())
                 );

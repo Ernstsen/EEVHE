@@ -4,6 +4,7 @@ import dk.mmj.eevhe.entities.CertificateDTO;
 import dk.mmj.eevhe.entities.SignedEntity;
 import dk.mmj.eevhe.interfaces.CertificateFetcher;
 import dk.mmj.eevhe.interfaces.CertificateProvider;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.operator.ContentVerifierProvider;
@@ -37,7 +38,7 @@ public class CertificateProviderImpl implements CertificateProvider {
      */
     @Override
     public Map<Integer, String> generateCertMap() {
-        if(cache != null){
+        if (cache != null) {
             return cache;
         }
         try {
@@ -64,7 +65,8 @@ public class CertificateProviderImpl implements CertificateProvider {
 
             boolean signedByCA = certificate.isSignatureValid(verifier);
             boolean selfSigned = e.verifySignature(CertificateHelper.getPublicKeyFromCertificate(cert));
-            return selfSigned && signedByCA;
+            boolean notImposter = certificate.getSubject().equals(new X500Name("CN=DA" + e.getEntity().getId()));
+            return selfSigned && signedByCA && notImposter;
         } catch (Exception exception) {
             return false;
         }
