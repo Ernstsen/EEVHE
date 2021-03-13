@@ -104,6 +104,7 @@ public class TestSerialization {
                 , new BigInteger("123456789"), publicKey));
         serializables.add(new PartialPublicInfo(1, publicKey, new BigInteger("6513894"), Arrays.asList(cand1, cand2), 16318, cert));
         serializables.add(new ElectionResult(Arrays.asList(1, 2, 41, 12, 12541), 12412134));
+        serializables.add(new CertificateDTO("this is very much a certificate ", 23));
     }
 
     @Test

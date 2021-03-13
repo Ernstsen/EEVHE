@@ -145,10 +145,6 @@ public class DecryptionAuthority extends AbstractServer {
         }
     }
 
-    public Integer getId() {
-        return id;
-    }
-
     @Override
     protected void afterStart() {
         logger.info("Posting ");

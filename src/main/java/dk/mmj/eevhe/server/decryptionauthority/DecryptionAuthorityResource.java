@@ -16,15 +16,6 @@ import javax.ws.rs.core.MediaType;
 public class DecryptionAuthorityResource {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthorityResource.class);
 
-    @GET
-    @Path("type")
-    @Produces(MediaType.TEXT_HTML)
-    public String test() {
-        logger.info("Received request for server type");
-
-        return "<b>ServerType:</b> Decryption Authority";
-    }
-
     @POST
     @Path("partialSecret")
     public void postPartialSecret(SignedEntity<PartialSecretMessageDTO> partialSecret) {
