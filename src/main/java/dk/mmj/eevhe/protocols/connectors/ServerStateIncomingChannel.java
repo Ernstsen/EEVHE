@@ -7,7 +7,6 @@ import dk.mmj.eevhe.interfaces.CertificateProvider;
 import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
 import dk.mmj.eevhe.server.ServerState;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +62,7 @@ public class ServerStateIncomingChannel implements IncomingChannel {
             String cert = certs.get(e.getEntity().getSender());
             byte[] certBytes = cert.getBytes(StandardCharsets.UTF_8);
             return e.verifySignature(CertificateHelper.getPublicKeyFromCertificate(certBytes));
-        } catch (IOException exception) {
+        } catch (Exception exception) {
             return false;
         }
     }
