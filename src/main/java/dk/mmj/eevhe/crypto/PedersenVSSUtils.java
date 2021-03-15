@@ -49,10 +49,9 @@ public class PedersenVSSUtils {
      * @param coefficientCommitments The coefficient commitments to combine
      * @param j                      The DA's ID &#62; 0
      * @param p                      Prime modulus p
-     * @param q                      Prime modulus q = (p-1) / 2
      * @return Combined coefficient commitments g^(f_i(j)) * e^(f'_i(j))
      */
-    public static BigInteger combineCoefficientCommitments(BigInteger[] coefficientCommitments, BigInteger j, BigInteger p, BigInteger q) {
+    public static BigInteger combineCoefficientCommitments(BigInteger[] coefficientCommitments, BigInteger j, BigInteger p) {
         return FeldmanVSSUtils.combineCoefficientCommitments(coefficientCommitments, j, p);
     }
 
@@ -74,7 +73,7 @@ public class PedersenVSSUtils {
         BigInteger gU = g.modPow(u1, p);
         BigInteger eU = e.modPow(u2, p);
         BigInteger leftSide = gU.multiply(eU).mod(p);
-        BigInteger combinedCoefficientCommitments = combineCoefficientCommitments(coefficientCommitments, j, p, q);
+        BigInteger combinedCoefficientCommitments = combineCoefficientCommitments(coefficientCommitments, j, p);
 
         return leftSide.equals(combinedCoefficientCommitments);
     }

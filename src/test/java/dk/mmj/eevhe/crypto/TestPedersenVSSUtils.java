@@ -56,7 +56,7 @@ public class TestPedersenVSSUtils {
 
         BigInteger[] coefficientCommitments = computeCoefficientCommitments(g, e, p, polynomial1, polynomial2);
 
-        BigInteger actualResult = combineCoefficientCommitments(coefficientCommitments, j, p, q);
+        BigInteger actualResult = combineCoefficientCommitments(coefficientCommitments, j, p);
 
         BigInteger jExp = j.modPow(valueOf(2), q);
         BigInteger expectedResult = coefficientCommitments[0]
@@ -79,7 +79,7 @@ public class TestPedersenVSSUtils {
 
         BigInteger[] coefficientCommitments = computeCoefficientCommitments(g, e, p, polynomial1, polynomial2);
 
-        BigInteger actualResult = combineCoefficientCommitments(coefficientCommitments, j, p, q);
+        BigInteger actualResult = combineCoefficientCommitments(coefficientCommitments, j, p);
 
         BigInteger jExp = j.modPow(valueOf(2), q);
         BigInteger expectedResult = coefficientCommitments[0]
@@ -104,7 +104,7 @@ public class TestPedersenVSSUtils {
             BigInteger j = valueOf(i);
             BigInteger u1 = SecurityUtils.evaluatePolynomial(polynomial1, j.intValue());
             BigInteger u2 = SecurityUtils.evaluatePolynomial(polynomial2, j.intValue());
-            assertTrue("Commitments should be respected ",verifyCommitmentRespected(g, e, u1, u2, coefficientCommitments, j, p, q));
+            assertTrue("Commitments should be respected ", verifyCommitmentRespected(g, e, u1, u2, coefficientCommitments, j, p, q));
         }
     }
 
