@@ -1,13 +1,6 @@
 package dk.mmj.eevhe.crypto;
 
-import dk.mmj.eevhe.entities.PartialKeyPair;
-import dk.mmj.eevhe.entities.PartialSecretKey;
-import dk.mmj.eevhe.entities.PublicKey;
-
 import java.math.BigInteger;
-import java.util.Arrays;
-
-import static java.math.BigInteger.valueOf;
 
 public class FeldmanVSSUtils {
     /**
@@ -59,26 +52,5 @@ public class FeldmanVSSUtils {
         BigInteger gU = g.modPow(u, p);
 
         return gU.equals(combinedCoefficientCommitments);
-    }
-
-    /**
-     * <b>NOTE: does not include dLogPublicValue, as unable to generate that value without solving discrete log </b>
-     *
-     * @param g  Generator g
-     * @param q  Prime modulus q = (p-1)/2
-     * @param u  For all i: u_i, which is equal to f_i(j)
-     * @param gV For all i: g^v_i
-     * @return Partial key pair containing public key containing (h,g,q,p), partial public key h_j, partial secret key s_j
-     */
-    public static PartialKeyPair generateKeyPair(BigInteger g, BigInteger q, BigInteger[] u, BigInteger[] gV) {
-        BigInteger p = valueOf(2).multiply(q).add(valueOf(1));
-
-        BigInteger h = Arrays.stream(gV).reduce(BigInteger::multiply).orElse(BigInteger.ZERO).mod(p);
-        PublicKey publicKey = new PublicKey(h, g, q);
-
-        BigInteger partialSecretKey = Arrays.stream(u).reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
-        BigInteger partialPublicKey = g.modPow(partialSecretKey, p);
-
-        return new PartialKeyPair(new PartialSecretKey(partialSecretKey, p), partialPublicKey, publicKey);
     }
 }
