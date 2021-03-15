@@ -101,7 +101,7 @@ public class DecryptionAuthority extends AbstractServer {
             }
 
         } catch (IOException e) {
-            logger.error("Error occured while reading private input file from " + privateInput, e);
+            logger.error("Error occurred while reading private input file from " + privateInput, e);
         }
 
         ObjectMapper mapper = new ObjectMapper();
