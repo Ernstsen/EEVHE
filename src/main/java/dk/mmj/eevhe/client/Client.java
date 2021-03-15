@@ -13,9 +13,7 @@ import org.glassfish.jersey.client.JerseyWebTarget;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
@@ -66,27 +64,41 @@ public abstract class Client implements Application {
         }
 
         List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, target, cert);
-        if (publicInfos == null){
+        if (publicInfos == null) {
             return null;
         }
 
-        HashMap<PublicKey, Integer> pkCount = new HashMap<>();
+        HashMap<String, Integer> pkCount = new HashMap<>();
         for (PartialPublicInfo info : publicInfos) {
-            pkCount.compute(info.getPublicKey(), (pk, v) -> v != null ? v + 1 : 1);
+            pkCount.compute(
+                    toComparable(info),
+                    (pk, v) -> v != null ? v + 1 : 1
+            );
         }
 
         int t = publicInfos.size() / 2;
-        for (Map.Entry<PublicKey, Integer> e : pkCount.entrySet()) {
+        for (Map.Entry<String, Integer> e : pkCount.entrySet()) {
             if (e.getValue() > t) {
-                PublicKey key = e.getKey();
+                String key = e.getKey();
                 return this.publicInfo = publicInfos.stream()
-                        .filter(i -> key.equals(i.getPublicKey()))
+                        .filter(info -> key.equals(toComparable(info)))
                         .findAny().orElse(null);
             }
         }
 
         logger.error("Failed to find valid Public-Information");
         return null;
+    }
+
+    /**
+     * Extracts shared fields to a string, used in determining whether PartialPublicInfos agree
+     *
+     * @param info the information entity
+     * @return deterministically computed string containing all information from the info which is shared between
+     * information entities
+     */
+    private String toComparable(PartialPublicInfo info) {
+        return info.getPublicKey().toString() + Arrays.toString(info.getCandidates().toArray()) + info.getEndTime();
     }
 
     protected List<PartialPublicInfo> fetchPublicInfos() {
