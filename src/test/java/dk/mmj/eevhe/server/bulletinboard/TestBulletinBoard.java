@@ -48,6 +48,7 @@ public class TestBulletinBoard {
     public void serverTypeAndTime() throws InterruptedException {
         Thread thread = new Thread(bulletinBoard);
         thread.start();
+        Thread.sleep(2_000);
 
         JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
         String type = target.path("type").request().get(String.class);
@@ -66,6 +67,7 @@ public class TestBulletinBoard {
     public void postAndRetrieve() throws InterruptedException, IOException {
         Thread thread = new Thread(bulletinBoard);
         thread.start();
+        Thread.sleep(2_000);
 
         JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
 
