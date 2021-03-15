@@ -269,7 +269,7 @@ public class DecryptionAuthority extends AbstractServer {
 
         if (post.getStatus() < 200 || post.getStatus() > 300) {
             logger.error("Unable to post result to bulletinBoard, got response:" + post);
-            System.exit(-1);
+            throw new RuntimeException("Unable to post result to bulletinBoard, got response:" + post);
         } else {
             logger.info("Successfully transferred partial decryption to bulletin board");
         }
