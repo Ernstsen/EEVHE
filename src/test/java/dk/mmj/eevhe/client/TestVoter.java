@@ -89,6 +89,7 @@ public class TestVoter extends TestUsingBouncyCastle {
         BulletinBoard bulletinBoard = new BulletinBoard(config);
         Thread thread = new Thread(bulletinBoard);
         thread.start();
+        Thread.sleep(2_000);
 
         String id = "id";
         Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + port, id, 2, null);
@@ -122,6 +123,7 @@ public class TestVoter extends TestUsingBouncyCastle {
         BulletinBoard bulletinBoard = new BulletinBoard(config);
         Thread thread = new Thread(bulletinBoard);
         thread.start();
+        Thread.sleep(2_000);
 
         Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + port, null, null, 20);
         Voter voter = new Voter(conf);
