@@ -46,6 +46,7 @@ public class TestBulletinBoard {
 
     @Test
     public void serverTypeAndTime() throws InterruptedException {
+        ServerState.getInstance().reset();
         Thread thread = new Thread(bulletinBoard);
         thread.start();
         Thread.sleep(2_000);
@@ -65,13 +66,13 @@ public class TestBulletinBoard {
 
     @Test
     public void postAndRetrieve() throws InterruptedException, IOException {
+        ServerState.getInstance().reset();
         Thread thread = new Thread(bulletinBoard);
         thread.start();
         Thread.sleep(2_000);
 
         JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
 
-        ServerState.getInstance().reset();
         //Assert we get 404 when items are not found
         assertEquals("Expected 404", 404, target.path("publicKey").request().get().getStatus());
         assertEquals("Expected 404", 404, target.path("getPublicInfo").request().get().getStatus());
