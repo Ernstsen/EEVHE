@@ -6,6 +6,7 @@ import dk.mmj.eevhe.client.SSLHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
@@ -68,6 +69,7 @@ public class TestBulletinBoard {
 
         JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
 
+        ServerState.getInstance().reset();
         //Assert we get 404 when items are not found
         assertEquals("Expected 404", 404, target.path("publicKey").request().get().getStatus());
         assertEquals("Expected 404", 404, target.path("getPublicInfo").request().get().getStatus());
