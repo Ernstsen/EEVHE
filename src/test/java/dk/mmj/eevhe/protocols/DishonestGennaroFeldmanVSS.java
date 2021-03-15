@@ -93,7 +93,7 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
                 continue;
             }
 
-            boolean matches = verifyCommitmentRespected(g, partialSecret, feldmanCommitment, BigInteger.valueOf(id), p, q);
+            boolean matches = verifyCommitmentRespected(g, partialSecret, feldmanCommitment, BigInteger.valueOf(id), p);
             if (!matches) {
                 complain(senderId);
             }

@@ -92,7 +92,7 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
                 continue;
             }
 
-            boolean matches = verifyCommitmentRespected(g, partialSecret, feldmanCommitment, BigInteger.valueOf(id), p, q);
+            boolean matches = verifyCommitmentRespected(g, partialSecret, feldmanCommitment, BigInteger.valueOf(id), p);
             if (!matches) {
                 complain(senderId);
             }
@@ -124,7 +124,7 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
             boolean matches1 = PedersenVSSUtils.verifyCommitmentRespected(g, e,
                     partialSecret1, partialSecret2, pedersenCommitment, complainerId, p, q);
             // Check 2
-            boolean matches2 = verifyCommitmentRespected(g, partialSecret1, feldmanCommitment, complainerId, p, q);
+            boolean matches2 = verifyCommitmentRespected(g, partialSecret1, feldmanCommitment, complainerId, p);
 
             if (matches1 && !matches2) {
                 logger.info("Removing party with ID " + complaint.getTargetId() + " from honest parties");

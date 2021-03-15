@@ -50,11 +50,10 @@ public class FeldmanVSSUtils {
      * @param coefficientCommitments Coefficient commitments
      * @param j                      DA id &#62; 0
      * @param p                      Prime modulus p
-     * @param q                      Prime modulus q = (p-1)/2
      * @return Whether g^u_i equals g^combinedCoefficientCommitments or not
      */
     public static boolean verifyCommitmentRespected(BigInteger g, BigInteger u, BigInteger[] coefficientCommitments,
-                                                    BigInteger j, BigInteger p, BigInteger q) {
+                                                    BigInteger j, BigInteger p) {
         BigInteger combinedCoefficientCommitments = combineCoefficientCommitments(coefficientCommitments, j, p);
 
         BigInteger gU = g.modPow(u, p);

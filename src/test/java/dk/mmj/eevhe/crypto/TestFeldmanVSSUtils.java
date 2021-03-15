@@ -92,7 +92,7 @@ public class TestFeldmanVSSUtils {
         BigInteger[] coefficientCommitments = FeldmanVSSUtils.computeCoefficientCommitments(g, p, polynomial);
         BigInteger u = SecurityUtils.evaluatePolynomial(polynomial, j.intValue());
 
-        boolean actualResult = FeldmanVSSUtils.verifyCommitmentRespected(g, u, coefficientCommitments, j, p, q);
+        boolean actualResult = FeldmanVSSUtils.verifyCommitmentRespected(g, u, coefficientCommitments, j, p);
 
         assertTrue(actualResult);
     }
@@ -108,7 +108,7 @@ public class TestFeldmanVSSUtils {
         BigInteger[] coefficientCommitments = FeldmanVSSUtils.computeCoefficientCommitments(g, p, polynomial);
         BigInteger u = SecurityUtils.evaluatePolynomial(polynomial, j.intValue());
 
-        boolean actualResult = FeldmanVSSUtils.verifyCommitmentRespected(g, u, coefficientCommitments, j, p, q);
+        boolean actualResult = FeldmanVSSUtils.verifyCommitmentRespected(g, u, coefficientCommitments, j, p);
 
         assertTrue(actualResult);
     }
