@@ -68,7 +68,7 @@ public class IntegrationUnitTest {
 
         test.run();
 
-        assertTrue("Did not finalize election",observer.finalized);
+        assertTrue("Did not finalize election", observer.finalized);
 
         assertNotNull("ErrorList was not initialized - finalization was not executed", observer.errors);
         if (!observer.errors.isEmpty()) {

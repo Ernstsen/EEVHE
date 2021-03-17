@@ -28,7 +28,6 @@ import static dk.mmj.eevhe.crypto.PedersenVSSUtils.verifyCommitmentRespected;
 public class PedersenVSS extends AbstractVSS implements VSS {
     static final String PEDERSEN = "PedersenVSS";
     private final Set<Integer> honestParties = new HashSet<>();
-    private final BigInteger e;
     private final int t;
     private final BigInteger[] pol1;
     private final BigInteger[] pol2;
@@ -39,7 +38,6 @@ public class PedersenVSS extends AbstractVSS implements VSS {
                        Map<Integer, PeerCommunicator> peerCommunicatorMap,
                        int id, ExtendedKeyGenerationParameters params, String logPrefix, BigInteger[] pol1, BigInteger[] pol2) {
         super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);
-        this.e = params.getGroupElement();
         this.t = ((peerMap.size()) / 2);
         this.pol1 = pol1 == null ? SecurityUtils.generatePolynomial(t, q) : pol1;
         this.pol2 = pol2 == null ? SecurityUtils.generatePolynomial(t, q) : pol2;
@@ -196,11 +194,11 @@ public class PedersenVSS extends AbstractVSS implements VSS {
                 .reduce(BigInteger::add).orElse(BigInteger.ZERO).mod(q);
     }
 
-    public Set<Integer> getHonestParties() {
+    Set<Integer> getHonestParties() {
         return honestParties;
     }
 
-    public Map<Integer, PartialSecretMessageDTO> getSecrets() {
+    Map<Integer, PartialSecretMessageDTO> getSecrets() {
         return secrets;
     }
 }

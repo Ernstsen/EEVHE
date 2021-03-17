@@ -1,7 +1,6 @@
 package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.crypto.PedersenVSSUtils;
-import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.entities.CommitmentDTO;
 import dk.mmj.eevhe.entities.FeldmanComplaintDTO;
@@ -24,7 +23,6 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
     protected final Map<Integer, BigInteger[]> feldmanCommitments = new HashMap<>();
     protected final Map<Integer, BigInteger[]> pedersenCommitments = new HashMap<>();
     final BigInteger[] polynomial;
-    private final BigInteger e;
     protected final Set<Integer> honestParties = new HashSet<>();
 
 
@@ -33,13 +31,11 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
                              int id, ExtendedKeyGenerationParameters params, String logPrefix,
                              BigInteger[] polynomial, Map<Integer, PartialSecretMessageDTO> secrets) {
         super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);
-        this.e = params.getGroupElement();
         if (secrets != null) {
             this.secrets = secrets;
         }
 
-        int t = ((peerMap.size()) / 2);
-        this.polynomial = polynomial  != null ? polynomial : SecurityUtils.generatePolynomial(t, params.getPrimePair().getQ());
+        this.polynomial = polynomial;
     }
 
     @Override

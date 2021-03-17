@@ -1,5 +1,6 @@
 package dk.mmj.eevhe.protocols;
 
+import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
@@ -20,13 +21,14 @@ public class AbstractVSS {
     protected final BigInteger g;
     protected final BigInteger q;
     protected final BigInteger p;
+    protected final BigInteger e;
     protected final Logger logger;
     protected Map<Integer, PartialSecretMessageDTO> secrets = new HashMap<>();
 
 
     public AbstractVSS(Broadcaster broadcaster, IncomingChannel incoming,
                        Map<Integer, PeerCommunicator> peerCommunicatorMap,
-                       int id, KeyGenerationParameters params, String logPrefix) {
+                       int id, ExtendedKeyGenerationParameters params, String logPrefix) {
         this.broadcaster = broadcaster;
         this.incoming = incoming;
         this.peerMap = peerCommunicatorMap;
@@ -34,7 +36,7 @@ public class AbstractVSS {
         this.g = params.getGenerator();
         this.q = params.getPrimePair().getQ();
         this.p = params.getPrimePair().getP();
-
+        this.e = params.getGroupElement();
         logger = LogManager.getLogger(getClass().getName() + " " + logPrefix + ":");
     }
 }
