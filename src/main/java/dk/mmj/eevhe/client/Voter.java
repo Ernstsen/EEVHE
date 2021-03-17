@@ -4,7 +4,6 @@ import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.entities.BallotDTO;
 import dk.mmj.eevhe.entities.Candidate;
 import dk.mmj.eevhe.entities.PublicKey;
-import dk.mmj.eevhe.entities.CandidateVoteDTO;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthorityConfigBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,13 +14,17 @@ import javax.ws.rs.core.Response;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 public class Voter extends Client {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthorityConfigBuilder.class);
     private final Integer multi;
     private String id;
     private Integer vote;
+    private int[] castVotes;
 
 
     /**
@@ -64,7 +67,7 @@ public class Voter extends Client {
     private void doMultiVote(PublicKey publicKey) {
         int size = getCandidates().size();
         Random random = new Random();
-        int[] castVotes = new int[size];
+        castVotes = new int[size];
         Arrays.fill(castVotes, 0);
 
         for (int i = 0; i < multi; i++) {
@@ -77,6 +80,13 @@ public class Voter extends Client {
             doVote(vote, publicKey);
         }
         System.out.println("Dispatched " + multi + " votes with distribution: " + Arrays.toString(castVotes));
+    }
+
+    /**
+     * @return array of cast votes for each candidate
+     */
+    public int[] getCastVotes() {
+        return castVotes;
     }
 
     /**
@@ -153,9 +163,8 @@ public class Voter extends Client {
                 String s = reader.readLine();
                 vote = Integer.parseInt(s);
                 System.out.println("voting: " + vote);
-            } catch (IOException ignored) {
-                System.out.println("Unable to read vote - terminating");
-                System.exit(-1);
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to read vote", e);
             }
         }
 
@@ -168,7 +177,7 @@ public class Voter extends Client {
      * <br>
      * Built in the {@link ClientConfigBuilder}.
      */
-    public static class VoterConfiguration extends ClientConfiguration {
+    public static class VoterConfiguration extends ClientConfiguration<Voter> {
         private final String id;
         private final Integer vote;
         private final Integer multi;
@@ -180,10 +189,22 @@ public class Voter extends Client {
          * @param multi     if different from null, multiple random votes are dispatched
          */
         VoterConfiguration(String targetUrl, String id, Integer vote, Integer multi) {
-            super(targetUrl);
+            super(Voter.class, targetUrl);
             this.id = id;
             this.vote = vote;
             this.multi = multi;
+        }
+
+        String getId() {
+            return id;
+        }
+
+        Integer getVote() {
+            return vote;
+        }
+
+        Integer getMulti() {
+            return multi;
         }
     }
 }

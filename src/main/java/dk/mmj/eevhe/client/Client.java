@@ -1,29 +1,37 @@
 package dk.mmj.eevhe.client;
 
-import dk.eSoftware.commandLineParser.Configuration;
+import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.Application;
-import dk.mmj.eevhe.crypto.SecurityUtils;
+import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.entities.Candidate;
-import dk.mmj.eevhe.entities.PublicInformationEntity;
+import dk.mmj.eevhe.entities.PartialPublicInfo;
 import dk.mmj.eevhe.entities.PublicKey;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
-import java.math.BigInteger;
-import java.util.List;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.*;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
 public abstract class Client implements Application {
-    private static final String PUBLIC_KEY_NAME = "rsa";
     private static final Logger logger = LogManager.getLogger(Client.class);
+    protected final AsymmetricKeyParameter cert;
     protected JerseyWebTarget target;
     private PublicKey publicKey;
-    private PublicInformationEntity publicInfo;
+    private PartialPublicInfo publicInfo;
+    private List<PartialPublicInfo> publicInfos;
 
-    public Client(ClientConfiguration configuration) {
+    public Client(ClientConfiguration<?> configuration) {
         target = configureWebTarget(logger, configuration.targetUrl);
+        try {
+            cert = CertificateHelper.getPublicKeyFromCertificate(Paths.get("certs/test_glob.pem"));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load election certificate");
+        }
     }
 
     /**
@@ -35,36 +43,83 @@ public abstract class Client implements Application {
         if (publicKey != null) {
             return publicKey;
         }
-        PublicInformationEntity info = fetchPublicInfo();
 
-        BigInteger h = SecurityUtils.combinePartials(info.getPublicKeys(), info.getP());
-
-        return publicKey = new PublicKey(h, info.getG(), info.getQ());
+        return publicKey = fetchPublicInfo().getPublicKey();
     }
 
     /**
      * @return the list of candidates in the election
      */
     protected List<Candidate> getCandidates() {
-        PublicInformationEntity info = fetchPublicInfo();
-
+        PartialPublicInfo info = fetchPublicInfo();
+        if (info == null) {
+            return null;
+        }
         return info.getCandidates();
     }
 
-    protected PublicInformationEntity fetchPublicInfo() {
+    protected PartialPublicInfo fetchPublicInfo() {
         if (publicInfo != null) {
             return publicInfo;
         }
 
-        return publicInfo = FetchingUtilities.fetchPublicInfo(logger, PUBLIC_KEY_NAME, target);
+        List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, target, cert);
+        if (publicInfos == null) {
+            return null;
+        }
+
+        HashMap<String, Integer> pkCount = new HashMap<>();
+        for (PartialPublicInfo info : publicInfos) {
+            pkCount.compute(
+                    toComparable(info),
+                    (pk, v) -> v != null ? v + 1 : 1
+            );
+        }
+
+        int t = publicInfos.size() / 2;
+        for (Map.Entry<String, Integer> e : pkCount.entrySet()) {
+            if (e.getValue() > t) {
+                String key = e.getKey();
+                return this.publicInfo = publicInfos.stream()
+                        .filter(info -> key.equals(toComparable(info)))
+                        .findAny().orElse(null);
+            }
+        }
+
+        logger.error("Failed to find valid Public-Information");
+        return null;
+    }
+
+    /**
+     * Extracts shared fields to a string, used in determining whether PartialPublicInfos agree
+     *
+     * @param info the information entity
+     * @return deterministically computed string containing all information from the info which is shared between
+     * information entities
+     */
+    private String toComparable(PartialPublicInfo info) {
+        return info.getPublicKey().toString() + Arrays.toString(info.getCandidates().toArray()) + info.getEndTime();
+    }
+
+    protected List<PartialPublicInfo> fetchPublicInfos() {
+        if (publicInfos != null) {
+            return publicInfos;
+        }
+
+        return publicInfos = FetchingUtilities.getPublicInfos(logger, target, cert);
     }
 
 
-    static class ClientConfiguration implements Configuration {
+    static abstract class ClientConfiguration<T extends Client> extends AbstractInstanceCreatingConfiguration<T> {
         private final String targetUrl;
 
-        ClientConfiguration(String targetUrl) {
+        ClientConfiguration(Class<T> clazz, String targetUrl) {
+            super(clazz);
             this.targetUrl = targetUrl;
+        }
+
+        public String getTargetUrl() {
+            return targetUrl;
         }
     }
 }

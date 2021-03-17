@@ -3,17 +3,19 @@ package dk.mmj.eevhe.server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Singleton state for a server. Acts like a map
  */
 public class ServerState {
     // State
-    private static ServerState instance = new ServerState();
-    private static Logger logger = LogManager.getLogger(ServerState.class);
-    private Map<String, Object> state = new HashMap<>();
+    private final static ServerState instance = new ServerState();
+    private final static Logger logger = LogManager.getLogger(ServerState.class);
+    private final Map<String, Object> state = new ConcurrentHashMap<>();
 
     /**
      * Getter for singleton instance
@@ -32,6 +34,18 @@ public class ServerState {
      */
     public void put(String key, Object object) {
         state.put(key, object);
+    }
+
+    public synchronized <T> void putInList(String key, T object) {
+        //noinspection unchecked
+        List<T> list = (List<T>) state.get(key);
+
+        if (list == null) {
+            list = new ArrayList<>();
+            state.put(key, list);
+        }
+
+        list.add(object);
     }
 
     /**
@@ -57,5 +71,12 @@ public class ServerState {
             return null;
         }
         return (T) object;
+    }
+
+    /**
+     * Resets memory, for testing purposes only.
+     */
+    public void reset() {
+        state.clear();
     }
 }

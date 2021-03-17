@@ -6,7 +6,7 @@ import dk.mmj.eevhe.entities.KeyPair;
 import dk.mmj.eevhe.entities.PersistedVote;
 import dk.mmj.eevhe.entities.PrimePair;
 import dk.mmj.eevhe.entities.PublicKey;
-import jersey.repackaged.com.google.common.collect.Lists;
+import org.apache.commons.collections4.ListUtils;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-class TestUtils {
+public class TestUtils {
     private static KeyPair generateKeysForTesting(KeyGenerationParameters params) {
         BigInteger g = params.getGenerator();
         PrimePair primePair = params.getPrimePair();
@@ -41,7 +41,7 @@ class TestUtils {
         return generateKeysForTesting(getKeyGenParamsFromP11G2());
     }
 
-    static KeyPair generateKeysFromP2048bitsG2() {
+    public static KeyPair generateKeysFromP2048bitsG2() {
         return generateKeysForTesting(getKeyGenParamsFromP2048bitsG2());
     }
 
@@ -76,7 +76,7 @@ class TestUtils {
             ids.add("ID" + i);
         }
 
-        List<List<String>> partitions = Lists.partition(ids, amount / 20);
+        List<List<String>> partitions = ListUtils.partition(ids, amount / 20);
 
         ConcurrentLinkedQueue<PersistedVote> res = new ConcurrentLinkedQueue<>();
 

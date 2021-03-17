@@ -2,7 +2,7 @@ package dk.mmj.eevhe.crypto;
 
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
-import jersey.repackaged.com.google.common.collect.Lists;
+import org.apache.commons.collections4.ListUtils;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 
 import java.math.BigInteger;
@@ -10,6 +10,8 @@ import java.security.SecureRandom;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
+
+import static java.math.BigInteger.valueOf;
 
 /**
  * Class used for methods not tied directly to ElGamal
@@ -61,8 +63,8 @@ public class SecurityUtils {
      */
     public static CandidateVoteDTO generateVote(int vote, String id, PublicKey publicKey) {
         BigInteger r = SecurityUtils.getRandomNumModN(publicKey.getQ());
-        CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, BigInteger.valueOf(vote), r);
-        Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, BigInteger.valueOf(vote));
+        CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, valueOf(vote), r);
+        Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, valueOf(vote));
 
         return new CandidateVoteDTO(ciphertext, id, proof);
     }
@@ -81,10 +83,10 @@ public class SecurityUtils {
             BigInteger r = SecurityUtils.getRandomNumModN(publicKey.getQ());
             rVals[i] = r;
 
-            CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, BigInteger.valueOf(isYes), r);
+            CipherText ciphertext = ElGamal.homomorphicEncryption(publicKey, valueOf(isYes), r);
             cipherTexts.add(ciphertext);
 
-            Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, BigInteger.valueOf(isYes));
+            Proof proof = VoteProofUtils.generateProof(ciphertext, publicKey, r, id, valueOf(isYes));
 
             votes.add(new CandidateVoteDTO(ciphertext, id, proof));
         }
@@ -96,7 +98,6 @@ public class SecurityUtils {
         BigInteger sumOfVotes = voted ? BigInteger.ONE : BigInteger.ZERO;
         Proof proof = VoteProofUtils.generateProof(cipherTextSum, publicKey, rSum, id, sumOfVotes);
 
-        //TODO: Return BallotDTO
         return new BallotDTO(votes, id, proof);
     }
 
@@ -107,7 +108,7 @@ public class SecurityUtils {
      * @param q      q-1 specifies the maximum value of coefficients in the polynomial
      * @return a BigInteger array representing the polynomial
      */
-    static BigInteger[] generatePolynomial(int degree, BigInteger q) {
+    public static BigInteger[] generatePolynomial(int degree, BigInteger q) {
         BigInteger[] polynomial = new BigInteger[degree + 1];
         for (int i = 0; i <= degree; i++) {
             polynomial[i] = getRandomNumModN(q);
@@ -129,16 +130,29 @@ public class SecurityUtils {
 
         for (int i = 0; i < authorities; i++) {
             int authorityIndex = i + 1;
-            BigInteger acc = BigInteger.ZERO;
+            BigInteger evaluation = evaluatePolynomial(polynomial, authorityIndex);
 
-            for (int j = 0; j < polynomial.length; j++) {
-                acc = acc.add(BigInteger.valueOf(authorityIndex).pow(j).multiply(polynomial[j]));
-            }
-
-            secretValuesMap.put(authorityIndex, acc.mod(q));
+            secretValuesMap.put(authorityIndex, evaluation.mod(q));
         }
 
         return secretValuesMap;
+    }
+
+    /**
+     * Evaluates polynomial
+     *
+     * @param polynomial The polynomial to evaluate
+     * @param x          The variable to evaluate the polynomial at
+     * @return The BigInteger value of the evaluated polynomial
+     */
+    public static BigInteger evaluatePolynomial(BigInteger[] polynomial, int x) {
+        BigInteger acc = BigInteger.ZERO;
+
+        for (int j = 0; j < polynomial.length; j++) {
+            acc = acc.add(valueOf(x).pow(j).multiply(polynomial[j]));
+        }
+
+        return acc;
     }
 
     /**
@@ -167,11 +181,11 @@ public class SecurityUtils {
      */
     static BigInteger generateLagrangeCoefficient(int[] authorityIndexes, int currentIndexValue, BigInteger q) {
         BigInteger acc = BigInteger.ONE;
-        BigInteger currentIndexBig = BigInteger.valueOf(currentIndexValue);
+        BigInteger currentIndexBig = valueOf(currentIndexValue);
 
         for (int authorityIndex : authorityIndexes) {
             if (authorityIndex != currentIndexValue) {
-                BigInteger iBig = BigInteger.valueOf(authorityIndex);
+                BigInteger iBig = valueOf(authorityIndex);
                 BigInteger diff = iBig.subtract(currentIndexBig);
                 BigInteger diffModInv = diff.modInverse(q);
                 acc = acc.multiply(iBig.multiply(diffModInv)).mod(q);
@@ -194,19 +208,15 @@ public class SecurityUtils {
     }
 
     /**
-     * Combines partials
+     * Combines partials using Lagrange interpolation
      *
      * @param partialsMap a map where the key is an authority index and value is a corresponding partial
      * @param p           the modulus prime
      * @return the combination of the partials
      */
-    public static BigInteger combinePartials(Map<Integer, BigInteger> partialsMap, BigInteger p) {
-        BigInteger q = p.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2));
-        Integer[] authorityIndexesInteger = partialsMap.keySet().toArray(new Integer[0]);
-        int[] authorityIndexes = new int[authorityIndexesInteger.length];
-        for (int i = 0; i < authorityIndexesInteger.length; i++) {
-            authorityIndexes[i] = authorityIndexesInteger[i];
-        }
+    public static BigInteger lagrangeInterpolate(Map<Integer, BigInteger> partialsMap, BigInteger p) {
+        BigInteger q = p.subtract(BigInteger.ONE).divide(valueOf(2));
+        int[] authorityIndexes = partialsMap.keySet().stream().mapToInt(Integer::valueOf).toArray();
 
         return partialsMap.keySet().stream()
                 .map(key -> partialsMap.get(key).modPow(generateLagrangeCoefficient(authorityIndexes, key, q), p))
@@ -271,7 +281,7 @@ public class SecurityUtils {
         if (cipherTexts.size() > 2 * partitionSize) {
             List<Thread> threads = new ArrayList<>();
 
-            List<List<CipherText>> partitions = Lists.partition(cipherTexts, partitionSize);
+            List<List<CipherText>> partitions = ListUtils.partition(cipherTexts, partitionSize);
             for (List<CipherText> partition : partitions) {
                 Thread thread = new Thread(new VoteSummer(result, partition));
                 thread.start();
@@ -296,8 +306,8 @@ public class SecurityUtils {
     }
 
     private static class VoteSummer implements Runnable {
-        private Collection<CipherText> resultRef;
-        private List<CipherText> values;
+        private final Collection<CipherText> resultRef;
+        private final List<CipherText> values;
 
         VoteSummer(Collection<CipherText> resultRef, List<CipherText> values) {
             this.resultRef = resultRef;

@@ -1,15 +1,15 @@
 package dk.mmj.eevhe.crypto.keygeneration;
 
-import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin;
 import dk.mmj.eevhe.entities.PrimePair;
+import org.bouncycastle.util.encoders.Hex;
 
 import java.math.BigInteger;
 
 import static java.math.BigInteger.ONE;
 
 public class PersistedKeyParameters implements KeyGenerationParameters {
-    private PrimePair primePair;
-    private BigInteger g;
+    private final PrimePair primePair;
+    private final BigInteger g;
 
     /**
      * Generates persisted key parameters from a prime p and a generator g
@@ -20,7 +20,7 @@ public class PersistedKeyParameters implements KeyGenerationParameters {
     public PersistedKeyParameters(String pString, String gString) {
         this.g = new BigInteger(gString);
 
-        BigInteger p = new BigInteger(1, HexBin.decode(pString.replaceAll(" ", "")));
+        BigInteger p = new BigInteger(1, Hex.decode(pString.replaceAll(" ", "")));
         BigInteger q = p.subtract(ONE).divide(BigInteger.valueOf(2));
 
         this.primePair = new PrimePair(p, q);

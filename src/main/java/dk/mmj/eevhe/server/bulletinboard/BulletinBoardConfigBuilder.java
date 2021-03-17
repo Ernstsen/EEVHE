@@ -1,15 +1,18 @@
 package dk.mmj.eevhe.server.bulletinboard;
 
 import dk.eSoftware.commandLineParser.CommandLineParser;
-import dk.eSoftware.commandLineParser.Configuration;
+import dk.mmj.eevhe.TestableConfigurationBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class BulletinBoardConfigBuilder implements CommandLineParser.ConfigBuilder {
+import java.util.Collections;
+import java.util.List;
+
+public class BulletinBoardConfigBuilder implements CommandLineParser.ConfigBuilder<BulletinBoard.BulletinBoardConfiguration>, TestableConfigurationBuilder {
     private static final Logger logger = LogManager.getLogger(BulletinBoardConfigBuilder.class);
 
     //Configuration options
-    private static final String SELF = "--bulletinBoard";
+    private static final String SELF = "bulletinBoard";
     private static final String PORT = "port=";
 
     //State
@@ -28,7 +31,7 @@ public class BulletinBoardConfigBuilder implements CommandLineParser.ConfigBuild
     }
 
     @Override
-    public Configuration build() {
+    public BulletinBoard.BulletinBoardConfiguration build() {
         return new BulletinBoard.BulletinBoardConfiguration(port);
     }
 
@@ -36,5 +39,10 @@ public class BulletinBoardConfigBuilder implements CommandLineParser.ConfigBuild
     public String help() {
         return "\tMODE: bulletinBoard\n" +
                 "\t  --" + PORT + "int\t\tSpecifies port to be used. Standard=8081\n";
+    }
+
+    @Override
+    public List<String> getParameters() {
+        return Collections.singletonList(PORT);
     }
 }

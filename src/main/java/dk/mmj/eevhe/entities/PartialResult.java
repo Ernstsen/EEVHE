@@ -15,7 +15,7 @@ public class PartialResult {
     public PartialResult() {
     }
 
-    public PartialResult(Integer id, BigInteger result, DLogProofUtils.Proof proof, CipherText cipherText, int votes) {
+    public PartialResult(Integer id, BigInteger result, DLogProofUtils.Proof proof, CipherText cipherText) {
         this.id = id;
         this.result = result;
         this.proof = proof;

@@ -3,7 +3,7 @@
     <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
     <option name="MAIN_CLASS_NAME" value="dk.mmj.eevhe.Main" />
     <module name="eevhe" />
-    <option name="PROGRAM_PARAMETERS" value="--integrationTest --duration=2 --vote -start -end -after" />
+    <option name="PROGRAM_PARAMETERS" value="--integrationTest --duration=3 --vote -start -end -after" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

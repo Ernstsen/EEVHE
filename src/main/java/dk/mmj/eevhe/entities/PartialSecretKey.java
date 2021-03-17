@@ -13,6 +13,10 @@ public class PartialSecretKey {
     public PartialSecretKey() {
     }
 
+    /**
+     * @param secretValue     secret value, output of the DKG protocol
+     * @param p               prime p
+     */
     public PartialSecretKey(BigInteger secretValue, BigInteger p) {
         this.secretValue = secretValue;
         this.p = p;
@@ -31,12 +35,19 @@ public class PartialSecretKey {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         PartialSecretKey that = (PartialSecretKey) o;
-        return Objects.equals(secretValue, that.secretValue) &&
-                Objects.equals(p, that.p);
+        return Objects.equals(secretValue, that.secretValue) && Objects.equals(p, that.p);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(secretValue, p);
+    }
+
+    @Override
+    public String toString() {
+        return "PartialSecretKey{" +
+                "secretValue=" + secretValue +
+                ", p=" + p +
+                '}';
     }
 }

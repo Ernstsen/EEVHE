@@ -1,49 +1,78 @@
 package dk.mmj.eevhe.server.decryptionauthority;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dk.eSoftware.commandLineParser.Configuration;
+import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.client.FetchingUtilities;
-import dk.mmj.eevhe.crypto.ElGamal;
-import dk.mmj.eevhe.crypto.SecurityUtils;
-import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
+import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
+import dk.mmj.eevhe.crypto.signature.CertificateHelper;
+import dk.mmj.eevhe.crypto.signature.CertificateProviderImpl;
+import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.interfaces.Decrypter;
+import dk.mmj.eevhe.protocols.GennaroDKG;
+import dk.mmj.eevhe.protocols.connectors.BulletinBoardBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.RestPeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.ServerStateIncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.interfaces.DKG;
 import dk.mmj.eevhe.server.AbstractServer;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
 public class DecryptionAuthority extends AbstractServer {
-    private static final Logger logger = LogManager.getLogger(DecryptionAuthority.class);
-    private static final String RSA_PUBLIC_KEY_NAME = "rsa";
-    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private final Logger logger;
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
     private final JerseyWebTarget bulletinBoard;
+    private final int port;
+    private final Integer id;
+    private final KeyGenParams params;
+    private final DecryptionAuthorityInput input;
+    private final long endTime;
+    private final List<Candidate> candidates;
+    private String certString;
+    private AsymmetricKeyParameter electionPk;
+    private AsymmetricKeyParameter sk;
+    private Decrypter decrypter;
+    private DKG<PartialKeyPair> dkg;
     private boolean timeCorrupt = false;
-    private PartialSecretKey sk;
-    private int port = 8081;
-    private long endTime;
-    private PublicKey pk;
-    private Integer id;
+    private Iterator<DKG.Step> dkgSteps;
+    private PartialKeyPair keyPair;
 
     public DecryptionAuthority(DecryptionAuthorityConfiguration configuration) {
-        if (configuration.port != null) {
-            port = configuration.port;
-        }
+        logger = LogManager.getLogger(DecryptionAuthority.class + " " + configuration.id + ":");
+        port = configuration.port;
+        id = configuration.id;
 
         if (configuration.timeCorrupt > 0) {
             timeCorrupt = true;
@@ -51,52 +80,174 @@ public class DecryptionAuthority extends AbstractServer {
 
         bulletinBoard = configureWebTarget(logger, configuration.bulletinBoard);
 
-        File conf = new File(configuration.confPath);
-        if (!conf.exists() || !conf.isFile()) {
-            logger.error("Configuration file either did not exists or were not a file. Path: " + conf.getAbsolutePath() + "\nTerminating");
-            System.exit(-1);
+        Path conf = Paths.get(configuration.confPath);
+        if (!Files.exists(conf) || !Files.exists(conf)) {
+            logger.error("Configuration folder either did not exists or were not a folder. Path: " + conf + "\n");
+            terminate();
+        }
+
+        Path privateInput = conf.resolve("DA" + id + ".zip");
+        logger.info("Reading private input from file: " + privateInput);
+        try (ZipFile zipFile = new ZipFile(privateInput.toFile())) {
+            ZipEntry skEntry = zipFile.getEntry("sk.pem");
+            ZipEntry certEntry = zipFile.getEntry("cert.pem");
+
+            try (InputStream is = zipFile.getInputStream(skEntry)) {
+                sk = KeyHelper.readKey(IOUtils.toByteArray(is));
+            }
+
+            try (InputStream is = zipFile.getInputStream(certEntry)) {
+                certString = new String(IOUtils.toByteArray(is));
+            }
+
+        } catch (IOException e) {
+            logger.error("Error occurred while reading private input file from " + privateInput, e);
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            candidates = mapper.readValue(conf.resolve("candidates.json").toFile(), new TypeReference<List<Candidate>>() {
+            });
+        } catch (IOException e) {
+            logger.error("Unable to read candidates from file: " + conf.resolve("candidates.json"));
+            throw new RuntimeException("Failed to load file for candidates", e);
         }
 
 
-        try (FileInputStream ous = new FileInputStream(conf)) {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(ous));
+        try {
+            input = mapper.readValue(conf.resolve("common_input.json").toFile(), DecryptionAuthorityInput.class);
 
-            id = Integer.parseInt(reader.readLine());
-            BigInteger secretValue = new BigInteger(reader.readLine());
-            BigInteger p = new BigInteger(reader.readLine());
-            String publicKeyString = reader.readLine();
-            String endTimeString = reader.readLine();
-
-            pk = new ObjectMapper().readValue(publicKeyString, PublicKey.class);
-
-
-            sk = new PartialSecretKey(secretValue, p);
-            endTime = Long.parseLong(endTimeString);
+            BigInteger p = new BigInteger(Hex.decode(input.getpHex()));
+            BigInteger g = new BigInteger(Hex.decode(input.getgHex()));
+            BigInteger e = new BigInteger(Hex.decode(input.geteHex()));
+            BigInteger q = p.subtract(BigInteger.ONE).divide(BigInteger.valueOf(2));
+            params = new KeyGenParams(p, q, g, e);
+            endTime = input.getEndTime();
             long relativeEndTime = endTime - new Date().getTime();
 
             if (timeCorrupt) {
                 relativeEndTime -= configuration.timeCorrupt; //30 sec.
             }
 
-            scheduler.schedule(this::terminateVoting, relativeEndTime, TimeUnit.MILLISECONDS);
+            if (input.getInfos().stream().anyMatch(i -> i.getId() == 0)) {
+                logger.error("Found DA with id=0, which is illegal!. Terminating");
+                terminate();
+                return;
+            }
 
-        } catch (JsonProcessingException e) {
-            logger.error("Unable to deserialize public key. Terminating", e);
-            System.exit(-1);
-        } catch (FileNotFoundException e) {
-            logger.error("Configuration file not found. Terminating", e);
-            System.exit(-1);
+            electionPk = CertificateHelper
+                    .getPublicKeyFromCertificate(input.getEncodedElectionCertificate().getBytes(StandardCharsets.UTF_8));
+
+            scheduler.schedule(this::terminateVoting, relativeEndTime, TimeUnit.MILLISECONDS);
         } catch (IOException e) {
-            logger.error("Unable to read configuration file. Terminating", e);
-            System.exit(-1);
+            logger.error("Failed to read authorities input file", e);
+            throw new RuntimeException("Failed to read DecryptionAuthorityInput from file", e);
         }
     }
 
+    @Override
+    protected void afterStart() {
+        logger.info("Posting ");
+        Entity<SignedEntity<CertificateDTO>> entity = Entity.entity(
+                new SignedEntity<>(new CertificateDTO(certString, id), sk),
+                MediaType.APPLICATION_JSON);
+        bulletinBoard.path("certificates").request().post(entity);
+
+        logger.info("Starting keyGeneration protocol for DA id=" + id);
+        scheduler.execute(this::scheduleDKG);
+    }
+
+    /**
+     * Initializes the key-generation protocol by sending polynomial to the other peers,
+     * and awaiting input from the other authorities
+     */
+    private void scheduleDKG() {
+        logger.info("Started keygen protocol for DA with id=" + id);
+        Map<Integer, PeerCommunicator> communicators = input.getInfos()
+                .stream()
+                .collect(Collectors.toMap(DecryptionAuthorityInfo::getId, inf -> new RestPeerCommunicator(configureWebTarget(logger, inf.getAddress()), sk)));
+        communicators.remove(id);//We remove ourself, to be able to iterate without
+        CertificateProviderImpl certProvider = new CertificateProviderImpl(this::getCertificates, electionPk);
+        final ServerStateIncomingChannel incoming = new ServerStateIncomingChannel(
+                input.getInfos().stream()
+                        .map(DecryptionAuthorityInfo::getId)
+                        .map(this::partialSecretKey)
+                        .collect(Collectors.toList()),
+                certProvider
+        );
+
+        dkg = new GennaroDKG(new BulletinBoardBroadcaster(bulletinBoard, sk, certProvider),
+                incoming, communicators, id, params, "ID:" + id);
+        dkgSteps = dkg.getSteps().iterator();
+
+        logger.info("scheduling verification of received values. DA with id=" + id);
+
+        executeDKGStep();
+    }
+
+    /**
+     * Fetches certificates
+     *
+     * @return list of signed certificates
+     */
+    private List<SignedEntity<CertificateDTO>> getCertificates() {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String certificates = bulletinBoard.path("certificates").request().get(String.class);
+            return mapper.readValue(certificates, new TypeReference<List<SignedEntity<CertificateDTO>>>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to fetch certificates", e);
+        }
+    }
+
+    /**
+     * Step execution logic - schedules step, and extracts output when DKG is finished
+     */
+    private void executeDKGStep() {
+        if (dkgSteps.hasNext()) {
+            DKG.Step step = dkgSteps.next();
+            scheduler.schedule(stepWrapper(step), step.getDelay(), step.getTimeUnit());
+        } else {
+            logger.info("Retrieving keys from DKG and sending to BulletinBoard");
+            keyPair = dkg.output();
+            PartialPublicInfo ppi = new PartialPublicInfo(
+                    id, keyPair.getPublicKey(),
+                    keyPair.getPartialPublicKey(),
+                    candidates, endTime, certString
+            );
+
+            decrypter = new DecrypterImpl(id,
+                    () -> FetchingUtilities.getBallots(logger, bulletinBoard),
+                    b -> VoteProofUtils.verifyBallot(b, keyPair.getPublicKey()),
+                    candidates
+            );
+
+            Response resp = bulletinBoard.path("publicInfo").request().post(Entity.entity(new SignedEntity<>(ppi, sk), MediaType.APPLICATION_JSON));
+            if (resp.getStatus() != 204) {
+                logger.error("Failed to post public info to bulletinBoard! Status was: " + resp.getStatus());
+            }
+        }
+    }
+
+    /**
+     * Runs step and then schedules next
+     *
+     * @param step step to execute
+     */
+    private Runnable stepWrapper(final DKG.Step step) {
+        return () -> {
+            step.getExecutable().run();
+            executeDKGStep();
+        };
+    }
+
+    private String partialSecretKey(Integer id) {
+        return this.id + "secret:" + id;
+    }
 
     private void terminateVoting() {
         Long bulletinBoardTime = new Long(bulletinBoard.path("getCurrentTime").request().get(String.class));
-        PublicInformationEntity pi = FetchingUtilities.fetchPublicInfo(logger, RSA_PUBLIC_KEY_NAME, bulletinBoard);
-        List<Candidate> candidates = pi.getCandidates();
 
         long remainingTime = endTime - bulletinBoardTime;
 
@@ -106,94 +257,23 @@ public class DecryptionAuthority extends AbstractServer {
             return;
         }
 
-        logger.info("Terminating voting - Fetching ballots");
-        List<PersistedBallot> ballots = getBallots();
-
-        if (ballots == null || ballots.size() < 1) {
-            logger.error("No votes registered. Terminating server without result");
-            terminate();
+        PartialResultList res = decrypter.generatePartialResult(endTime, keyPair);
+        if (res == null) {
+            logger.info("No result to post");
             return;
         }
 
-        logger.info("Verifying ballots");
-        ballots = ballots.parallelStream()
-                .filter(v -> v.getTs().getTime() < endTime)
-                .filter(b -> VoteProofUtils.verifyBallot(b, pk)).collect(Collectors.toList());
-
-
-        logger.info("Summing votes");
-        Map<Integer, List<CandidateVoteDTO>> votes = new HashMap<>(candidates.size());
-        ballots.forEach(b -> {
-            for (int i = 0; i < candidates.size(); i++) {
-                List<CandidateVoteDTO> lst = votes.computeIfAbsent(i, j -> new ArrayList<>());
-                lst.add(b.getCandidateVotes().get(i));
-            }
-        });
-
-        CipherText[] sums = new CipherText[candidates.size()];
-
-        for (int i = 0; i < candidates.size(); i++) {
-            sums[i] = SecurityUtils.concurrentVoteSum(votes.get(i), pk, 1000);
-        }
-
-        logger.info("Beginning partial decryption");
-
-        BigInteger[] results = new BigInteger[candidates.size()];
-        for (int i = 0; i < candidates.size(); i++) {
-            results[i] = ElGamal.partialDecryption(sums[i].getC(), sk.getSecretValue(), sk.getP());
-        }
-
-        logger.info("Partially decrypted value. Generating proof");
-
-        PublicKey partialPublicKey = new PublicKey(pk.getG().modPow(sk.getSecretValue(), sk.getP()), pk.getG(), pk.getQ());
-
-        DLogProofUtils.Proof[] proofs = new DLogProofUtils.Proof[candidates.size()];
-        for (int i = 0; i < candidates.size(); i++) {
-            proofs[i] = DLogProofUtils.generateProof(sums[i], sk.getSecretValue(), partialPublicKey, id);
-        }
-
         logger.info("Posting to bulletin board");
-        ArrayList<PartialResult> partialResults = new ArrayList<>();
-        for (int i = 0; i < candidates.size(); i++) {
-            partialResults.add(new PartialResult(id, results[i], proofs[i], sums[i], ballots.size()));
-        }
-
-        Entity<PartialResultList> resultEntity = Entity.entity(new PartialResultList(partialResults, ballots.size()), MediaType.APPLICATION_JSON);
+        Entity<SignedEntity<PartialResultList>> resultEntity = Entity.entity(new SignedEntity<>(res, sk), MediaType.APPLICATION_JSON);
         Response post = bulletinBoard.path("result").request().post(resultEntity);
 
         if (post.getStatus() < 200 || post.getStatus() > 300) {
             logger.error("Unable to post result to bulletinBoard, got response:" + post);
-            System.exit(-1);
+            throw new RuntimeException("Unable to post result to bulletinBoard, got response:" + post);
         } else {
             logger.info("Successfully transferred partial decryption to bulletin board");
         }
 
-    }
-
-    /**
-     * Retrieves cast ballots from BulletinBoard
-     *
-     * @return list of ballots from BulletinBoard
-     */
-    private List<PersistedBallot> getBallots() {
-        try {
-            String getVotes = bulletinBoard.path("getBallots").request().get(String.class);
-            BallotList voteObjects = new ObjectMapper().readValue(getVotes, BallotList.class);
-            ArrayList<PersistedBallot> ballots = new ArrayList<>();
-
-            for (Object ballot : voteObjects.getBallots()) {
-                if (ballot instanceof PersistedBallot) {
-                    ballots.add((PersistedBallot) ballot);
-                } else {
-                    logger.error("Found ballot that was not correct class. Was " + ballot.getClass() + ". Terminating server");
-                    terminate();
-                }
-            }
-            return ballots;
-        } catch (IOException e) {
-            logger.error("Failed to read BallotList from JSON string", e);
-            return null;
-        }
     }
 
     @Override
@@ -211,17 +291,68 @@ public class DecryptionAuthority extends AbstractServer {
     /**
      * Configuration for a DecryptionAuthority
      */
-    public static class DecryptionAuthorityConfiguration implements Configuration {
-        private final Integer port;
+    public static class DecryptionAuthorityConfiguration extends AbstractInstanceCreatingConfiguration<DecryptionAuthority> {
+        private final int port;
         private final String bulletinBoard;
         private final String confPath;
         private final int timeCorrupt;
+        private final int id;
 
-        DecryptionAuthorityConfiguration(Integer port, String bulletinBoard, String confPath, int timeCorrupt) {
+        DecryptionAuthorityConfiguration(int port, String bulletinBoard, String confPath, int id, int timeCorrupt) {
+            super(DecryptionAuthority.class);
             this.port = port;
             this.bulletinBoard = bulletinBoard;
+            this.id = id;
             this.confPath = confPath;
             this.timeCorrupt = timeCorrupt;
+        }
+
+        public int getPort() {
+            return port;
+        }
+
+        public String getBulletinBoard() {
+            return bulletinBoard;
+        }
+
+        public String getConfPath() {
+            return confPath;
+        }
+
+        public int getTimeCorrupt() {
+            return timeCorrupt;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+    }
+
+    public static class KeyGenParams implements ExtendedKeyGenerationParameters {
+        private final PrimePair pair;
+        private final BigInteger generator;
+        private final BigInteger groupElement;
+
+        public KeyGenParams(BigInteger p, BigInteger q, BigInteger generator, BigInteger groupElement) {
+            this.pair = new PrimePair(p, q);
+            this.generator = generator;
+            this.groupElement = groupElement;
+        }
+
+        @Override
+        public PrimePair getPrimePair() {
+            return pair;
+        }
+
+        @Override
+        public BigInteger getGenerator() {
+            return generator;
+        }
+
+        @Override
+        public BigInteger getGroupElement() {
+            return groupElement;
         }
     }
 }
