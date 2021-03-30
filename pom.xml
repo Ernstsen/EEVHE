@@ -5,7 +5,7 @@
 
     <groupId>dk.mmj</groupId>
     <artifactId>eevhe</artifactId>
-    <version>2.2.2-SNAPSHOT</version>
+    <version>2.2.3-SNAPSHOT</version>
     <name>${project.groupId}:${project.artifactId}</name>
     <url>https://github.com/Ernstsen/EEVHE</url>
     <description>Extended Electronic Voting using Homomorphic Encryption</description>
