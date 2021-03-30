@@ -40,6 +40,27 @@ public class Voter extends Client {
     }
 
     /**
+     * Constructor for using voter as part of the system, such as a GUI
+     *
+     * @param targetUrl url for the Bulletin Board
+     * @param id        voter ID
+     */
+    public Voter(String targetUrl, String id) {
+        super(new VoterConfiguration(targetUrl, id, null, null));
+        this.id = id;
+        this.vote = null;
+        multi = null;
+    }
+
+    /**
+     * @param vote index of the candidate to vote for
+     * @return whether the vote was successful
+     */
+    public boolean vote(Integer vote) {
+        return doVote(vote, getPublicKey());
+    }
+
+    /**
      * Fetches the public key from the public server, and casts vote.
      * <br>
      * if <code>multi</code> is set it casts <code>multi</code> random votes, for testing purposes.
@@ -70,7 +91,7 @@ public class Voter extends Client {
         castVotes = new int[size];
         Arrays.fill(castVotes, 0);
 
-        for (int i = 0; i < multi; i++) {
+        for (int i = 0; multi != null && i < multi; i++) {
             System.out.print("Dispatching votes: " + i + "/" + multi + " \r");
 
             id = UUID.randomUUID().toString();
@@ -94,12 +115,13 @@ public class Voter extends Client {
      *
      * @param publicKey is the public key used to encrypt the vote.
      * @param vote      is the vote to be cast, either 0 or 1.
+     * @return whether vote was successfully cast
      */
-    private void doVote(int vote, PublicKey publicKey) {
+    private boolean doVote(int vote, PublicKey publicKey) {
         int candidateCount = getCandidates().size();
 
         BallotDTO ballot = SecurityUtils.generateBallot(vote, candidateCount, id, publicKey);
-        postBallot(ballot);
+        return postBallot(ballot);
     }
 
     /**
@@ -108,6 +130,15 @@ public class Voter extends Client {
      * Throws a {@link RuntimeException} if this is not the case.
      */
     private void assertBulletinBoard() {
+        if (!checkBulletinBoard()) {
+            throw new RuntimeException("Server was not of type bulletinBoard");
+        }
+    }
+
+    /**
+     * @return whether the client points at a bulletin board
+     */
+    public boolean checkBulletinBoard() {
         Response publicServerResp = target.path("type").request().buildGet().invoke();
 
         if (publicServerResp.getStatus() != 200) {
@@ -116,24 +147,24 @@ public class Voter extends Client {
         }
 
         String responseEntity = publicServerResp.readEntity(String.class);
-
-        if (!responseEntity.contains("Bulletin Board")) {
-            throw new RuntimeException("Server was not of type bulletinBoard");
-        }
+        return responseEntity.contains("Bulletin Board");
     }
 
     /**
      * Posts the encrypted vote to the public server, using the "/vote" path.
      *
      * @param ballot the ballot with vote encrypted under the public key, and zero knowledge proofs.
+     * @return whether post was a success
      */
-    private void postBallot(BallotDTO ballot) {
+    private boolean postBallot(BallotDTO ballot) {
         Entity<?> entity = Entity.entity(ballot, MediaType.APPLICATION_JSON_TYPE);
         Response response = target.path("postBallot").request().post(entity);
 
         if (response.getStatus() != 204) {
             logger.warn("Failed to post vote to server: Error code was " + response.getStatus());
+            return false;
         }
+        return true;
     }
 
     /**

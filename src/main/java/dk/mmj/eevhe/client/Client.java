@@ -50,7 +50,7 @@ public abstract class Client implements Application {
     /**
      * @return the list of candidates in the election
      */
-    protected List<Candidate> getCandidates() {
+    public List<Candidate> getCandidates() {
         PartialPublicInfo info = fetchPublicInfo();
         if (info == null) {
             return null;
