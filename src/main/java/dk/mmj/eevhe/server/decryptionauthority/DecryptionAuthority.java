@@ -13,10 +13,10 @@ import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.interfaces.Decrypter;
 import dk.mmj.eevhe.protocols.GennaroDKG;
-import dk.mmj.eevhe.protocols.connectors.BulletinBoardBroadcaster;
-import dk.mmj.eevhe.protocols.connectors.RestPeerCommunicator;
-import dk.mmj.eevhe.protocols.connectors.ServerStateIncomingChannel;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.BulletinBoardDKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.RestDKGPeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.ServerStateDKGIncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.DKG;
 import dk.mmj.eevhe.server.AbstractServer;
 import org.apache.commons.compress.utils.IOUtils;
@@ -163,12 +163,12 @@ public class DecryptionAuthority extends AbstractServer {
      */
     private void scheduleDKG() {
         logger.info("Started keygen protocol for DA with id=" + id);
-        Map<Integer, PeerCommunicator> communicators = input.getInfos()
+        Map<Integer, DKGPeerCommunicator> communicators = input.getInfos()
                 .stream()
-                .collect(Collectors.toMap(DecryptionAuthorityInfo::getId, inf -> new RestPeerCommunicator(configureWebTarget(logger, inf.getAddress()), sk)));
+                .collect(Collectors.toMap(DecryptionAuthorityInfo::getId, inf -> new RestDKGPeerCommunicator(configureWebTarget(logger, inf.getAddress()), sk)));
         communicators.remove(id);//We remove ourself, to be able to iterate without
         CertificateProviderImpl certProvider = new CertificateProviderImpl(this::getCertificates, electionPk);
-        final ServerStateIncomingChannel incoming = new ServerStateIncomingChannel(
+        final ServerStateDKGIncomingChannel incoming = new ServerStateDKGIncomingChannel(
                 input.getInfos().stream()
                         .map(DecryptionAuthorityInfo::getId)
                         .map(this::partialSecretKey)
@@ -176,7 +176,7 @@ public class DecryptionAuthority extends AbstractServer {
                 certProvider
         );
 
-        dkg = new GennaroDKG(new BulletinBoardBroadcaster(bulletinBoard, sk, certProvider),
+        dkg = new GennaroDKG(new BulletinBoardDKGBroadcaster(bulletinBoard, sk, certProvider),
                 incoming, communicators, id, params, "ID:" + id);
         dkgSteps = dkg.getSteps().iterator();
 

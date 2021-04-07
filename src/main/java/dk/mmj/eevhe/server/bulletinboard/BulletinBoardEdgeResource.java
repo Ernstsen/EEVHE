@@ -14,8 +14,8 @@ import java.util.*;
 import static dk.mmj.eevhe.server.bulletinboard.BulletinBoard.*;
 
 @Path("/")
-public class BulletinBoardResource {
-    private final static Logger logger = LogManager.getLogger(BulletinBoardResource.class);
+public class BulletinBoardEdgeResource {
+    private final static Logger logger = LogManager.getLogger(BulletinBoardEdgeResource.class);
     private final ServerState state = ServerState.getInstance();
 
     @GET

@@ -5,7 +5,7 @@ import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.entities.SignedEntity;
-import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGIncomingChannel;
 import dk.mmj.eevhe.server.ServerState;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -33,8 +33,8 @@ import java.util.stream.Collectors;
 import static java.math.BigInteger.valueOf;
 import static org.junit.Assert.assertEquals;
 
-public class TestServerStateIncomingChannel extends TestUsingBouncyCastle {
-    private IncomingChannel channel;
+public class TestServerStateDKGIncomingChannel extends TestUsingBouncyCastle {
+    private DKGIncomingChannel channel;
     private ArrayList<SignedEntity<PartialSecretMessageDTO>> expected;
 
     @Before
@@ -80,7 +80,7 @@ public class TestServerStateIncomingChannel extends TestUsingBouncyCastle {
         HashMap<Integer, String> certMap = new HashMap<>();
         certMap.put(1, CertificateHelper.certificateToPem(daOneCert));
 
-        channel = new ServerStateIncomingChannel(ids, () -> certMap);
+        channel = new ServerStateDKGIncomingChannel(ids, () -> certMap);
     }
 
     @Test

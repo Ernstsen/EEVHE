@@ -6,9 +6,9 @@ import dk.mmj.eevhe.entities.CommitmentDTO;
 import dk.mmj.eevhe.entities.ComplaintResolveDTO;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.entities.PedersenComplaintDTO;
-import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
-import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGIncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.VSS;
 
 import java.math.BigInteger;
@@ -34,8 +34,8 @@ public class PedersenVSS extends AbstractVSS implements VSS {
     private final Map<Integer, BigInteger[]> commitments = new HashMap<>();
 
 
-    public PedersenVSS(Broadcaster broadcaster, IncomingChannel incoming,
-                       Map<Integer, PeerCommunicator> peerCommunicatorMap,
+    public PedersenVSS(DKGBroadcaster broadcaster, DKGIncomingChannel incoming,
+                       Map<Integer, DKGPeerCommunicator> peerCommunicatorMap,
                        int id, ExtendedKeyGenerationParameters params, String logPrefix, BigInteger[] pol1, BigInteger[] pol2) {
         super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);
         this.t = ((peerMap.size()) / 2);
@@ -68,7 +68,7 @@ public class PedersenVSS extends AbstractVSS implements VSS {
         for (Integer target : peerMap.keySet()) {
             BigInteger val1 = SecurityUtils.evaluatePolynomial(pol1, target);
             BigInteger val2 = SecurityUtils.evaluatePolynomial(pol2, target);
-            PeerCommunicator communicator = this.peerMap.get(target);
+            DKGPeerCommunicator communicator = this.peerMap.get(target);
 
             communicator.sendSecret(new PartialSecretMessageDTO(val1, val2, target, id));
         }

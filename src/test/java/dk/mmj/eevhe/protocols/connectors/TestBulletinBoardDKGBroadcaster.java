@@ -6,7 +6,7 @@ import dk.mmj.eevhe.TestUsingBouncyCastle;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGBroadcaster;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
@@ -42,10 +42,10 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TestBulletinBoardBroadcaster extends TestUsingBouncyCastle {
+public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
     private final HashMap<String, WebTarget> targets = new HashMap<>();
     private WebTarget target;
-    private Broadcaster broadcaster;
+    private DKGBroadcaster broadcaster;
     private X509CertificateHolder daOneCert;
     private AsymmetricKeyParameter daOneSk;
 
@@ -105,7 +105,7 @@ public class TestBulletinBoardBroadcaster extends TestUsingBouncyCastle {
 
         HashMap<Integer, String> certMap = new HashMap<>();
         certMap.put(1, CertificateHelper.certificateToPem(daOneCert));
-        broadcaster = new BulletinBoardBroadcaster(target, daOneSk, () -> certMap);
+        broadcaster = new BulletinBoardDKGBroadcaster(target, daOneSk, () -> certMap);
 
     }
 

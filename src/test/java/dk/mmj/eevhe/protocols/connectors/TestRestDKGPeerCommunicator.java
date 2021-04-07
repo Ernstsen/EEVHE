@@ -23,16 +23,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TestRestPeerCommunicator {
+public class TestRestDKGPeerCommunicator {
     private WebTarget peer;
     private WebTarget target;
-    private RestPeerCommunicator communicator;
+    private RestDKGPeerCommunicator communicator;
 
     @Before
     public void setUp() throws Exception {
         peer = mock(WebTarget.class);
         AsymmetricKeyParameter sk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
-        communicator = new RestPeerCommunicator(peer, sk);
+        communicator = new RestDKGPeerCommunicator(peer, sk);
         target = mock(WebTarget.class);
 
         when(peer.path("partialSecret")).thenReturn(target);

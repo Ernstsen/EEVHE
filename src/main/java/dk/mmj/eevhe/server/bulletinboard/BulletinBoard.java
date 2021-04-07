@@ -32,7 +32,7 @@ public class BulletinBoard extends AbstractServer {
     protected void configure(ServletHolder servletHolder) {
         servletHolder.setInitParameter(
                 "jersey.config.server.provider.classnames",
-                BulletinBoardResource.class.getCanonicalName() + ";" + "org.glassfish.jersey.jackson.JacksonFeature");
+                BulletinBoardEdgeResource.class.getCanonicalName() + ";" + "org.glassfish.jersey.jackson.JacksonFeature");
 
         initializeVoting();
     }

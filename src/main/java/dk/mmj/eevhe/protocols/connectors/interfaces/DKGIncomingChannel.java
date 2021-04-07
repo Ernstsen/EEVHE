@@ -9,9 +9,9 @@ import java.util.List;
  * <br>
  * This interface allows the DKG implementation to access information sent directly to it.
  * <br>
- * Broadcasts must be read through {@link Broadcaster}
+ * Broadcasts must be read through {@link DKGBroadcaster}
  */
-public interface IncomingChannel {
+public interface DKGIncomingChannel {
 
 
     /**

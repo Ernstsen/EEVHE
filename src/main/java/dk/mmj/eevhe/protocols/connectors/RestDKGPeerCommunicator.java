@@ -2,7 +2,7 @@ package dk.mmj.eevhe.protocols.connectors;
 
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.entities.SignedEntity;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
@@ -15,8 +15,8 @@ import javax.ws.rs.core.Response;
 /**
  * Rest implementation of PeerCommunicator
  */
-public class RestPeerCommunicator implements PeerCommunicator {
-    private final Logger logger = LogManager.getLogger(RestPeerCommunicator.class);
+public class RestDKGPeerCommunicator implements DKGPeerCommunicator {
+    private final Logger logger = LogManager.getLogger(RestDKGPeerCommunicator.class);
     private final WebTarget target;
     private final AsymmetricKeyParameter sk;
 
@@ -26,7 +26,7 @@ public class RestPeerCommunicator implements PeerCommunicator {
      * @param target webTarget for communication
      * @param sk     secretKey used in signing outgoing messages
      */
-    public RestPeerCommunicator(WebTarget target, AsymmetricKeyParameter sk) {
+    public RestDKGPeerCommunicator(WebTarget target, AsymmetricKeyParameter sk) {
         this.target = target;
         this.sk = sk;
     }

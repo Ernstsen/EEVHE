@@ -6,7 +6,7 @@ import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 /**
  * Enables sending messages to a single peer, in a DKG protocol
  */
-public interface PeerCommunicator {
+public interface DKGPeerCommunicator {
 
     /**
      * Sends a secret value to the communicator

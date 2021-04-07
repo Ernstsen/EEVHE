@@ -4,7 +4,7 @@ import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.entities.SignedEntity;
 import dk.mmj.eevhe.interfaces.CertificateProvider;
-import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGIncomingChannel;
 import dk.mmj.eevhe.server.ServerState;
 
 import java.nio.charset.StandardCharsets;
@@ -16,14 +16,14 @@ import java.util.Objects;
 /**
  * Reads {@link ServerState} to determine incoming messages
  */
-public class ServerStateIncomingChannel implements IncomingChannel {
+public class ServerStateDKGIncomingChannel implements DKGIncomingChannel {
     private final List<String> ids;
     private final CertificateProvider certProvider;
 
     /**
      * @param ids list of ids that the messages might be saved under
      */
-    public ServerStateIncomingChannel(List<String> ids, CertificateProvider certProvider) {
+    public ServerStateDKGIncomingChannel(List<String> ids, CertificateProvider certProvider) {
         this.ids = ids;
         this.certProvider = certProvider;
     }

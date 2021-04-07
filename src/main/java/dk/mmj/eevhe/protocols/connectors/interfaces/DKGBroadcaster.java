@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Enables reading/writing to a 'broadcast' channel in a DKG protocol
  */
-public interface Broadcaster {
+public interface DKGBroadcaster {
 
 
     /**

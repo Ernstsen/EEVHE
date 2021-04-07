@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.interfaces.CertificateProvider;
-import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGBroadcaster;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
@@ -19,8 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class BulletinBoardBroadcaster implements Broadcaster {
-    private final Logger logger = LogManager.getLogger(BulletinBoardBroadcaster.class);
+public class BulletinBoardDKGBroadcaster implements DKGBroadcaster {
+    private final Logger logger = LogManager.getLogger(BulletinBoardDKGBroadcaster.class);
     private final ObjectMapper mapper = new ObjectMapper();
 
     private final WebTarget target;
@@ -32,9 +32,9 @@ public class BulletinBoardBroadcaster implements Broadcaster {
      * @param secretKey    secret key, used in signing all outgoing data
      * @param certProvider provider for the certificates used in verification
      */
-    public BulletinBoardBroadcaster(WebTarget target,
-                                    AsymmetricKeyParameter secretKey,
-                                    CertificateProvider certProvider) {
+    public BulletinBoardDKGBroadcaster(WebTarget target,
+                                       AsymmetricKeyParameter secretKey,
+                                       CertificateProvider certProvider) {
         this.target = target;
         this.secretKey = secretKey;
         this.certProvider = certProvider;

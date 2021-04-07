@@ -1,13 +1,13 @@
 package dk.mmj.eevhe.protocols.connectors;
 
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
-import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGIncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PrivateCommunicationChannel implements IncomingChannel, PeerCommunicator {
+public class PrivateCommunicationChannelDKG implements DKGIncomingChannel, DKGPeerCommunicator {
     private final List<PartialSecretMessageDTO> messages = new ArrayList<>();
 
     @Override

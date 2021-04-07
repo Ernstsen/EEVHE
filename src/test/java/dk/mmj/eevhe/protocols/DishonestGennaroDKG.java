@@ -3,9 +3,9 @@ package dk.mmj.eevhe.protocols;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.entities.PartialKeyPair;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
-import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
-import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGIncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 
 import java.util.*;
 
@@ -24,8 +24,8 @@ public class DishonestGennaroDKG extends GennaroDKG {
      * @param params              Key Generation Parameters: (g, p, q)
      * @param logPrefix           Prefix used for logging
      */
-    public DishonestGennaroDKG(Broadcaster broadcaster, IncomingChannel incoming,
-                               Map<Integer, PeerCommunicator> peerCommunicatorMap,
+    public DishonestGennaroDKG(DKGBroadcaster broadcaster, DKGIncomingChannel incoming,
+                               Map<Integer, DKGPeerCommunicator> peerCommunicatorMap,
                                int id, ExtendedKeyGenerationParameters params, String logPrefix,
                                boolean wrongCommitment, boolean noCommitment, boolean complainAgainstHonestParty) {
         super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);
@@ -61,7 +61,7 @@ public class DishonestGennaroDKG extends GennaroDKG {
         honestPartiesPedersen = pedersenVSS.getHonestParties();
         honestPartiesFeldman = new HashSet<>();
 
-        final Map<Integer, PeerCommunicator> honestPeers = new HashMap<>();
+        final Map<Integer, DKGPeerCommunicator> honestPeers = new HashMap<>();
         final Map<Integer, PartialSecretMessageDTO> secretsPedersen = pedersenVSS.getSecrets();
 
         DishonestGennaroFeldmanVSS feldmanVSS = new DishonestGennaroFeldmanVSS(broadcaster, incoming,
@@ -84,7 +84,7 @@ public class DishonestGennaroDKG extends GennaroDKG {
     }
 
     @Override
-    PartialKeyPair computeKeyPair(Broadcaster broadcaster, Set<Integer> honestParties, GennaroFeldmanVSS feldmanVSS) {
+    PartialKeyPair computeKeyPair(DKGBroadcaster broadcaster, Set<Integer> honestParties, GennaroFeldmanVSS feldmanVSS) {
         return super.computeKeyPair(broadcaster, honestParties, feldmanVSS);
     }
 
