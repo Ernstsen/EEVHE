@@ -6,6 +6,7 @@ import org.junit.runners.Suite;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
         TestByzantineAgreementProtocolImpl.class,
+        TestCompositeCommunicator.class,
         TestMultiValuedByzantineAgreementProtocolImpl.class,
         TestNotifyItem.class
 })

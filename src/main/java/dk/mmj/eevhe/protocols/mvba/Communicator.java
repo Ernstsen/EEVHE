@@ -24,11 +24,18 @@ public interface Communicator {
     void send(String BAId, Boolean msg);
 
     /**
+     * Registers a receiving handler for Strings.
+     * <br>
+     * Depending on implementation, only one, or multiple, can be registered at a time
      * @param onReceived handler for received string BAs
      */
     void registerOnReceivedString(BiConsumer<String, String> onReceived);
 
     /**
+     * Registers a receiving handler for booleans.
+     * <br>
+     * Depending on implementation, only one, or multiple, can be registered at a time
+     *
      * @param onReceived handler for received boolean BAs
      */
     void registerOnReceivedBoolean(BiConsumer<String, Boolean> onReceived);
