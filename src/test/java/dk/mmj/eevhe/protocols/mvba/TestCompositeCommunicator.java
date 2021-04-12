@@ -2,11 +2,11 @@ package dk.mmj.eevhe.protocols.mvba;
 
 import org.junit.Test;
 
-import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
 
 public class TestCompositeCommunicator {
 
@@ -15,19 +15,19 @@ public class TestCompositeCommunicator {
     public void allLambdasRespected() {
         Map<String, String> strings = new HashMap<>();
         Map<String, Boolean> bools = new HashMap<>();
-        List<BiConsumer<String, String>> onStrings = new ArrayList<>();
-        List<BiConsumer<String, Boolean>> onBools = new ArrayList<>();
+        Map<String, String> strings2 = new HashMap<>();
+        Map<String, Boolean> bools2 = new HashMap<>();
+
 
         String id = UUID.randomUUID().toString();
 
         CompositeCommunicator communicator = new CompositeCommunicator(
                 strings::put,
-                bools::put,
-                onStrings::add,
-                onBools::add
+                bools::put
         );
 
         String strVal = "someString";
+        String strVal2 = "someString2";
         Boolean boolVal = true;
         Boolean boolVal2 = false;
 
@@ -35,18 +35,16 @@ public class TestCompositeCommunicator {
         communicator.send(id, boolVal);
         communicator.send("id", boolVal2);
 
-        BiConsumer<String, String> onString = (s, s2) -> {
-        };
-        BiConsumer<String, Boolean> onBool = (s, b) -> {
-        };
+        communicator.registerOnReceivedString(strings2::put);
+        communicator.registerOnReceivedBoolean(bools2::put);
 
-        communicator.registerOnReceivedString(onString);
-        communicator.registerOnReceivedBoolean(onBool);
+        communicator.receive(id, strVal2);
+        communicator.receive(id, boolVal2);
 
-        assertSame("Failed to register onString handler", onString, onStrings.get(0));
-        assertSame("Failed to register onBool handler", onBool, onBools.get(0));
         assertEquals("String was not sent properly", strVal, strings.get(id));
         assertEquals("Bool was not sent properly", boolVal, bools.get(id));
         assertEquals("Bool was not sent properly", boolVal2, bools.get("id"));
+        assertEquals("String was not received properly", strVal2, strings2.get(id));
+        assertEquals("Bool was not received properly", boolVal2, bools2.get(id));
     }
 }

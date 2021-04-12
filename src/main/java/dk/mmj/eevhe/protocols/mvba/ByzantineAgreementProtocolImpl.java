@@ -22,6 +22,9 @@ class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<B
         String id = UUID.randomUUID().toString();
         communicator.send(id, message);
 
+        List<Boolean> conversation = received.computeIfAbsent(id, i -> new ArrayList<>());
+        conversation.add(message);
+
         BANotifyItem<Boolean> notifyItem = new BANotifyItem<>();
         notifyItems.put(id, notifyItem);
         return notifyItem;
@@ -37,10 +40,10 @@ class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<B
                 cnt[val ? 1 : 0] += 1;
             }
 
-            int idx = cnt[0] > peers - (2 * t) ? 0 : 1;
+            int idx = cnt[0] >= peers - (2 * t) ? 0 : 1;
 
             //Find d s.t. d_i = d for n-2t of values then v = true, else v=false
-            Boolean d = idx > peers - (2 * t) ? true : null;
+            Boolean d = cnt[idx] >= peers - (2 * t) ? true : null;
 
             BANotifyItem<Boolean> conclusion = notifyItems.get(id);
             conclusion.setAgreement(d);

@@ -23,6 +23,23 @@ public interface Communicator {
      */
     void send(String BAId, Boolean msg);
 
+
+    /**
+     * Communicator receives string msg for BA with ID
+     *
+     * @param BAId BA id
+     * @param msg message
+     */
+    void receive(String BAId, String msg);
+
+    /**
+     * Communicator receives boolean msg for BA with ID
+     *
+     * @param BAId BA id
+     * @param msg message
+     */
+    void receive(String BAId, Boolean msg);
+
     /**
      * Registers a receiving handler for Strings.
      * <br>
