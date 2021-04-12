@@ -45,6 +45,7 @@ class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<B
             BANotifyItem<Boolean> conclusion = notifyItems.get(id);
             conclusion.setAgreement(d);
             conclusion.setMessage(d);
+            conclusion.finish();
         }
     }
 }

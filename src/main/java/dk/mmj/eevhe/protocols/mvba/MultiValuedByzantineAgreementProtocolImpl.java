@@ -58,6 +58,7 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
                 //fail
                 conclusion.setAgreement(false);
             }
+            conclusion.finish();
         }
     }
 }
