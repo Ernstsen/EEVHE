@@ -18,12 +18,12 @@ class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<B
     }
 
     @Override
-    public BANotifyItem<Boolean> agree(Boolean message) {
+    public BANotifyItem<Boolean> agree(Boolean msg) {
         String id = UUID.randomUUID().toString();
-        communicator.send(id, message);
+        communicator.send(id, msg);
 
         List<Boolean> conversation = received.computeIfAbsent(id, i -> new ArrayList<>());
-        conversation.add(message);
+        conversation.add(msg);
 
         BANotifyItem<Boolean> notifyItem = new BANotifyItem<>();
         notifyItems.put(id, notifyItem);

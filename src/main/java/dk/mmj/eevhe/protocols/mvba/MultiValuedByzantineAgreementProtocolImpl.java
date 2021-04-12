@@ -20,9 +20,12 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
     }
 
     @Override
-    public BANotifyItem<String> agree(String message) {
+    public BANotifyItem<String> agree(String msg) {
         String id = UUID.randomUUID().toString();
-        communicator.send(id, message);
+        communicator.send(id, msg);
+
+        List<String> conversation = received.computeIfAbsent(id, i -> new ArrayList<>());
+        conversation.add(msg);
 
         BANotifyItem<String> notifyItem = new BANotifyItem<>();
         notifyItems.put(id, notifyItem);
@@ -41,24 +44,27 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
 
             //Find d s.t. d_i = d for n-2t of values then v = true, else v=false
             String d = countMap.entrySet().stream()
-                    .filter(e -> e.getValue() > peers - (2 * t))
+                    .filter(e -> e.getValue() >= peers - (2 * t))
                     .map(Map.Entry::getKey)
                     .findAny().orElse(null);
 
             BANotifyItem<Boolean> agree = singleValueBA.agree(d != null);
-            agree.waitForFinish();//TODO: Probably not wait in this thread?
-            boolean e = Boolean.TRUE.equals(agree.getAgreement());//Undecided defaults to false
 
-            BANotifyItem<String> conclusion = notifyItems.get(id);
-            if (e) {
-                //success
-                conclusion.setAgreement(true);
-                conclusion.setMessage(d);
-            } else {
-                //fail
-                conclusion.setAgreement(false);
-            }
-            conclusion.finish();
+            new Thread(() -> {
+                agree.waitForFinish();//TODO: Probably not wait in this thread?
+                boolean e = Boolean.TRUE.equals(agree.getAgreement());//Undecided defaults to false
+
+                BANotifyItem<String> conclusion = notifyItems.get(id);
+                if (e) {
+                    //success
+                    conclusion.setAgreement(true);
+                    conclusion.setMessage(d);
+                } else {
+                    //fail
+                    conclusion.setAgreement(false);
+                }
+                conclusion.finish();
+            }).start();
         }
     }
 }
