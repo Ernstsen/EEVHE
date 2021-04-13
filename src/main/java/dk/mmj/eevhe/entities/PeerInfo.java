@@ -2,23 +2,23 @@ package dk.mmj.eevhe.entities;
 
 import java.util.Objects;
 
-public class DecryptionAuthorityInfo {
+public class PeerInfo {
     private int id;
     private String address;
 
-    public DecryptionAuthorityInfo(int id, String address) {
+    public PeerInfo(int id, String address) {
         this.id = id;
         this.address = address;
     }
 
-    public DecryptionAuthorityInfo() {
+    public PeerInfo() {
     }
 
     public int getId() {
         return id;
     }
 
-    public DecryptionAuthorityInfo setId(int id) {
+    public PeerInfo setId(int id) {
         this.id = id;
         return this;
     }
@@ -27,7 +27,7 @@ public class DecryptionAuthorityInfo {
         return address;
     }
 
-    public DecryptionAuthorityInfo setAddress(String address) {
+    public PeerInfo setAddress(String address) {
         this.address = address;
         return this;
     }
@@ -36,7 +36,7 @@ public class DecryptionAuthorityInfo {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        DecryptionAuthorityInfo that = (DecryptionAuthorityInfo) o;
+        PeerInfo that = (PeerInfo) o;
         return id == that.id && Objects.equals(address, that.address);
     }
 

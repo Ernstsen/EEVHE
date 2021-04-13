@@ -165,12 +165,12 @@ public class DecryptionAuthority extends AbstractServer {
         logger.info("Started keygen protocol for DA with id=" + id);
         Map<Integer, DKGPeerCommunicator> communicators = input.getInfos()
                 .stream()
-                .collect(Collectors.toMap(DecryptionAuthorityInfo::getId, inf -> new RestDKGPeerCommunicator(configureWebTarget(logger, inf.getAddress()), sk)));
+                .collect(Collectors.toMap(PeerInfo::getId, inf -> new RestDKGPeerCommunicator(configureWebTarget(logger, inf.getAddress()), sk)));
         communicators.remove(id);//We remove ourself, to be able to iterate without
         CertificateProviderImpl certProvider = new CertificateProviderImpl(this::getCertificates, electionPk);
         final ServerStateDKGIncomingChannel incoming = new ServerStateDKGIncomingChannel(
                 input.getInfos().stream()
-                        .map(DecryptionAuthorityInfo::getId)
+                        .map(PeerInfo::getId)
                         .map(this::partialSecretKey)
                         .collect(Collectors.toList()),
                 certProvider

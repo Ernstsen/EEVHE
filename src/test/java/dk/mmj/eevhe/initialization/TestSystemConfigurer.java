@@ -6,7 +6,7 @@ import dk.mmj.eevhe.TestUsingBouncyCastle;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.signature.SignatureHelper;
-import dk.mmj.eevhe.entities.DecryptionAuthorityInfo;
+import dk.mmj.eevhe.entities.PeerInfo;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
 import org.apache.commons.compress.utils.IOUtils;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -74,9 +74,9 @@ public class TestSystemConfigurer extends TestUsingBouncyCastle {
             DecryptionAuthorityInput output = new ObjectMapper()
                     .readValue(dirPath.resolve("common_input.json").toFile(), DecryptionAuthorityInput.class);
 
-            List<DecryptionAuthorityInfo> infos = output.getInfos();
+            List<PeerInfo> infos = output.getInfos();
             Map<Integer, String> addresses = infos.stream()
-                    .collect(Collectors.toMap(DecryptionAuthorityInfo::getId, DecryptionAuthorityInfo::getAddress));
+                    .collect(Collectors.toMap(PeerInfo::getId, PeerInfo::getAddress));
 
             assertEquals("Wrong address for id=" + 1, addresses.get(1), "https://localhost:8081");
             assertEquals("Wrong address for id=" + 2, addresses.get(2), "https://localhost:8082");

@@ -7,7 +7,7 @@ import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParametersImpl;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
-import dk.mmj.eevhe.entities.DecryptionAuthorityInfo;
+import dk.mmj.eevhe.entities.PeerInfo;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,8 +68,8 @@ public class SystemConfigurer implements Application {
         String pHex = new String(Hex.encode(params.getPrimePair().getP().toByteArray()));
         String eHex = new String(Hex.encode(params.getGroupElement().toByteArray()));
 
-        List<DecryptionAuthorityInfo> daInfos = daAddresses.entrySet()
-                .stream().map(e -> new DecryptionAuthorityInfo(e.getKey(), e.getValue()))
+        List<PeerInfo> daInfos = daAddresses.entrySet()
+                .stream().map(e -> new PeerInfo(e.getKey(), e.getValue()))
                 .collect(Collectors.toList());
 
         String certPem;
@@ -104,7 +104,7 @@ public class SystemConfigurer implements Application {
         logger.info("Writing certificates");
         try {
             Date notAfter = new Date(endTime + (60 * 1000));
-            for (DecryptionAuthorityInfo daInfo : daInfos) {
+            for (PeerInfo daInfo : daInfos) {
                 KeyPair keyPair = KeyHelper.generateRSAKeyPair();
                 PublicKey pk = keyPair.getPublic();
                 PrivateKey sk = keyPair.getPrivate();

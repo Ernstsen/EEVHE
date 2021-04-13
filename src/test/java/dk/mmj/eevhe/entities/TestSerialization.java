@@ -89,8 +89,8 @@ public class TestSerialization {
         String cert = new String(Files.readAllBytes(Paths.get("certs/test_glob_key.pem")));
 
         serializables.add(new ResultList(Arrays.asList(new SignedEntity<>(partialResultList, sk), new SignedEntity<>(partialResultList2, sk))));
-        DecryptionAuthorityInfo daInfo1 = new DecryptionAuthorityInfo(0, "127.0.0.1:8080");
-        DecryptionAuthorityInfo daInfo2 = new DecryptionAuthorityInfo(1, "127.0.0.1:8081");
+        PeerInfo daInfo1 = new PeerInfo(0, "127.0.0.1:8080");
+        PeerInfo daInfo2 = new PeerInfo(1, "127.0.0.1:8081");
         serializables.add(daInfo1);
         serializables.add(new CommitmentDTO(new BigInteger[]{new BigInteger("5464"), new BigInteger("641349646")}, 56, "FOO"));
         serializables.add(new PedersenComplaintDTO(69849684, 12378612));

@@ -26,8 +26,8 @@ public class TestSignedEntity {
         AsymmetricKeyParameter sk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
 
 
-        DecryptionAuthorityInfo daInfo1 = new DecryptionAuthorityInfo(0, "127.0.0.1:8080");
-        DecryptionAuthorityInfo daInfo2 = new DecryptionAuthorityInfo(1, "127.0.0.1:8081");
+        PeerInfo daInfo1 = new PeerInfo(0, "127.0.0.1:8080");
+        PeerInfo daInfo2 = new PeerInfo(1, "127.0.0.1:8081");
         DecryptionAuthorityInput input = new DecryptionAuthorityInput("wiughweiugnwe", "woe" +
                 "gnweoginw", "woegnweoginwqwf", 54684654, Arrays.asList(daInfo1, daInfo2),
                 new String(bytes)

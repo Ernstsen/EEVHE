@@ -6,7 +6,7 @@ import dk.eSoftware.commandLineParser.SingletonCommandLineParser;
 import dk.eSoftware.commandLineParser.WrongFormatException;
 import dk.mmj.eevhe.AbstractConfigTest;
 import dk.mmj.eevhe.entities.Candidate;
-import dk.mmj.eevhe.entities.DecryptionAuthorityInfo;
+import dk.mmj.eevhe.entities.PeerInfo;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
 import org.apache.commons.compress.utils.IOUtils;
 import org.junit.After;
@@ -36,8 +36,8 @@ public class TestDecryptionAuthorityConfigBuilder extends AbstractConfigTest {
     public void setup() throws IOException {
         DecryptionAuthorityInput input = new DecryptionAuthorityInput("02", "02", "02", 124,
                 Arrays.asList(
-                        new DecryptionAuthorityInfo(1, "https://localhost:8081"),
-                        new DecryptionAuthorityInfo(2, "https://localhost:8082")
+                        new PeerInfo(1, "https://localhost:8081"),
+                        new PeerInfo(2, "https://localhost:8082")
                 ), new String(Files.readAllBytes(Paths.get("certs/test_glob.pem"))));
 
         confPath = "temp_conf/";
