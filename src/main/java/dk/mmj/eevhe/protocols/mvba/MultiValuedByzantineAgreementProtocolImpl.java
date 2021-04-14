@@ -1,12 +1,13 @@
 package dk.mmj.eevhe.protocols.mvba;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<String> {
 
     private final Communicator communicator;
     private final ByzantineAgreementCommunicator<Boolean> singleValueBA;
-    private final Map<String, List<String>> received = new HashMap<>();
+    private final Map<String, List<String>> received = new TimeoutMap<>(5, TimeUnit.MINUTES);
     private final Map<String, BANotifyItem<String>> notifyItems = new HashMap<>();
     private final int peers;
     private final int t;
@@ -37,6 +38,7 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
         conversation.add(msg);
 
         if (conversation.size() >= peers - t) {
+            received.remove(id);
             HashMap<String, Integer> countMap = new HashMap<>();
             for (String s : conversation) {
                 countMap.compute(s, (k, v) -> v != null ? v + 1 : 1);
@@ -51,12 +53,12 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
             BANotifyItem<Boolean> agree = singleValueBA.agree(d != null);
 
             new Thread(() -> {
-                agree.waitForFinish();//TODO: Probably not wait in this thread?
+                agree.waitForFinish();
                 boolean e = Boolean.TRUE.equals(agree.getAgreement());//Undecided defaults to false
 
                 BANotifyItem<String> conclusion = notifyItems.get(id);
                 if (e) {
-                    //success
+                    //succeed
                     conclusion.setAgreement(true);
                     conclusion.setMessage(d);
                 } else {

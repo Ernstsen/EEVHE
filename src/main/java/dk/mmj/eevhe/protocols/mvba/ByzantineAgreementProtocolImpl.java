@@ -43,7 +43,7 @@ class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<B
             int idx = cnt[0] >= peers - (2 * t) ? 0 : 1;
 
             //Find d s.t. d_i = d for n-2t of values then v = true, else v=false
-            Boolean d = cnt[idx] >= peers - (2 * t) ? true : null;
+            Boolean d = cnt[idx] >= peers - (2 * t) ? idx == 1 : null;
 
             BANotifyItem<Boolean> conclusion = notifyItems.get(id);
             conclusion.setAgreement(d);
