@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class BBPackage<T> {
+    private static final ObjectMapper mapper = new ObjectMapper();
     private T content;
 
     public BBPackage(T content) {
@@ -20,9 +21,16 @@ public class BBPackage<T> {
         this.content = content;
     }
 
-    public String getContentAsString() throws JsonProcessingException {
-        ObjectMapper mapper = new ObjectMapper();
-
-        return mapper.writeValueAsString(content);
+    /**
+     * Returns a JSON string representation of the Content object
+     *
+     * @return Json string representation
+     */
+    public String getContentAsString() {
+        try {
+            return mapper.writeValueAsString(content);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize content object.", e);
+        }
     }
 }

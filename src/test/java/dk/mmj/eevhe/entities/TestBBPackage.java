@@ -34,13 +34,7 @@ public class TestBBPackage {
 
         BBPackage<BallotDTO> bbPackage = new BBPackage<>(ballot);
 
-        String actual = "";
-
-        try {
-            actual = bbPackage.getContentAsString();
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
+        String actual = bbPackage.getContentAsString();
 
         String expected = "{\"candidateVotes\":[{\"cipherText\":{\"c\":1,\"d\":2},\"id\":\"Some random ID\",\"proof\":{\"e0\":1,\"e1\":2,\"z0\":3,\"z1\":4}},{\"cipherText\":{\"c\":10,\"d\":20},\"id\":\"Some random ID\",\"proof\":{\"e0\":10,\"e1\":20,\"z0\":30,\"z1\":40}}],\"id\":\"Some random ID\",\"sumIsOneProof\":{\"e0\":0,\"e1\":1,\"z0\":2,\"z1\":3}}";
         Assert.assertEquals("BBPackage content not be converted to string correctly", expected, actual);

@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+/**
+ * Handles requests from Edges
+ */
 @Path("/")
 public class BulletinBoardPeerResource {
     private final static Logger logger = LogManager.getLogger(BulletinBoardPeerResource.class);
