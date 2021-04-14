@@ -88,8 +88,8 @@ public class BulletinBoardPeer extends AbstractServer {
         BulletinBoardPeerConfiguration(int port, String confPath, int id) {
             super(BulletinBoardPeer.class);
             this.port = port;
-            this.id = id;
             this.confPath = confPath;
+            this.id = id;
         }
 
         public int getPort() {

@@ -2,24 +2,19 @@ package dk.mmj.eevhe.server.bulletinboard;
 
 
 import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.math.BigInteger;
-import java.util.*;
-
-import static dk.mmj.eevhe.server.bulletinboard.BulletinBoardConstants.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 @Path("/")
 public class BulletinBoardPeerResource {
     private final static Logger logger = LogManager.getLogger(BulletinBoardPeerResource.class);
-    //    private final ServerState state = ServerState.getInstance();
     private final BBState state = BBState.getInstance();
 
     @GET
