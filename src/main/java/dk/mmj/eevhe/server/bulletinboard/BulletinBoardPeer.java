@@ -53,20 +53,15 @@ public class BulletinBoardPeer extends AbstractServer {
      * Receives responds back from MVBA protocol
      * Updates BB state
      */
-    public static void executeConsensusProtocol(BBPackage bbPackage, String methodName, MethodType methodType) {
+    public static void executeConsensusProtocol(BBPackage bbPackage, MethodExecutor methodExecutor) {
         //        TODO: Receive data from Edge
-        try {
-            //        TODO: call MVBA protocol
-            //        TODO: receive result from MVBA protocol -> If ok:
+        //        TODO: call MVBA protocol
+        //        TODO: receive result from MVBA protocol -> If ok:
+        boolean consensusObtained = true;
+
+        if (consensusObtained) {
             //        TODO: update BB state
-            MethodHandle methodHandle = lookup.findVirtual(BBState.class, methodName, methodType);
-            methodHandle.invoke(BBState.getInstance(), bbPackage.getContent());
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (Throwable throwable) {
-            throwable.printStackTrace();
+            methodExecutor.execute();
         }
     }
 

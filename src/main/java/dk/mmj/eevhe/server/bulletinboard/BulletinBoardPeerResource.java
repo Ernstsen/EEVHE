@@ -59,8 +59,7 @@ public class BulletinBoardPeerResource {
 
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(persistedBallot),
-                "addBallot",
-                MethodType.methodType(void.class, PersistedBallot.class)
+                () -> state.addBallot(persistedBallot)
         );
     }
 
@@ -86,8 +85,7 @@ public class BulletinBoardPeerResource {
     public void postResult(SignedEntity<PartialResultList> partialDecryptions) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(partialDecryptions),
-                "addResult",
-                MethodType.methodType(void.class, SignedEntity.class)
+                () -> state.addResult(partialDecryptions)
         );
     }
 
@@ -114,8 +112,7 @@ public class BulletinBoardPeerResource {
 
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(commitment),
-                "addSignedCommitment",
-                MethodType.methodType(void.class, SignedEntity.class)
+                () -> state.addSignedCommitment(commitment)
         );
     }
 
@@ -139,8 +136,7 @@ public class BulletinBoardPeerResource {
     public void postPedersenComplaint(SignedEntity<PedersenComplaintDTO> complaint) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(complaint),
-                "addSignedPedersenComplaint",
-                MethodType.methodType(void.class, SignedEntity.class)
+                () -> state.addSignedPedersenComplaint(complaint)
         );
     }
 
@@ -150,8 +146,7 @@ public class BulletinBoardPeerResource {
     public void postFeldmanComplaint(SignedEntity<FeldmanComplaintDTO> complaint) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(complaint),
-                "addSignedFeldmanComplaint",
-                MethodType.methodType(void.class, SignedEntity.class)
+                () -> state.addSignedFeldmanComplaint(complaint)
         );
     }
 
@@ -181,8 +176,7 @@ public class BulletinBoardPeerResource {
     public void resolveComplaint(SignedEntity<ComplaintResolveDTO> resolveDTO) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(resolveDTO),
-                "addSignedComplaintResolve",
-                MethodType.methodType(void.class, SignedEntity.class)
+                () -> state.addSignedComplaintResolve(resolveDTO)
         );
     }
 
@@ -202,8 +196,7 @@ public class BulletinBoardPeerResource {
     public void postPublicInfo(SignedEntity<PartialPublicInfo> info) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(info),
-                "addSignedPartialPublicInfo",
-                MethodType.methodType(void.class, SignedEntity.class)
+                () -> state.addSignedPartialPublicInfo(info)
         );
     }
 
@@ -223,8 +216,7 @@ public class BulletinBoardPeerResource {
     public void postCertificate(SignedEntity<CertificateDTO> certificate) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(certificate),
-                "addSignedCertificate",
-                MethodType.methodType(void.class, SignedEntity.class)
+                () -> state.addSignedCertificate(certificate)
         );
     }
 

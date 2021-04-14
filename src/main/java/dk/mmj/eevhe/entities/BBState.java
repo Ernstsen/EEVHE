@@ -1,7 +1,5 @@
 package dk.mmj.eevhe.entities;
 
-import dk.mmj.eevhe.server.ServerState;
-
 import java.util.ArrayList;
 import java.util.List;
 
