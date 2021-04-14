@@ -45,6 +45,8 @@ public class BulletinBoardPeerResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
     public void postBallot(BallotDTO ballot) {
+//        TODO: Issue med Timestamp i PersistedBallot i forhold til MVBA protokol - send evt. ballot rundt i stedet for
+//        TODO: Consensus om timestamp?? unpleasant
         PersistedBallot persistedBallot = new PersistedBallot(ballot);
 
         if (state.hasVoted(persistedBallot)) {

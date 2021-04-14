@@ -4,24 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.entities.BBInput;
 import dk.mmj.eevhe.entities.BBPackage;
-import dk.mmj.eevhe.entities.BBState;
-import dk.mmj.eevhe.entities.SignedEntity;
 import dk.mmj.eevhe.server.AbstractServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import java.io.IOException;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.function.Supplier;
 
 public class BulletinBoardPeer extends AbstractServer {
-    private static MethodHandles.Lookup lookup = MethodHandles.lookup();
     private final Logger logger;
     private final int port;
     private final Integer id;
@@ -53,7 +46,7 @@ public class BulletinBoardPeer extends AbstractServer {
      * Receives responds back from MVBA protocol
      * Updates BB state
      */
-    public static void executeConsensusProtocol(BBPackage bbPackage, MethodExecutor methodExecutor) {
+    public static void executeConsensusProtocol(BBPackage<?> bbPackage, Runnable methodExecutor) {
         //        TODO: Receive data from Edge
         //        TODO: call MVBA protocol
         //        TODO: receive result from MVBA protocol -> If ok:
@@ -61,7 +54,7 @@ public class BulletinBoardPeer extends AbstractServer {
 
         if (consensusObtained) {
             //        TODO: update BB state
-            methodExecutor.execute();
+            methodExecutor.run();
         }
     }
 

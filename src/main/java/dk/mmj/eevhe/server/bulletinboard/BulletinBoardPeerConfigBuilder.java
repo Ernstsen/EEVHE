@@ -5,6 +5,8 @@ import dk.mmj.eevhe.TestableConfigurationBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -61,6 +63,10 @@ public class BulletinBoardPeerConfigBuilder implements CommandLineParser.ConfigB
 
     @Override
     public List<String> getParameters() {
-        return Collections.singletonList(PORT);
+        return new ArrayList<>(Arrays.asList(
+                ID,
+                PORT,
+                CONF
+        ));
     }
 }
