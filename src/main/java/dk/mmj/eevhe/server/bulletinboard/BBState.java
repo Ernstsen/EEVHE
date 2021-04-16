@@ -1,4 +1,6 @@
-package dk.mmj.eevhe.entities;
+package dk.mmj.eevhe.server.bulletinboard;
+
+import dk.mmj.eevhe.entities.*;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -105,6 +105,15 @@ public class TestSerialization {
         serializables.add(new PartialPublicInfo(1, publicKey, new BigInteger("6513894"), Arrays.asList(cand1, cand2), 16318, cert));
         serializables.add(new ElectionResult(Arrays.asList(1, 2, 41, 12, 12541), 12412134));
         serializables.add(new CertificateDTO("this is very much a certificate ", 23));
+
+        List<PeerInfo> peers = new ArrayList<PeerInfo>(){{
+            add(new PeerInfo(1, "123.123.123"));
+            add(new PeerInfo(2, "321.321.321"));
+        }};
+
+        serializables.add(new BBInput(peers, peers));
+
+        serializables.add(new BBPackage<Boolean>(true));
     }
 
     @Test

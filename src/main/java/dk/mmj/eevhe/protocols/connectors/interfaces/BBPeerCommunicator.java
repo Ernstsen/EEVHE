@@ -1,6 +1,6 @@
 package dk.mmj.eevhe.protocols.connectors.interfaces;
 
-import dk.mmj.eevhe.entities.BBState;
+import dk.mmj.eevhe.server.bulletinboard.BBState;
 import dk.mmj.eevhe.entities.SignedEntity;
 
 public interface BBPeerCommunicator {
