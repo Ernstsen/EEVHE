@@ -42,7 +42,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TestBulletinBoardBroadcaster extends TestUsingBouncyCastle {
+public class TestBulletinBoardBroadcastManager extends TestUsingBouncyCastle {
     private final HashMap<String, WebTarget> targets = new HashMap<>();
     private WebTarget target;
     private Broadcaster broadcaster;

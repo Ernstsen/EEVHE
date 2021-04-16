@@ -1,10 +1,9 @@
 package dk.mmj.eevhe.protocols;
 
-import dk.mmj.eevhe.protocols.connectors.TestBulletinBoardBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.TestBulletinBoardBroadcastManager;
 import dk.mmj.eevhe.protocols.connectors.TestRestPeerCommunicator;
 import dk.mmj.eevhe.protocols.connectors.TestServerStateIncomingChannel;
 import dk.mmj.eevhe.protocols.mvba.MVBATestSuite;
-import dk.mmj.eevhe.protocols.mvba.TestNotifyItem;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -14,7 +13,7 @@ import org.junit.runners.Suite;
         TestGennaroFeldmanVSS.class,
         TestGennaroDKG.class,
         TestPedersenVSS.class,
-        TestBulletinBoardBroadcaster.class,
+        TestBulletinBoardBroadcastManager.class,
         TestRestPeerCommunicator.class,
         TestServerStateIncomingChannel.class,
         MVBATestSuite.class

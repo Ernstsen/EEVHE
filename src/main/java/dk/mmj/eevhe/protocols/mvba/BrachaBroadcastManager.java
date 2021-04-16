@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.*;
 import java.util.function.Consumer;
 
-public class BrachaBroadcaster implements Broadcaster {
+public class BrachaBroadcastManager implements BroadcastManager {
     private static final ObjectMapper mapper = new ObjectMapper();
     private final HashSet<String> echoedMessages = new HashSet<>();
     private final HashSet<String> readiedMessages = new HashSet<>();
@@ -15,7 +15,7 @@ public class BrachaBroadcaster implements Broadcaster {
     private final int peerId;
     private final int t;
 
-    public BrachaBroadcaster(Map<Integer, Consumer<String>> peerMap, int peerId, int t) {
+    public BrachaBroadcastManager(Map<Integer, Consumer<String>> peerMap, int peerId, int t) {
         this.peerMap = peerMap;
         this.peerId = peerId;
         this.t = t;
@@ -24,6 +24,11 @@ public class BrachaBroadcaster implements Broadcaster {
     @Override
     public void broadcast(String broadcasterId, String msg) {
         sendMessage(new Message(Type.SEND, peerId, broadcasterId, msg));
+    }
+
+    @Override
+    public void registerOnReceived(Consumer<String> onReceived) {
+        listeners.add(onReceived);
     }
 
     /**
@@ -79,6 +84,7 @@ public class BrachaBroadcaster implements Broadcaster {
         }
     }
 
+    @Deprecated
     public void registerListener(Consumer<String> listener) {
         listeners.add(listener);
     }

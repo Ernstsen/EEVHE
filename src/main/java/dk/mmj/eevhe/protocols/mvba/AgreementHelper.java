@@ -1,34 +1,41 @@
 package dk.mmj.eevhe.protocols.mvba;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
 public class AgreementHelper {
-    private final Broadcaster broadcaster;
+    private final BroadcastManager broadcastManager;
     private final ByzantineAgreementCommunicator<String> mvba;
+    private final Consumer<String> onComplete;
 
-    public AgreementHelper(Broadcaster broadcaster, ByzantineAgreementCommunicator<String> mvba) {
-        this.broadcaster = broadcaster;
+    public AgreementHelper(BroadcastManager broadcastManager,
+                           ByzantineAgreementCommunicator<String> mvba,
+                           Consumer<String> onComplete) {
+        this.broadcastManager = broadcastManager;
         this.mvba = mvba;
+        this.onComplete = onComplete;
     }
 
     /**
      * Non-blocking call enabling a caller to broadcast a message, and then agree on it afterwards.
      *
-     * @param message    message to broadcast, and then agree on
-     * @param onComplete runnable to be executed upon reaching agreement
+     * @param message message to broadcast, and then agree on
      */
-    public void agree(String message, Runnable onComplete) {
+    public void agree(String message) {
         String id = UUID.randomUUID().toString(); //TODO Determine in deterministic way
-        broadcaster.broadcast(id, message);
+        broadcastManager.broadcast(id, message);
 
+        executeMVBA(message);
+    }
+
+    private void executeMVBA(String message) {
         ByzantineAgreementCommunicator.BANotifyItem<String> agree = mvba.agree(message);
 
         new Thread(() -> {
             agree.waitForFinish();
             if (agree.getAgreement() != null && agree.getAgreement()) {
-                onComplete.run();
+                onComplete.accept(message);
             }
         }).start();
-
     }
 }
