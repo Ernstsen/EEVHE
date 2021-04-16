@@ -12,6 +12,8 @@ public class BrachaBroadcastManager implements BroadcastManager {
     private final HashSet<String> readiedMessages = new HashSet<>();
     private final Map<Integer, Consumer<String>> peerMap;
     private final Map<String, Integer> totalReceived = new HashMap<>();
+    private final Map<String, Map<String, Set<Type>>> recordedParticipants = new HashMap<>();
+    private final Set<String> terminatedProtocols = new HashSet<>();
     private final List<Consumer<String>> listeners = new ArrayList<>();
     private final int peerId;
     private final int t;
@@ -49,11 +51,24 @@ public class BrachaBroadcastManager implements BroadcastManager {
     /**
      * Receives a message, and handles it according to its type.
      *
-     * @param msg message to be received.
+     * @param incoming message to be received.
      */
-    public void receive(String msg) throws JsonProcessingException {
+    public void receive(Incoming<String> incoming) throws JsonProcessingException {
+        if (!incoming.isValid()) {
+            return;
+        }
+
+        String msg = incoming.getContent();
         Message received = mapper.readValue(msg, Message.class);
         String broadcastId = received.getBroadcastId();
+
+        Map<String, Set<Type>> convParticipants = recordedParticipants.computeIfAbsent(broadcastId, k -> new HashMap<>());
+        Set<Type> types = convParticipants.computeIfAbsent(incoming.getIdentifier(), k -> new HashSet<>());
+        if (types.contains(received.type)) {
+            return;
+        } else {
+            types.add(received.type);
+        }
 
         switch (received.type) {
             case SEND:
@@ -65,7 +80,7 @@ public class BrachaBroadcastManager implements BroadcastManager {
                 break;
             case ECHO:
                 totalReceived.compute(msg, (msgStr, cnt) -> cnt != null ? cnt + 1 : 1);
-                if (totalReceived.get(msg) >= peerMap.size() - t) {
+                if (totalReceived.get(msg) >= peerMap.size() - t && !readiedMessages.contains(broadcastId)) {
                     readiedMessages.add(broadcastId);
                     received.setType(Type.READY);
                     sendMessage(received);
@@ -78,8 +93,9 @@ public class BrachaBroadcastManager implements BroadcastManager {
                     received.setType(Type.READY);
                     sendMessage(received);
                 }
-                if (totalReceived.get(msg) >= peerMap.size() - t) {
+                if (totalReceived.get(msg) >= peerMap.size() - t && !terminatedProtocols.contains(broadcastId)) {
                     listeners.forEach(l -> l.accept(received.getMessage()));
+                    terminatedProtocols.add(broadcastId);
                 }
                 break;
         }
