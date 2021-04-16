@@ -8,12 +8,10 @@ import java.util.function.Consumer;
 
 public class BrachaBroadcastManager implements BroadcastManager {
     private static final ObjectMapper mapper = new ObjectMapper();
-    private final HashSet<String> echoedMessages = new HashSet<>();
-    private final HashSet<String> readiedMessages = new HashSet<>();
+    private final Map<Type, Set<String>> handledMessages = new HashMap<>();
     private final Map<Integer, Consumer<String>> peerMap;
     private final Map<String, Integer> totalReceived = new HashMap<>();
     private final Map<String, Map<String, Set<Type>>> recordedParticipants = new HashMap<>();
-    private final Set<String> terminatedProtocols = new HashSet<>();
     private final List<Consumer<String>> listeners = new ArrayList<>();
     private final int peerId;
     private final int t;
@@ -70,8 +68,10 @@ public class BrachaBroadcastManager implements BroadcastManager {
             types.add(received.type);
         }
 
+        Set<String> readiedMessages = handledMessages.computeIfAbsent(Type.ECHO, k -> new HashSet<>());
         switch (received.type) {
             case SEND:
+                Set<String> echoedMessages = handledMessages.computeIfAbsent(Type.SEND, k -> new HashSet<>());
                 if (!echoedMessages.contains(broadcastId)) {
                     echoedMessages.add(broadcastId);
                     received.setType(Type.ECHO);
@@ -93,9 +93,10 @@ public class BrachaBroadcastManager implements BroadcastManager {
                     received.setType(Type.READY);
                     sendMessage(received);
                 }
-                if (totalReceived.get(msg) >= peerMap.size() - t && !terminatedProtocols.contains(broadcastId)) {
+                Set<String> terminated = handledMessages.computeIfAbsent(Type.READY, k -> new HashSet<>());
+                if (totalReceived.get(msg) >= peerMap.size() - t && !terminated.contains(broadcastId)) {
                     listeners.forEach(l -> l.accept(received.getMessage()));
-                    terminatedProtocols.add(broadcastId);
+                    terminated.add(broadcastId);
                 }
                 break;
         }
