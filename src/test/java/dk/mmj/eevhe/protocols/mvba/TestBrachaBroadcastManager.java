@@ -187,7 +187,7 @@ public class TestBrachaBroadcastManager {
     }
 
     @Test
-    public void shouldBroadcastSuccessfullyOneAdversarySpamming() {
+    public void shouldBroadcastSuccessfullyOneAdversarySpamming() throws JsonProcessingException {
         String message = "This is the message that is broadcasted";
 
         Map<Integer, Consumer<String>> peers = new HashMap<>();
@@ -198,11 +198,20 @@ public class TestBrachaBroadcastManager {
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> repeat(() -> sendWrap(manager, replaceMessage(s, "msg"), 2, false, true), 8));
-        peers.put(3, s -> sendWrap(manager, goToNextMessage(s), 3));
-        peers.put(4, s -> sendWrap(manager, goToNextMessage(s), 4));
+        peers.put(3, s -> {});
+        peers.put(4, s -> {});
 
         String broadcastId = "BID";
+        BrachaBroadcastManager.Message echo = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO, 1, broadcastId, message);
+        BrachaBroadcastManager.Message ready = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, 1, broadcastId, message);
+
         manager.broadcast(broadcastId, message);
+
+        sendWrap(manager, mapper.writeValueAsString(echo), 2, true, true);
+        sendWrap(manager, mapper.writeValueAsString(echo), 4, true, true);
+
+        sendWrap(manager, mapper.writeValueAsString(ready), 2, true, true);
+        sendWrap(manager, mapper.writeValueAsString(ready), 4, true, true);
 
         assertEquals("Expected exactly one output val", 1, spy.vals.size());
         assertEquals("Did not call listener with proper output!", message, spy.vals.get(0));
@@ -251,8 +260,8 @@ public class TestBrachaBroadcastManager {
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> sendWrap(manager, goToNextMessage(s), 2));
-        peers.put(3, s -> sendWrap(manager, replaceMessage(s, adversaryMessage), 3, false, true ));
-        peers.put(4, s -> sendWrap(manager, replaceMessage(s, adversaryMessage), 4, false, true ));
+        peers.put(3, s -> sendWrap(manager, replaceMessage(s, adversaryMessage), 3, false, true));
+        peers.put(4, s -> sendWrap(manager, replaceMessage(s, adversaryMessage), 4, false, true));
 
         String broadcastId = "BID";
         manager.broadcast(broadcastId, message);
@@ -263,7 +272,7 @@ public class TestBrachaBroadcastManager {
 
 
     @Test
-    public void shouldBroadcastSuccessfullyOneAdversaryWrongMessage() {
+    public void shouldBroadcastSuccessfullyOneAdversaryWrongMessage() throws JsonProcessingException {
         String message = "This is the message that is broadcasted";
 
         Map<Integer, Consumer<String>> peers = new HashMap<>();
@@ -273,13 +282,23 @@ public class TestBrachaBroadcastManager {
         BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 1);
         manager.registerOnReceived(spy);
 
-        peers.put(2, s -> sendWrap(manager, goToNextMessage(s), 2));
+        peers.put(2, s -> {
+        });
         peers.put(3, s -> sendWrap(manager, replaceMessage(s, "newMessage"), 3, false, true));
-        peers.put(4, s -> sendWrap(manager, goToNextMessage(s), 4));
+        peers.put(4, s -> {
+        });
 
         String broadcastId = "BID";
+        BrachaBroadcastManager.Message echo = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO, 1, broadcastId, message);
+        BrachaBroadcastManager.Message ready = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, 1, broadcastId, message);
+
         manager.broadcast(broadcastId, message);
 
+        sendWrap(manager, mapper.writeValueAsString(echo), 2, true, true);
+        sendWrap(manager, mapper.writeValueAsString(echo), 4, true, true);
+
+        sendWrap(manager, mapper.writeValueAsString(ready), 2, true, true);
+        sendWrap(manager, mapper.writeValueAsString(ready), 4, true, true);
         assertEquals("Expected exactly one output val", 1, spy.vals.size());
         assertEquals("Did not call listener with proper output!", message, spy.vals.get(0));
     }
