@@ -11,6 +11,7 @@ public class BrachaBroadcastManager implements BroadcastManager {
     private final HashSet<String> echoedMessages = new HashSet<>();
     private final HashSet<String> readiedMessages = new HashSet<>();
     private final Map<Integer, Consumer<String>> peerMap;
+    private final Map<String, Integer> totalReceived = new HashMap<>();
     private final List<Consumer<String>> listeners = new ArrayList<>();
     private final int peerId;
     private final int t;
@@ -22,8 +23,8 @@ public class BrachaBroadcastManager implements BroadcastManager {
     }
 
     @Override
-    public void broadcast(String broadcasterId, String msg) {
-        sendMessage(new Message(Type.SEND, peerId, broadcasterId, msg));
+    public void broadcast(String broadcastId, String msg) {
+        sendMessage(new Message(Type.SEND, peerId, broadcastId, msg));
     }
 
     @Override
@@ -52,7 +53,6 @@ public class BrachaBroadcastManager implements BroadcastManager {
      */
     public void receive(String msg) throws JsonProcessingException {
         Message received = mapper.readValue(msg, Message.class);
-        Map<String, Integer> totalReceived = new HashMap<>();
         String broadcastId = received.getBroadcastId();
 
         switch (received.type) {
@@ -74,6 +74,7 @@ public class BrachaBroadcastManager implements BroadcastManager {
             case READY:
                 totalReceived.compute(msg, (msgStr, cnt) -> cnt != null ? cnt + 1 : 1);
                 if (totalReceived.get(msg) >= t + 1 && !readiedMessages.contains(broadcastId)) {
+                    readiedMessages.add(broadcastId);
                     received.setType(Type.READY);
                     sendMessage(received);
                 }
@@ -91,7 +92,7 @@ public class BrachaBroadcastManager implements BroadcastManager {
     }
 
     @SuppressWarnings("unused")
-    private static class Message {
+    static class Message {
         Type type;
         int senderId;
         String broadcastId;
