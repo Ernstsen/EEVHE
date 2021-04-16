@@ -84,17 +84,13 @@ public class BrachaBroadcastManager implements BroadcastManager {
         }
     }
 
-    @Deprecated
-    public void registerListener(Consumer<String> listener) {
-        listeners.add(listener);
-    }
-
     enum Type {
         SEND,
         ECHO,
         READY
     }
 
+    @SuppressWarnings("unused")
     private static class Message {
         Type type;
         int senderId;

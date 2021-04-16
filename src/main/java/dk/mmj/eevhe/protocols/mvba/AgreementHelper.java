@@ -12,6 +12,7 @@ public class AgreementHelper {
                            ByzantineAgreementCommunicator<String> mvba,
                            Consumer<String> onComplete) {
         this.broadcastManager = broadcastManager;
+        broadcastManager.registerOnReceived(this::executeMVBA);
         this.mvba = mvba;
         this.onComplete = onComplete;
     }
@@ -24,8 +25,6 @@ public class AgreementHelper {
     public void agree(String message) {
         String id = UUID.randomUUID().toString(); //TODO Determine in deterministic way
         broadcastManager.broadcast(id, message);
-
-        executeMVBA(message);
     }
 
     private void executeMVBA(String message) {
