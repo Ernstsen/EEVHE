@@ -5,6 +5,7 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+        TestAgreementHelper.class,
         TestBrachaBroadcastManager.class,
         TestByzantineAgreementProtocolImpl.class,
         TestCompositeCommunicator.class,
