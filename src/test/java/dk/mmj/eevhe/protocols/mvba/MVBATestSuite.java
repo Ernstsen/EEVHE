@@ -9,7 +9,8 @@ import org.junit.runners.Suite;
         TestByzantineAgreementProtocolImpl.class,
         TestCompositeCommunicator.class,
         TestMultiValuedByzantineAgreementProtocolImpl.class,
-        TestNotifyItem.class
+        TestNotifyItem.class,
+        TestTimeoutMap.class
 })
 public class MVBATestSuite {
 }
