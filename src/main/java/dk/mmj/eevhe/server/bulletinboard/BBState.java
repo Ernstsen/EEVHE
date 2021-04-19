@@ -8,8 +8,8 @@ import java.util.List;
 public class BBState {
     private final static BBState instance = new BBState();
 
-    private BallotList ballots = new BallotList();
-    private ResultList results = new ResultList();
+    private BallotList ballots = new BallotList(new ArrayList<>());
+    private ResultList results = new ResultList(new ArrayList<>());
     private List<SignedEntity<PartialPublicInfo>> signedPartialPublicInfos = new ArrayList<>();
     private List<SignedEntity<CommitmentDTO>> signedCommitments = new ArrayList<>();
     private List<SignedEntity<PedersenComplaintDTO>> signedPedersenComplaints = new ArrayList<>();

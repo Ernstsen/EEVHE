@@ -35,7 +35,7 @@ public class BulletinBoardPeerResource {
     public List<SignedEntity<PartialPublicInfo>> getPublicInfos() {
         List<SignedEntity<PartialPublicInfo>> list = state.getSignedPartialPublicInfos();
 
-        if (list == null) {
+        if (list.isEmpty()) {
             logger.warn("Attempt to fetch public infos before they were created");
             throw new NotFoundException();
         }
@@ -123,7 +123,7 @@ public class BulletinBoardPeerResource {
     public List<SignedEntity<CommitmentDTO>> getCommitments() {
         List<SignedEntity<CommitmentDTO>> list = state.getSignedCommitments();
 
-        if (list == null) {
+        if (list.isEmpty()) {
             throw new NotFoundException("Voting has not been initialized");
         }
 

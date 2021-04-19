@@ -62,7 +62,7 @@ public class BulletinBoardPeer extends AbstractServer {
     protected void configure(ServletHolder servletHolder) {
         servletHolder.setInitParameter(
                 "jersey.config.server.provider.classnames",
-                BulletinBoardPeer.class.getCanonicalName());
+                BulletinBoardPeerResource.class.getCanonicalName());
     }
 
     @Override
