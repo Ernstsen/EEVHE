@@ -89,14 +89,14 @@ public class BulletinBoardEdgeResource {
     @GET
     @Path("getBallots")
     @Produces(MediaType.APPLICATION_JSON)
-    public BallotList getBallots() {
+    public List<PersistedBallot> getBallots() {
         List<PersistedBallot> list = state.get(BALLOTS, List.class);
 
         if (list == null || list.isEmpty()) {
             throw new NotFoundException("Voting has not been initialized");
         }
 
-        return new BallotList(list);
+        return list;
     }
 
     @POST

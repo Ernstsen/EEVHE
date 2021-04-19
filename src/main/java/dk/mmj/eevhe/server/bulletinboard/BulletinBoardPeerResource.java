@@ -89,14 +89,13 @@ public class BulletinBoardPeerResource {
         );
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("getBallots")
     @Produces(MediaType.APPLICATION_JSON)
-    public BallotList getBallots() {
-        BallotList ballotList = state.getBallots();
+    public List<PersistedBallot> getBallots() {
+        List<PersistedBallot> ballotList = state.getBallots();
 
-        if (ballotList.getBallots() == null || ballotList.getBallots().isEmpty()) {
+        if (ballotList == null || ballotList.isEmpty()) {
             throw new NotFoundException("Voting has not been initialized");
         }
 

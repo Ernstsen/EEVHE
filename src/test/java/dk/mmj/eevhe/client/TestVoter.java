@@ -1,5 +1,7 @@
 package dk.mmj.eevhe.client;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.NoSuchBuilderException;
 import dk.eSoftware.commandLineParser.SingletonCommandLineParser;
 import dk.eSoftware.commandLineParser.WrongFormatException;
@@ -32,7 +34,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -45,6 +46,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class TestVoter extends TestUsingBouncyCastle {
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final Logger logger = LogManager.getLogger(TestVoter.class);
     private BigInteger h;
     private PublicKey pk;
@@ -100,10 +102,10 @@ public class TestVoter extends TestUsingBouncyCastle {
 
         voter.run();
 
-        BallotList fetchedBallotList = target.path("getBallots").request()
-                .get(BallotList.class);
+        String ballotsString = target.path("getBallots").request()
+                .get(String.class);
+        List<PersistedBallot> ballots = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {});
 
-        List<PersistedBallot> ballots = fetchedBallotList.getBallots();
         assertEquals("Did not find exactly one vote!", 1, ballots.size());
 
         PersistedBallot ballot = ballots.get(0);
@@ -133,10 +135,9 @@ public class TestVoter extends TestUsingBouncyCastle {
 
         voter.run();
 
-        BallotList fetchedBallotList = target.path("getBallots").request()
-                .get(new GenericType<>(BallotList.class));
-
-        List<PersistedBallot> ballots = fetchedBallotList.getBallots();
+        String ballotsString = target.path("getBallots").request()
+                .get(String.class);
+        List<PersistedBallot> ballots = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {});
         assertEquals("Did not find exactly twenty votes!", 20, ballots.size());
 
         for (PersistedBallot ballot : ballots) {

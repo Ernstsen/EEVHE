@@ -1,9 +1,11 @@
 package dk.mmj.eevhe.entities;
 
+import dk.mmj.eevhe.server.bulletinboard.BulletinBoardState;
+
 import java.util.Date;
 import java.util.Objects;
 
-public class PersistedBallot extends BallotDTO {
+public class PersistedBallot extends BallotDTO implements BulletinBoardUpdatable {
     private Date ts;
 
     public PersistedBallot() {
@@ -42,5 +44,10 @@ public class PersistedBallot extends BallotDTO {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), ts);
+    }
+
+    @Override
+    public void update(BulletinBoardState bb) {
+        bb.addBallot(this);
     }
 }

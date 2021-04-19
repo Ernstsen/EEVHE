@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static java.math.BigInteger.valueOf;
@@ -25,7 +26,7 @@ public class TestBulletinBoardState {
         BallotDTO ballotDTO = new BallotDTO(candidates, "id", p3);
         PersistedBallot persistedBallot = new PersistedBallot(ballotDTO);
 
-        Assert.assertEquals("Ballot should not exist in BBState at this point", 0, bulletinBoardState.getBallots().getBallots().size());
+        Assert.assertEquals("Ballot should not exist in BBState at this point", 0, bulletinBoardState.getBallots().size());
         Assert.assertFalse("Ballot should not exist in BBState at this point", bulletinBoardState.hasVoted(persistedBallot));
 
         bulletinBoardState.addBallot(persistedBallot);
@@ -33,7 +34,7 @@ public class TestBulletinBoardState {
         Assert.assertTrue("Ballot should exist in BBState at this point", bulletinBoardState.hasVoted(persistedBallot));
 
         Assert.assertEquals("BBState should contain BallotList with exactly one ballot",
-                                    new BallotList(new ArrayList<PersistedBallot>() {{add(persistedBallot);}}),
+                                    new ArrayList<>(Collections.singletonList(persistedBallot)),
                                     bulletinBoardState.getBallots());
         Assert.assertTrue("BBState should contain this specific ballot", bulletinBoardState.hasVoted(persistedBallot));
     }

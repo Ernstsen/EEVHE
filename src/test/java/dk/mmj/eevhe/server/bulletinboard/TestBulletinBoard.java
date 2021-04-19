@@ -160,10 +160,11 @@ public class TestBulletinBoard {
         assertEquals("Unexpected list size", 1, fetchedResultList.getResults().size());
         assertEquals("Fetched result did not match posted one", partialResultList, fetchedResultList.getResults().get(0));
 
-        BallotList fetchedBallotList = target.path("getBallots").request()
-                .get(new GenericType<>(BallotList.class));
-        assertEquals("Unexpected list size", 1, fetchedBallotList.getBallots().size());
-        PersistedBallot persistedBallot = fetchedBallotList.getBallots().get(0);
+        String ballotsString = target.path("getBallots").request()
+                .get(String.class);
+        List<PersistedBallot> fetchedBallotList = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>(){});
+        assertEquals("Unexpected list size", 1, fetchedBallotList.size());
+        PersistedBallot persistedBallot = fetchedBallotList.get(0);
         assertEquals("Fetched ballot did not match posted one; votes", ballotDTO.getCandidateVotes(), persistedBallot.getCandidateVotes());
         assertEquals("Fetched ballot did not match posted one; id", ballotDTO.getId(), persistedBallot.getId());
         assertEquals("Fetched ballot did not match posted one; proof", ballotDTO.getSumIsOneProof(), persistedBallot.getSumIsOneProof());

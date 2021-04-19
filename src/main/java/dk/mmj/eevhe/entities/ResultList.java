@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 
 @SuppressWarnings("JavaDocs, unused")
+@Deprecated
 public class ResultList {
 
     private List<SignedEntity<PartialResultList>> results;

@@ -8,7 +8,7 @@ import java.util.List;
 public class BulletinBoardState {
     private final static BulletinBoardState instance = new BulletinBoardState();
 
-    private BallotList ballots = new BallotList(new ArrayList<>());
+    private List<PersistedBallot> ballots = new ArrayList<>();
     private ResultList results = new ResultList(new ArrayList<>());
     private List<SignedEntity<PartialPublicInfo>> signedPartialPublicInfos = new ArrayList<>();
     private List<SignedEntity<CommitmentDTO>> signedCommitments = new ArrayList<>();
@@ -28,12 +28,12 @@ public class BulletinBoardState {
         return instance;
     }
 
-    public BallotList getBallots() {
+    public List<PersistedBallot> getBallots() {
         return ballots;
     }
 
     public void addBallot(PersistedBallot ballot) {
-        ballots.getBallots().add(ballot);
+        ballots.add(ballot);
         hasVoted.add(ballot.getId());
     }
 

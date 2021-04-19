@@ -128,7 +128,8 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
 
         final Invocation.Builder commitBuilder = mock(Invocation.Builder.class);
         when(ballotsTarget.request()).thenReturn(commitBuilder);
-        when(commitBuilder.get(String.class)).thenReturn(mapper.writeValueAsString(new BallotList(ballots)));
+        String ballotsString = mapper.writeValueAsString(ballots.toArray(new PersistedBallot[0]));
+        when(commitBuilder.get(String.class)).thenReturn(ballotsString);
 
         List<PersistedBallot> fetched = FetchingUtilities.getBallots(logger, bulletinBoard);
 

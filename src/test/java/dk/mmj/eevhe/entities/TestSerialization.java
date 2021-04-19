@@ -51,9 +51,7 @@ public class TestSerialization {
 
         List<CandidateVoteDTO> candidates = Arrays.asList(candidateVoteDTO, candidateVoteDTO2);
         BallotDTO ballot = new BallotDTO(candidates, "ballotId", proof);
-        BallotDTO ballot2 = new BallotDTO(candidates, "ballotId2", proof);
         serializables.add(ballot);
-        serializables.add(new BallotList(Arrays.asList(new PersistedBallot(ballot), new PersistedBallot(ballot2))));
 
         Candidate cand1 = new Candidate(0, "name", "desc");
         Candidate cand2 = new Candidate(1, "name2", "desc2");

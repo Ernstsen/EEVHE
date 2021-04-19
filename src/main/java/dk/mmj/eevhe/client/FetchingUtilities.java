@@ -3,7 +3,6 @@ package dk.mmj.eevhe.client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
-import dk.mmj.eevhe.entities.BallotList;
 import dk.mmj.eevhe.entities.PartialPublicInfo;
 import dk.mmj.eevhe.entities.PersistedBallot;
 import dk.mmj.eevhe.entities.SignedEntity;
@@ -69,8 +68,8 @@ public class FetchingUtilities {
         ObjectMapper mapper = new ObjectMapper();
         try {
             String getVotes = bulletinBoard.path("getBallots").request().get(String.class);
-            BallotList voteObjects = mapper.readValue(getVotes, BallotList.class);
-            return voteObjects.getBallots();
+            return mapper.readValue(getVotes, new TypeReference<List<PersistedBallot>>() {
+            });
         } catch (IOException e) {
             logger.error("Failed to read BallotList from JSON string", e);
             return null;
