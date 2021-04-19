@@ -112,8 +112,6 @@ public class TestSerialization {
         }};
 
         serializables.add(new BBInput(peers, peers));
-
-        serializables.add(new BBPackage<Boolean>(true));
     }
 
     @Test
