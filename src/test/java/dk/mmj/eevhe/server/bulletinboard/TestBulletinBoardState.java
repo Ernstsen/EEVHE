@@ -1,25 +1,19 @@
 package dk.mmj.eevhe.server.bulletinboard;
 
-import dk.mmj.eevhe.crypto.signature.KeyHelper;
-import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.entities.*;
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static java.math.BigInteger.valueOf;
 
-public class TestBBState {
+public class TestBulletinBoardState {
     @Test
     public void testAddGetBallot() {
-        BBState bbState = BBState.getInstance();
+        BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
 
         CipherText c = new CipherText(valueOf(165), valueOf(684983));
         Proof p1 = new Proof(valueOf(64986), valueOf(859483), valueOf(92873452), valueOf(293885671));
@@ -31,17 +25,17 @@ public class TestBBState {
         BallotDTO ballotDTO = new BallotDTO(candidates, "id", p3);
         PersistedBallot persistedBallot = new PersistedBallot(ballotDTO);
 
-        Assert.assertEquals("Ballot should not exist in BBState at this point", 0, bbState.getBallots().getBallots().size());
-        Assert.assertFalse("Ballot should not exist in BBState at this point", bbState.hasVoted(persistedBallot));
+        Assert.assertEquals("Ballot should not exist in BBState at this point", 0, bulletinBoardState.getBallots().getBallots().size());
+        Assert.assertFalse("Ballot should not exist in BBState at this point", bulletinBoardState.hasVoted(persistedBallot));
 
-        bbState.addBallot(persistedBallot);
+        bulletinBoardState.addBallot(persistedBallot);
 
-        Assert.assertTrue("Ballot should exist in BBState at this point", bbState.hasVoted(persistedBallot));
+        Assert.assertTrue("Ballot should exist in BBState at this point", bulletinBoardState.hasVoted(persistedBallot));
 
         Assert.assertEquals("BBState should contain BallotList with exactly one ballot",
                                     new BallotList(new ArrayList<PersistedBallot>() {{add(persistedBallot);}}),
-                                    bbState.getBallots());
-        Assert.assertTrue("BBState should contain this specific ballot", bbState.hasVoted(persistedBallot));
+                                    bulletinBoardState.getBallots());
+        Assert.assertTrue("BBState should contain this specific ballot", bulletinBoardState.hasVoted(persistedBallot));
     }
 
 //    @Test

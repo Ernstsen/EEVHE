@@ -5,8 +5,8 @@ import dk.mmj.eevhe.entities.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BBState {
-    private final static BBState instance = new BBState();
+public class BulletinBoardState {
+    private final static BulletinBoardState instance = new BulletinBoardState();
 
     private BallotList ballots = new BallotList(new ArrayList<>());
     private ResultList results = new ResultList(new ArrayList<>());
@@ -24,7 +24,7 @@ public class BBState {
      *
      * @return the BBState
      */
-    public static BBState getInstance() {
+    public static BulletinBoardState getInstance() {
         return instance;
     }
 
