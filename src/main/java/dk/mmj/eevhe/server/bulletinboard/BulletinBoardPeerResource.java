@@ -18,7 +18,7 @@ import java.util.List;
 @Path("/")
 public class BulletinBoardPeerResource {
     private final static Logger logger = LogManager.getLogger(BulletinBoardPeerResource.class);
-    private final BBState state = BBState.getInstance();
+    private final BulletinBoardState state = BulletinBoardState.getInstance();
 
     @GET
     @Path("type")

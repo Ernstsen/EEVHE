@@ -1,6 +1,6 @@
 package dk.mmj.eevhe.protocols.connectors.interfaces;
 
-import dk.mmj.eevhe.server.bulletinboard.BBState;
+import dk.mmj.eevhe.server.bulletinboard.BulletinBoardState;
 import dk.mmj.eevhe.entities.SignedEntity;
 
 public interface BBPeerCommunicator {
@@ -10,5 +10,5 @@ public interface BBPeerCommunicator {
      *
      * @param content Signed content
      */
-    void sendContent(SignedEntity<BBState> content);
+    void sendContent(SignedEntity<BulletinBoardState> content);
 }
