@@ -1,4 +1,4 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement.mvba;
 
 public interface Incoming<T> {
 

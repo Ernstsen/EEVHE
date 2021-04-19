@@ -1,5 +1,8 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement;
 
+import dk.mmj.eevhe.protocols.agreement.broadcast.BrachaBroadcastManager;
+import dk.mmj.eevhe.protocols.agreement.mvba.ByzantineAgreementCommunicator;
+import dk.mmj.eevhe.protocols.agreement.mvba.MultiValuedByzantineAgreementProtocolImpl;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 

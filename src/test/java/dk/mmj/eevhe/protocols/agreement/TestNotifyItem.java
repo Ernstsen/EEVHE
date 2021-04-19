@@ -1,4 +1,4 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement;
 
 import org.junit.Test;
 
@@ -35,7 +35,7 @@ public class TestNotifyItem {
     }
 
     @Test(expected = RuntimeException.class)
-    public void testThrowsExceptionInsteadOfReturnOnInterrupt(){
+    public void testThrowsExceptionInsteadOfReturnOnInterrupt() {
         NotifyItem notifyItem = new NotifyItem();
         Thread main = Thread.currentThread();
 

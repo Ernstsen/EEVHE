@@ -1,7 +1,8 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement.broadcast;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.mmj.eevhe.protocols.agreement.mvba.Incoming;
 
 import java.util.*;
 import java.util.function.Consumer;

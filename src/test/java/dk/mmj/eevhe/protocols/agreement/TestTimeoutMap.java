@@ -1,4 +1,4 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement;
 
 import org.junit.Test;
 

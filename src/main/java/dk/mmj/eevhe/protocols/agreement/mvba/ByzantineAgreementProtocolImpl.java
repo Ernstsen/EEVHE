@@ -1,8 +1,8 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement.mvba;
 
 import java.util.*;
 
-class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<Boolean> {
+public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<Boolean> {
 
     private final Communicator communicator;
     private final Map<String, List<Boolean>> received = new HashMap<>();
@@ -10,7 +10,7 @@ class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<B
     private final int peers;
     private final int t;
 
-    ByzantineAgreementProtocolImpl(Communicator communicator, int peers, int t) {
+    public ByzantineAgreementProtocolImpl(Communicator communicator, int peers, int t) {
         this.communicator = communicator;
         communicator.registerOnReceivedBoolean(this::handleReceived);
         this.peers = peers;

@@ -1,5 +1,9 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement;
 
+import dk.mmj.eevhe.protocols.agreement.broadcast.TestBrachaBroadcastManager;
+import dk.mmj.eevhe.protocols.agreement.mvba.TestByzantineAgreementProtocolImpl;
+import dk.mmj.eevhe.protocols.agreement.mvba.TestCompositeCommunicator;
+import dk.mmj.eevhe.protocols.agreement.mvba.TestMultiValuedByzantineAgreementProtocolImpl;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -13,5 +17,5 @@ import org.junit.runners.Suite;
         TestNotifyItem.class,
         TestTimeoutMap.class
 })
-public class MVBATestSuite {
+public class AgreementTestSuite {
 }

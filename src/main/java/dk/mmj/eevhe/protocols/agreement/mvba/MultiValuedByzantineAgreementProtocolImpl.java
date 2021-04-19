@@ -1,4 +1,6 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement.mvba;
+
+import dk.mmj.eevhe.protocols.agreement.TimeoutMap;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;

@@ -1,4 +1,4 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement;
 
 /**
  * Item used to wait for agreement
@@ -9,7 +9,7 @@ public class NotifyItem {
     /**
      * Waits for the agreement to terminate
      */
-    void waitForFinish() {
+    public void waitForFinish() {
         synchronized (this) {
             if (!complete) {
                 try {
@@ -24,7 +24,7 @@ public class NotifyItem {
     /**
      * Mark the item as finished, and notify all waiting threads
      */
-    void finish() {
+    public void finish() {
         synchronized (this) {
             complete = true;
             notifyAll();

@@ -1,4 +1,6 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement.mvba;
+
+import dk.mmj.eevhe.protocols.agreement.NotifyItem;
 
 public interface ByzantineAgreementCommunicator<T> {
 

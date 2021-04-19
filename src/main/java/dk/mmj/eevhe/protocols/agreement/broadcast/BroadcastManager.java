@@ -1,4 +1,4 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement.broadcast;
 
 import java.util.function.Consumer;
 

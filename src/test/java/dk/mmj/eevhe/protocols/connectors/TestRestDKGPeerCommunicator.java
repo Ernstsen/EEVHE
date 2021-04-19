@@ -59,9 +59,9 @@ public class TestRestDKGPeerCommunicator {
         communicator.sendSecret(s1);
         communicator.sendSecret(s2);
         List<PartialSecretMessageDTO> sent = Arrays.asList(s1, s2);
-        assertEquals("Only two secrets has been sent",secrets.size(), 2);
+        assertEquals("Only two secrets has been sent", secrets.size(), 2);
         assertTrue("First secret not properly handled", sent.contains(secrets.get(0).getEntity()));
-        assertTrue("Second secret not properly handled",sent.contains(secrets.get(1).getEntity()));
+        assertTrue("Second secret not properly handled", sent.contains(secrets.get(1).getEntity()));
 
     }
 

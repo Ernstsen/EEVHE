@@ -1,4 +1,7 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement;
+
+import dk.mmj.eevhe.protocols.agreement.broadcast.BroadcastManager;
+import dk.mmj.eevhe.protocols.agreement.mvba.ByzantineAgreementCommunicator;
 
 import java.util.UUID;
 import java.util.function.Consumer;

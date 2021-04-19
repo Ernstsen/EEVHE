@@ -1,7 +1,8 @@
-package dk.mmj.eevhe.protocols.mvba;
+package dk.mmj.eevhe.protocols.agreement.broadcast;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.mmj.eevhe.protocols.agreement.mvba.Incoming;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -198,8 +199,10 @@ public class TestBrachaBroadcastManager {
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> repeat(() -> sendWrap(manager, replaceMessage(s, "msg"), 2, false, true), 8));
-        peers.put(3, s -> {});
-        peers.put(4, s -> {});
+        peers.put(3, s -> {
+        });
+        peers.put(4, s -> {
+        });
 
         String broadcastId = "BID";
         BrachaBroadcastManager.Message echo = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO, 1, broadcastId, message);
