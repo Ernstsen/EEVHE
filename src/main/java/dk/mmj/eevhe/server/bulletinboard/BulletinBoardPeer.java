@@ -44,11 +44,11 @@ public class BulletinBoardPeer extends AbstractServer {
             throw new RuntimeException("Failed to read BB from file", e);
         }
 
-        agreementHelper = new AgreementHelper(
-                null,
-                null,
-                this::updateState
-        );
+//        agreementHelper = new AgreementHelper(
+//                null,
+//                null,
+//                this::updateState
+//        );//TODO: Introduce!
     }
 
     /**

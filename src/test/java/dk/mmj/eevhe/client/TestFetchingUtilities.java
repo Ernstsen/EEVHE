@@ -35,8 +35,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class TestFetchingUtilities extends TestUsingBouncyCastle {
     private static final Logger logger = LogManager.getLogger(TestFetchingUtilities.class);
