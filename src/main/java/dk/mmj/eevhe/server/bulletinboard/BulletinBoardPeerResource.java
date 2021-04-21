@@ -2,9 +2,11 @@ package dk.mmj.eevhe.server.bulletinboard;
 
 
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.protocols.agreement.mvba.Communicator;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.jetty.server.Server;
 
 import javax.servlet.ServletConfig;
 import javax.ws.rs.*;
@@ -27,9 +29,13 @@ public class BulletinBoardPeerResource {
 
     private BulletinBoardState getState() {
         ServerState serverState = ServerState.getInstance();
-        String id = servletConfig.getInitParameter("id");
+        String id = getId();
 
         return serverState.computeIfAbsent("bbState." + id, s -> new BulletinBoardState());
+    }
+
+    private String getId() {
+        return servletConfig.getInitParameter("id");
     }
 
     @GET
@@ -244,11 +250,18 @@ public class BulletinBoardPeerResource {
         return list != null ? list : new ArrayList<>();
     }
 
-
     @GET
     @Path("getCurrentTime")
     @Produces(MediaType.APPLICATION_JSON)
     public String getCurrentTime() {
         return Long.toString(new Date().getTime());
+    }
+
+    @POST
+    @Path("brachaBroadcast")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void postBrachaBroadcast(SignedEntity<BrachaMessage> message) {
+        Communicator communicator = ServerState.getInstance().get("bracha.communicator." + getId(), Communicator.class);
+        message.getEntity().communicatorReceive(communicator); // TODO: Handle signed entity...
     }
 }

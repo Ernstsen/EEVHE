@@ -3,11 +3,9 @@ package dk.mmj.eevhe.server.bulletinboard;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
-import dk.mmj.eevhe.entities.BBInput;
-import dk.mmj.eevhe.entities.BBPackage;
-import dk.mmj.eevhe.entities.BulletinBoardUpdatable;
-import dk.mmj.eevhe.entities.SignedEntity;
+import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.protocols.agreement.AgreementHelper;
+import dk.mmj.eevhe.protocols.agreement.broadcast.BrachaBroadcastManager;
 import dk.mmj.eevhe.server.AbstractServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,6 +15,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class BulletinBoardPeer extends AbstractServer {
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -44,11 +44,13 @@ public class BulletinBoardPeer extends AbstractServer {
             throw new RuntimeException("Failed to read BB from file", e);
         }
 
-//        agreementHelper = new AgreementHelper(
-//                null,
-//                null,
-//                this::updateState
-//        );//TODO: Introduce!
+        Map<Integer, String> peerMap = bbInput.getPeers().stream().collect(Collectors.toMap(PeerInfo::getId, PeerInfo::getAddress));
+
+        agreementHelper = new AgreementHelper(
+                new BrachaBroadcastManager(null, id, peerMap.size() / 3),
+                null,
+                this::updateState
+        );//TODO: Introduce!
     }
 
     /**

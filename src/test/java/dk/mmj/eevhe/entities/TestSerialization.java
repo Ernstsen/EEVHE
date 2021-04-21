@@ -110,6 +110,10 @@ public class TestSerialization {
         }};
 
         serializables.add(new BBInput(peers, peers));
+
+        serializables.add(new BrachaMessage("12", "", null));
+        serializables.add(new BrachaMessage("456", "MsgString...", null));
+        serializables.add(new BrachaMessage("7", null, true));
     }
 
     @Test
@@ -154,8 +158,10 @@ public class TestSerialization {
                 field.setAccessible(true);
                 try {
                     Object val = field.get(serializable);
-                    String valueString = val.getClass().isArray() ? Arrays.toString(toObjectArray(val)) : val.toString();
-                    assertTrue(serializableClass.getName() + ": toString for DTO must contain all fields", str.contains(valueString));
+                    if(val != null){
+                        String valueString = val.getClass().isArray() ? Arrays.toString(toObjectArray(val)) : val.toString();
+                        assertTrue(serializableClass.getName() + ": toString for DTO must contain all fields", str.contains(valueString));
+                    }
                 } catch (IllegalAccessException | IllegalArgumentException e) {
                     e.printStackTrace();
                     fail();
