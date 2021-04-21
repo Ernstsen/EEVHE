@@ -5,6 +5,7 @@ import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.entities.*;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -22,6 +23,12 @@ public class TestBulletinBoardState {
 
     public TestBulletinBoardState() throws IOException {
         secretKey = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
+        bulletinBoardState.clear();
     }
 
     @Test
@@ -46,8 +53,8 @@ public class TestBulletinBoardState {
         Assert.assertTrue("Ballot should exist in BBState at this point", bulletinBoardState.hasVoted(persistedBallot));
 
         Assert.assertEquals("BBState should contain BallotList with exactly one ballot",
-                                    new ArrayList<>(Collections.singletonList(persistedBallot)),
-                                    bulletinBoardState.getBallots());
+                new ArrayList<>(Collections.singletonList(persistedBallot)),
+                bulletinBoardState.getBallots());
         Assert.assertTrue("BBState should contain this specific ballot", bulletinBoardState.hasVoted(persistedBallot));
     }
 
@@ -114,7 +121,7 @@ public class TestBulletinBoardState {
     public void testPedersenComplaint() {
         BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
 
-        SignedEntity<PedersenComplaintDTO> pedersenComplaint = new SignedEntity<>(new PedersenComplaintDTO(1,2), secretKey);
+        SignedEntity<PedersenComplaintDTO> pedersenComplaint = new SignedEntity<>(new PedersenComplaintDTO(1, 2), secretKey);
 
         Assert.assertEquals("Pedersen Complaint should not exist in BBState at this point", 0, bulletinBoardState.getSignedPedersenComplaints().size());
 

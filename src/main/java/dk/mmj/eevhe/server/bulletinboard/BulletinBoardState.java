@@ -96,4 +96,19 @@ public class BulletinBoardState {
     public void addSignedCertificate(SignedEntity<CertificateDTO> signedCertificate) {
         signedCertificates.add(signedCertificate);
     }
+
+    /**
+     * For tests. Clears state
+     */
+    void clear() {
+        ballots.clear();
+        results.setResults(new ArrayList<>());
+        signedPartialPublicInfos.clear();
+        signedCommitments.clear();
+        signedPedersenComplaints.clear();
+        signedFeldmanComplaints.clear();
+        signedComplaintResolves.clear();
+        signedCertificates.clear();
+        hasVoted.clear();
+    }
 }

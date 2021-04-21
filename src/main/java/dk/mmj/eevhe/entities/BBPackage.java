@@ -3,6 +3,10 @@ package dk.mmj.eevhe.entities;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+@Deprecated
+/**
+ * @deprecated use SignedEntity stuff instead
+ */
 public class BBPackage<T> {
     private static final ObjectMapper mapper = new ObjectMapper();
     private T content;
