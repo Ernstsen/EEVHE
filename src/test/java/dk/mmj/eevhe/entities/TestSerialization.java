@@ -83,10 +83,8 @@ public class TestSerialization {
         serializables.add(pv1);
         serializables.add(new PrimePair(new BigInteger("3253"), new BigInteger("3298573493")));
 
-        AsymmetricKeyParameter sk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
         String cert = new String(Files.readAllBytes(Paths.get("certs/test_glob_key.pem")));
 
-        serializables.add(new ResultList(Arrays.asList(new SignedEntity<>(partialResultList, sk), new SignedEntity<>(partialResultList2, sk))));
         PeerInfo daInfo1 = new PeerInfo(0, "127.0.0.1:8080");
         PeerInfo daInfo2 = new PeerInfo(1, "127.0.0.1:8081");
         serializables.add(daInfo1);

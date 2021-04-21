@@ -8,16 +8,15 @@ import java.util.List;
 public class BulletinBoardState {
     private final static BulletinBoardState instance = new BulletinBoardState();
 
-    private List<PersistedBallot> ballots = new ArrayList<>();
-    private ResultList results = new ResultList(new ArrayList<>());
-    private List<SignedEntity<PartialPublicInfo>> signedPartialPublicInfos = new ArrayList<>();
-    private List<SignedEntity<CommitmentDTO>> signedCommitments = new ArrayList<>();
-    private List<SignedEntity<PedersenComplaintDTO>> signedPedersenComplaints = new ArrayList<>();
-    private List<SignedEntity<FeldmanComplaintDTO>> signedFeldmanComplaints = new ArrayList<>();
-    private List<SignedEntity<ComplaintResolveDTO>> signedComplaintResolves = new ArrayList<>();
-    private List<SignedEntity<CertificateDTO>> signedCertificates = new ArrayList<>();
-
-    private List<String> hasVoted = new ArrayList<>();
+    private final List<PersistedBallot> ballots = new ArrayList<>();
+    private final List<SignedEntity<PartialResultList>> results = new ArrayList<>();
+    private final List<SignedEntity<PartialPublicInfo>> signedPartialPublicInfos = new ArrayList<>();
+    private final List<SignedEntity<CommitmentDTO>> signedCommitments = new ArrayList<>();
+    private final List<SignedEntity<PedersenComplaintDTO>> signedPedersenComplaints = new ArrayList<>();
+    private final List<SignedEntity<FeldmanComplaintDTO>> signedFeldmanComplaints = new ArrayList<>();
+    private final List<SignedEntity<ComplaintResolveDTO>> signedComplaintResolves = new ArrayList<>();
+    private final List<SignedEntity<CertificateDTO>> signedCertificates = new ArrayList<>();
+    private final List<String> hasVoted = new ArrayList<>();
 
     /**
      * Getter for singleton instance
@@ -41,12 +40,12 @@ public class BulletinBoardState {
         return hasVoted.contains(ballot.getId());
     }
 
-    public ResultList getResults() {
+    public List<SignedEntity<PartialResultList>> getResults() {
         return results;
     }
 
     public void addResult(SignedEntity<PartialResultList> result) {
-        results.getResults().add(result);
+        results.add(result);
     }
 
     public List<SignedEntity<PartialPublicInfo>> getSignedPartialPublicInfos() {
@@ -102,7 +101,7 @@ public class BulletinBoardState {
      */
     void clear() {
         ballots.clear();
-        results.setResults(new ArrayList<>());
+        results.clear();
         signedPartialPublicInfos.clear();
         signedCommitments.clear();
         signedPedersenComplaints.clear();

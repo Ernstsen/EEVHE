@@ -90,8 +90,7 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("result")
     @Produces(MediaType.APPLICATION_JSON)
-    @SuppressWarnings("unchecked")
-    public ResultList getResult() {
+    public List<SignedEntity<PartialResultList>> getResult() {
         try {
             return getState().getResults();
         } catch (Exception e) {

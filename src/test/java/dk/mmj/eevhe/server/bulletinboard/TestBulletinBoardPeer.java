@@ -156,10 +156,12 @@ public class TestBulletinBoardPeer {
         assertEquals("Unexpected list size", 1, fetchedPublicInfos.size());
         assertEquals("Fetched publicInfo did not match posted one", partialPublicInfo, fetchedPublicInfos.get(0));
 
-        ResultList fetchedResultList = target.path("result").request()
-                .get(new GenericType<>(ResultList.class));
-        assertEquals("Unexpected list size", 1, fetchedResultList.getResults().size());
-        assertEquals("Fetched result did not match posted one", partialResultList, fetchedResultList.getResults().get(0));
+        String resultListString = target.path("result").request()
+                .get(String.class);
+        List<SignedEntity<PartialResultList>> fetchedResultList = mapper.readValue(resultListString, new TypeReference<List<SignedEntity<PartialResultList>>>() {
+        });
+        assertEquals("Unexpected list size", 1, fetchedResultList.size());
+        assertEquals("Fetched result did not match posted one", partialResultList, fetchedResultList.get(0));
 
         String ballotsString = target.path("getBallots").request()
                 .get(String.class);
