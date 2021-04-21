@@ -65,9 +65,9 @@ public class BulletinBoardEdgeResource {
     @Path("result")
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
-    public ResultList getResult() {
+    public List<SignedEntity<PartialResultList>> getResult() {
         try {
-            return new ResultList(state.get(RESULT, List.class));
+            return state.get(RESULT, List.class);
         } catch (Exception e) {
             e.printStackTrace();
             return null;

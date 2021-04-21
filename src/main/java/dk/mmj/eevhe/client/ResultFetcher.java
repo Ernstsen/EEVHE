@@ -1,6 +1,8 @@
 package dk.mmj.eevhe.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.results.ElectionResult;
 import dk.mmj.eevhe.client.results.ResultCombinerImpl;
 import dk.mmj.eevhe.entities.*;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
  * Class for retrieving vote results
  */
 public class ResultFetcher extends Client {
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final Logger logger = LogManager.getLogger(ResultFetcher.class);
     private final boolean forceCalculation;
     private ElectionResult electionResult;
@@ -23,11 +26,6 @@ public class ResultFetcher extends Client {
     public ResultFetcher(ResultFetcherConfiguration configuration) {
         super(configuration);
         this.forceCalculation = configuration.forceCalculations;
-    }
-
-    public ResultFetcher(String address, boolean forceCalculation) {
-        super(new ResultFetcherConfiguration(address, forceCalculation));
-        this.forceCalculation = forceCalculation;
     }
 
     @Override
@@ -51,8 +49,16 @@ public class ResultFetcher extends Client {
         }
 
         logger.info("Fetching partial results");
-        ResultList fetchedResultList = target.path("result").request().get(ResultList.class);
-        List<SignedEntity<PartialResultList>> signedResults = fetchedResultList.getResults();
+
+        String resultsString = target.path("result").request().get(String.class);
+        List<SignedEntity<PartialResultList>> signedResults = null;
+        try {
+            signedResults = mapper.readValue(resultsString, new TypeReference<List<SignedEntity<PartialResultList>>>() {
+            });
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to read list of partial results", e);
+        }
+
         if (signedResults == null || signedResults.isEmpty()) {
             logger.info("Did not fetch any results. Probable cause is unfinished decryption. Try again later");
             return;

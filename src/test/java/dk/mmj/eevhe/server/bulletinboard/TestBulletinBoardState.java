@@ -21,7 +21,8 @@ import static java.math.BigInteger.valueOf;
 public class TestBulletinBoardState {
     private AsymmetricKeyParameter secretKey;
 
-    public TestBulletinBoardState() throws IOException {
+    @Before
+    public void setup() throws IOException {
         secretKey = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
     }
 
@@ -76,11 +77,11 @@ public class TestBulletinBoardState {
                 18
         ), secretKey);
 
-        Assert.assertEquals("Partial Result should not exist in BBState at this point", 0, bulletinBoardState.getResults().getResults().size());
+        Assert.assertEquals("Partial Result should not exist in BBState at this point", 0, bulletinBoardState.getResults().size());
 
         bulletinBoardState.addResult(partialResultList);
 
-        Assert.assertEquals("BBState should contain this specific Partial Result", partialResultList, bulletinBoardState.getResults().getResults().get(0));
+        Assert.assertEquals("BBState should contain this specific Partial Result", partialResultList, bulletinBoardState.getResults().get(0));
     }
 
     @Test
