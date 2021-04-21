@@ -47,7 +47,7 @@ public class PeerInfo {
 
     @Override
     public String toString() {
-        return "DecryptionAuthorityInfo{" +
+        return "PeerInfo{" +
                 "id=" + id +
                 ", address='" + address + '\'' +
                 '}';

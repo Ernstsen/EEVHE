@@ -31,6 +31,7 @@ public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommuni
     }
 
     private synchronized void handleReceived(String id, Boolean msg) {
+        //        TODO: Handle adversaries messages repeatedly
         List<Boolean> conversation = received.computeIfAbsent(id, i -> new ArrayList<>());
         conversation.add(msg);
 

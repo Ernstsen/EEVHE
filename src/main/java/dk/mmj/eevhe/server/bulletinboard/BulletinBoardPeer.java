@@ -3,20 +3,34 @@ package dk.mmj.eevhe.server.bulletinboard;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
+import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.protocols.agreement.AgreementHelper;
 import dk.mmj.eevhe.protocols.agreement.broadcast.BrachaBroadcastManager;
+import dk.mmj.eevhe.protocols.agreement.mvba.CompositeCommunicator;
+import dk.mmj.eevhe.protocols.agreement.mvba.MultiValuedByzantineAgreementProtocolImpl;
+import dk.mmj.eevhe.protocols.connectors.RestBBPeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.BBPeerCommunicator;
 import dk.mmj.eevhe.server.AbstractServer;
+import dk.mmj.eevhe.server.ServerState;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+
+import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
 public class BulletinBoardPeer extends AbstractServer {
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -24,6 +38,9 @@ public class BulletinBoardPeer extends AbstractServer {
     private final int port;
     private final Integer id;
     private final BBInput bbInput;
+    private final AsymmetricKeyParameter sk;
+    private final String certString;
+    private final Map<Integer, RestBBPeerCommunicator> communicators;
     private AgreementHelper agreementHelper;
 
     public BulletinBoardPeer(BulletinBoardPeerConfiguration configuration) {
@@ -39,18 +56,55 @@ public class BulletinBoardPeer extends AbstractServer {
 
         try {
             bbInput = mapper.readValue(conf.resolve("BB_input.json").toFile(), BBInput.class);
+            Map<Integer, String> peerCertificates = bbInput.getPeers().stream().collect(Collectors.toMap(BBPeerInfo::getId, BBPeerInfo::getCertificate));
+            ServerState.getInstance().put("peerCertificates", peerCertificates);
         } catch (IOException e) {
             logger.error("Failed to read BB input file", e);
             throw new RuntimeException("Failed to read BB from file", e);
         }
 
+        Path privateInput = conf.resolve("BB_peer" + id + ".zip");
+        logger.info("Reading private input from file: " + privateInput);
+        try (ZipFile zipFile = new ZipFile(privateInput.toFile())) {
+            ZipEntry skEntry = zipFile.getEntry("sk.pem");
+            ZipEntry certEntry = zipFile.getEntry("cert.pem");
+
+            try (InputStream is = zipFile.getInputStream(skEntry)) {
+                sk = KeyHelper.readKey(IOUtils.toByteArray(is));
+            }
+
+            try (InputStream is = zipFile.getInputStream(certEntry)) {
+                certString = new String(IOUtils.toByteArray(is));
+            }
+
+        } catch (IOException e) {
+            logger.error("Error occurred while reading private input file from " + privateInput, e);
+            throw new RuntimeException("Failed to read private input from file");
+        }
+
+        communicators = bbInput.getPeers().stream()
+                .collect(Collectors.toMap(
+                        PeerInfo::getId,
+                        p -> new RestBBPeerCommunicator(configureWebTarget(logger, p.getAddress()), sk)));
+
+        CompositeCommunicator compositeCommunicator = new CompositeCommunicator(this::sendString, this::sendBoolean);
+
         Map<Integer, String> peerMap = bbInput.getPeers().stream().collect(Collectors.toMap(PeerInfo::getId, PeerInfo::getAddress));
 
+        int t = peerMap.size() / 3;
         agreementHelper = new AgreementHelper(
-                new BrachaBroadcastManager(null, id, peerMap.size() / 3),
-                null,
+                new BrachaBroadcastManager(null, id, t),
+                new MultiValuedByzantineAgreementProtocolImpl(compositeCommunicator, peerMap.size(), t),
                 this::updateState
         );//TODO: Introduce!
+    }
+
+    private void sendString(String baId, String message) {
+        communicators.values().forEach(c -> c.sendMessage(baId, message));
+    }
+
+    private void sendBoolean(String baId, Boolean message) {
+        communicators.values().forEach(c -> c.sendMessage(baId, message));
     }
 
     /**

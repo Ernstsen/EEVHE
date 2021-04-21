@@ -4,11 +4,6 @@ import dk.mmj.eevhe.server.bulletinboard.BulletinBoardState;
 import dk.mmj.eevhe.entities.SignedEntity;
 
 public interface BBPeerCommunicator {
-    /**
-     * Sends content signed using the BB-Peer's secret key
-     * Corresponds to "Partial BB Contents"
-     *
-     * @param content Signed content
-     */
-    void sendContent(SignedEntity<BulletinBoardState> content);
+    void sendMessage(String baId, String message);
+    void sendMessage(String baId, Boolean message);
 }

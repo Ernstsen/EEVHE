@@ -4,21 +4,21 @@ import java.util.List;
 import java.util.Objects;
 
 public class BBInput {
-    private List<PeerInfo> peers;
+    private List<BBPeerInfo> peers;
     private List<PeerInfo> edges;
 
-    public BBInput(List<PeerInfo> peers, List<PeerInfo> edges) {
+    public BBInput(List<BBPeerInfo> peers, List<PeerInfo> edges) {
         this.peers = peers;
         this.edges = edges;
     }
 
     public BBInput(){}
 
-    public List<PeerInfo> getPeers() {
+    public List<BBPeerInfo> getPeers() {
         return peers;
     }
 
-    public void setPeers(List<PeerInfo> peers) {
+    public void setPeers(List<BBPeerInfo> peers) {
         this.peers = peers;
     }
 

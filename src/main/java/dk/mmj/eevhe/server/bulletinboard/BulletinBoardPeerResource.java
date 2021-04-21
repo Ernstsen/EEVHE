@@ -6,7 +6,6 @@ import dk.mmj.eevhe.protocols.agreement.mvba.Communicator;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jetty.server.Server;
 
 import javax.servlet.ServletConfig;
 import javax.ws.rs.*;
@@ -258,10 +257,10 @@ public class BulletinBoardPeerResource {
     }
 
     @POST
-    @Path("brachaBroadcast")
+    @Path("BAMessage")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void postBrachaBroadcast(SignedEntity<BrachaMessage> message) {
-        Communicator communicator = ServerState.getInstance().get("bracha.communicator." + getId(), Communicator.class);
+    public void postBAMessage(SignedEntity<BAMessage> message) {
+        Communicator communicator = ServerState.getInstance().get("mvba.communicator." + getId(), Communicator.class);
         message.getEntity().communicatorReceive(communicator); // TODO: Handle signed entity...
     }
 }

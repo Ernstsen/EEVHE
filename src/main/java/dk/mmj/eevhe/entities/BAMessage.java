@@ -4,18 +4,18 @@ import dk.mmj.eevhe.protocols.agreement.mvba.Communicator;
 
 import java.util.Objects;
 
-public class BrachaMessage {
+public class BAMessage {
     private String baId;
     private String msgString;
     private Boolean msgBoolean;
 
-    public BrachaMessage(String baId, String msgString, Boolean msgBoolean) {
+    public BAMessage(String baId, String msgString, Boolean msgBoolean) {
         this.baId = baId;
         this.msgString = msgString;
         this.msgBoolean = msgBoolean;
     }
 
-    public BrachaMessage() {}
+    public BAMessage() {}
 
     public String getBaId() {
         return baId;
@@ -53,7 +53,7 @@ public class BrachaMessage {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        BrachaMessage that = (BrachaMessage) o;
+        BAMessage that = (BAMessage) o;
         return Objects.equals(baId, that.baId) && Objects.equals(msgString, that.msgString) && Objects.equals(msgBoolean, that.msgBoolean);
     }
 

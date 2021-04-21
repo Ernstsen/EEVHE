@@ -16,6 +16,7 @@ public class TestMain {
 
     @Test
     public void testBulletinBoard() throws InterruptedException {
+//        TODO: Fix:
         Thread thread = new Thread(() -> Main.main(new String[]{"--bulletinBoard"}));
         thread.start();
 

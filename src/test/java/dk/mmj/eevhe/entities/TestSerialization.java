@@ -111,9 +111,11 @@ public class TestSerialization {
 
         serializables.add(new BBInput(peers, peers));
 
-        serializables.add(new BrachaMessage("12", "", null));
-        serializables.add(new BrachaMessage("456", "MsgString...", null));
-        serializables.add(new BrachaMessage("7", null, true));
+        serializables.add(new BAMessage("12", "", null));
+        serializables.add(new BAMessage("456", "MsgString...", null));
+        serializables.add(new BAMessage("7", null, true));
+
+        serializables.add(new BBPeerInfo(1, "127.0.0.1:8081", "asdasdasd"));
     }
 
     @Test
