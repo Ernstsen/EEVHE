@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.entities.BBInput;
 import dk.mmj.eevhe.entities.BBPackage;
+import dk.mmj.eevhe.entities.BulletinBoardUpdatable;
 import dk.mmj.eevhe.entities.SignedEntity;
 import dk.mmj.eevhe.protocols.agreement.AgreementHelper;
 import dk.mmj.eevhe.server.AbstractServer;

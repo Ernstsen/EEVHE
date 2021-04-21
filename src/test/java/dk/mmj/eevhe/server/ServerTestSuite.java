@@ -1,6 +1,5 @@
 package dk.mmj.eevhe.server;
 
-import dk.mmj.eevhe.server.bulletinboard.TestBulletinBoard;
 import dk.mmj.eevhe.server.bulletinboard.TestBulletinBoardConfigBuilder;
 import dk.mmj.eevhe.server.bulletinboard.TestBulletinBoardPeer;
 import dk.mmj.eevhe.server.bulletinboard.TestBulletinBoardState;
@@ -13,7 +12,6 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
         TestServerState.class,
         TestBulletinBoardConfigBuilder.class,
-        TestBulletinBoard.class,
         TestDecrypterImpl.class,
         TestDecryptionAuthorityConfigBuilder.class,
         TestBulletinBoardPeer.class,
