@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.entities.BBInput;
 import dk.mmj.eevhe.entities.BBPackage;
-import dk.mmj.eevhe.entities.BulletinBoardUpdatable;
 import dk.mmj.eevhe.entities.SignedEntity;
 import dk.mmj.eevhe.protocols.agreement.AgreementHelper;
 import dk.mmj.eevhe.server.AbstractServer;
@@ -95,6 +94,7 @@ public class BulletinBoardPeer extends AbstractServer {
         servletHolder.setInitParameter(
                 "jersey.config.server.provider.classnames",
                 BulletinBoardPeerResource.class.getCanonicalName());
+        servletHolder.setInitParameter("id", id.toString());
     }
 
     @Override

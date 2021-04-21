@@ -2,10 +2,13 @@ package dk.mmj.eevhe.server.bulletinboard;
 
 
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.servlet.ServletConfig;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -17,14 +20,24 @@ import java.util.List;
  */
 @Path("/")
 public class BulletinBoardPeerResource {
+    @Context
+    ServletConfig servletConfig;
+
     private final static Logger logger = LogManager.getLogger(BulletinBoardPeerResource.class);
-    private final BulletinBoardState state = BulletinBoardState.getInstance();
+
+    private BulletinBoardState getState() {
+        ServerState serverState = ServerState.getInstance();
+        String id = servletConfig.getInitParameter("id");
+
+        return serverState.computeIfAbsent("bbState." + id, s -> new BulletinBoardState());
+    }
 
     @GET
     @Path("type")
     @Produces(MediaType.TEXT_HTML)
     public String getType() {
         logger.info("Received request for server type");
+
         return "<b>ServerType:</b> Bulletin Board Peer";
     }
 
@@ -33,7 +46,7 @@ public class BulletinBoardPeerResource {
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
     public List<SignedEntity<PartialPublicInfo>> getPublicInfos() {
-        List<SignedEntity<PartialPublicInfo>> list = state.getSignedPartialPublicInfos();
+        List<SignedEntity<PartialPublicInfo>> list = getState().getSignedPartialPublicInfos();
 
         if (list.isEmpty()) {
             logger.warn("Attempt to fetch public infos before they were created");
@@ -51,6 +64,8 @@ public class BulletinBoardPeerResource {
 //        TODO: Issue med Timestamp i PersistedBallot i forhold til MVBA protokol - send evt. ballot rundt i stedet for
 //        TODO: Consensus om timestamp?? unpleasant
         PersistedBallot persistedBallot = new PersistedBallot(ballot);
+
+        BulletinBoardState state = getState();
 
         if (state.hasVoted(persistedBallot)) {
             logger.warn("Voter with id=" + persistedBallot.getId() + " attempted to vote more than once");
@@ -72,7 +87,7 @@ public class BulletinBoardPeerResource {
     @SuppressWarnings("unchecked")
     public ResultList getResult() {
         try {
-            return state.getResults();
+            return getState().getResults();
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -85,7 +100,7 @@ public class BulletinBoardPeerResource {
     public void postResult(SignedEntity<PartialResultList> partialDecryptions) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(partialDecryptions),
-                () -> state.addResult(partialDecryptions)
+                () -> getState().addResult(partialDecryptions)
         );
     }
 
@@ -93,7 +108,7 @@ public class BulletinBoardPeerResource {
     @Path("getBallots")
     @Produces(MediaType.APPLICATION_JSON)
     public List<PersistedBallot> getBallots() {
-        List<PersistedBallot> ballotList = state.getBallots();
+        List<PersistedBallot> ballotList = getState().getBallots();
 
         if (ballotList == null || ballotList.isEmpty()) {
             throw new NotFoundException("Voting has not been initialized");
@@ -111,7 +126,7 @@ public class BulletinBoardPeerResource {
 
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(commitment),
-                () -> state.addSignedCommitment(commitment)
+                () -> getState().addSignedCommitment(commitment)
         );
     }
 
@@ -120,7 +135,7 @@ public class BulletinBoardPeerResource {
     @Path("commitments")
     @Produces(MediaType.APPLICATION_JSON)
     public List<SignedEntity<CommitmentDTO>> getCommitments() {
-        List<SignedEntity<CommitmentDTO>> list = state.getSignedCommitments();
+        List<SignedEntity<CommitmentDTO>> list = getState().getSignedCommitments();
 
         if (list.isEmpty()) {
             throw new NotFoundException("Voting has not been initialized");
@@ -135,7 +150,7 @@ public class BulletinBoardPeerResource {
     public void postPedersenComplaint(SignedEntity<PedersenComplaintDTO> complaint) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(complaint),
-                () -> state.addSignedPedersenComplaint(complaint)
+                () -> getState().addSignedPedersenComplaint(complaint)
         );
     }
 
@@ -145,7 +160,7 @@ public class BulletinBoardPeerResource {
     public void postFeldmanComplaint(SignedEntity<FeldmanComplaintDTO> complaint) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(complaint),
-                () -> state.addSignedFeldmanComplaint(complaint)
+                () -> getState().addSignedFeldmanComplaint(complaint)
         );
     }
 
@@ -154,7 +169,7 @@ public class BulletinBoardPeerResource {
     @Path("pedersenComplaints")
     @Produces(MediaType.APPLICATION_JSON)
     public List<SignedEntity<PedersenComplaintDTO>> getPedersenComplaints() {
-        List<SignedEntity<PedersenComplaintDTO>> list = state.getSignedPedersenComplaints();
+        List<SignedEntity<PedersenComplaintDTO>> list = getState().getSignedPedersenComplaints();
 
         return list != null ? list : new ArrayList<>();
     }
@@ -164,7 +179,7 @@ public class BulletinBoardPeerResource {
     @Path("feldmanComplaints")
     @Produces(MediaType.APPLICATION_JSON)
     public List<SignedEntity<FeldmanComplaintDTO>> getFeldmanComplaints() {
-        List<SignedEntity<FeldmanComplaintDTO>> list = state.getSignedFeldmanComplaints();
+        List<SignedEntity<FeldmanComplaintDTO>> list = getState().getSignedFeldmanComplaints();
 
         return list != null ? list : new ArrayList<>();
     }
@@ -175,7 +190,7 @@ public class BulletinBoardPeerResource {
     public void resolveComplaint(SignedEntity<ComplaintResolveDTO> resolveDTO) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(resolveDTO),
-                () -> state.addSignedComplaintResolve(resolveDTO)
+                () -> getState().addSignedComplaintResolve(resolveDTO)
         );
     }
 
@@ -184,7 +199,7 @@ public class BulletinBoardPeerResource {
     @Path("complaintResolves")
     @Produces(MediaType.APPLICATION_JSON)
     public List<SignedEntity<ComplaintResolveDTO>> getComplaintResolves() {
-        List<SignedEntity<ComplaintResolveDTO>> list = state.getSignedComplaintResolves();
+        List<SignedEntity<ComplaintResolveDTO>> list = getState().getSignedComplaintResolves();
 
         return list != null ? list : new ArrayList<>();
     }
@@ -195,7 +210,7 @@ public class BulletinBoardPeerResource {
     public void postPublicInfo(SignedEntity<PartialPublicInfo> info) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(info),
-                () -> state.addSignedPartialPublicInfo(info)
+                () -> getState().addSignedPartialPublicInfo(info)
         );
     }
 
@@ -204,7 +219,7 @@ public class BulletinBoardPeerResource {
     @Path("publicInfo")
     @Produces(MediaType.APPLICATION_JSON)
     public List<SignedEntity<PartialPublicInfo>> getPublicInfo() {
-        List<SignedEntity<PartialPublicInfo>> list = state.getSignedPartialPublicInfos();
+        List<SignedEntity<PartialPublicInfo>> list = getState().getSignedPartialPublicInfos();
 
         return list != null ? list : new ArrayList<>();
     }
@@ -215,7 +230,7 @@ public class BulletinBoardPeerResource {
     public void postCertificate(SignedEntity<CertificateDTO> certificate) {
         BulletinBoardPeer.executeConsensusProtocol(
                 new BBPackage<>(certificate),
-                () -> state.addSignedCertificate(certificate)
+                () -> getState().addSignedCertificate(certificate)
         );
     }
 
@@ -224,7 +239,7 @@ public class BulletinBoardPeerResource {
     @Path("certificates")
     @Produces(MediaType.APPLICATION_JSON)
     public List<SignedEntity<CertificateDTO>> getCertificate() {
-        List<SignedEntity<CertificateDTO>> list = state.getSignedCertificates();
+        List<SignedEntity<CertificateDTO>> list = getState().getSignedCertificates();
 
         return list != null ? list : new ArrayList<>();
     }
