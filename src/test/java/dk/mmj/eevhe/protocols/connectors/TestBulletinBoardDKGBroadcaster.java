@@ -154,7 +154,7 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
 
         invalidCommit.getEntity().setProtocol("FOO");
 
-        final String commitsString = new ObjectMapper().writeValueAsString(expected);
+        final String commitsString = new ObjectMapper().writeValueAsString(expected.toArray());
 
         final WebTarget webTarget = targets.get("commitments");
         final Invocation.Builder builder = mock(Invocation.Builder.class);
@@ -267,7 +267,7 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
                 includedComplaint,
                 complaintWrongProof);
 
-        final String commitsString = new ObjectMapper().writeValueAsString(expected);
+        final String commitsString = new ObjectMapper().writeValueAsString(expected.toArray());
 
         final WebTarget webTarget = targets.get("pedersenComplaints");
         final Invocation.Builder builder = mock(Invocation.Builder.class);
@@ -287,7 +287,7 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
         final List<SignedEntity<FeldmanComplaintDTO>> expected = Arrays.asList(valid, invalid);
         invalid.getEntity().setTargetId(67);
 
-        final String commitsString = new ObjectMapper().writeValueAsString(expected);
+        final String commitsString = new ObjectMapper().writeValueAsString(expected.toArray());
 
         final WebTarget webTarget = targets.get("feldmanComplaints");
         final Invocation.Builder builder = mock(Invocation.Builder.class);
@@ -376,7 +376,7 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
         final List<SignedEntity<ComplaintResolveDTO>> expected = Arrays.asList(valid, invalid);
         invalid.getEntity().getValue().setSender(-2);
 
-        final String commitsString = new ObjectMapper().writeValueAsString(expected);
+        final String commitsString = new ObjectMapper().writeValueAsString(expected.toArray());
 
         final WebTarget webTarget = targets.get("complaintResolves");
         final Invocation.Builder builder = mock(Invocation.Builder.class);

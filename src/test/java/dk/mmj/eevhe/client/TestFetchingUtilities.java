@@ -37,6 +37,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("unchecked")
 public class TestFetchingUtilities extends TestUsingBouncyCastle {
     private static final Logger logger = LogManager.getLogger(TestFetchingUtilities.class);
     private X509CertificateHolder daOneCert;
@@ -174,7 +175,7 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
                 System.currentTimeMillis(), CertificateHelper.certificateToPem(daOneCert)), daOneSk);
         SignedEntity<PartialPublicInfo> invalidInfo = new SignedEntity<>(new PartialPublicInfo(2, keyPair.getPublicKey(), keyPair.getSecretKey(), candidates,
                 System.currentTimeMillis(), CertificateHelper.certificateToPem(daOneCert)), daOneSk);
-        List<SignedEntity<PartialPublicInfo>> infos = Arrays.asList(validInfo, invalidInfo);
+        SignedEntity<PartialPublicInfo>[] infos = new SignedEntity[]{validInfo, invalidInfo};
 
         WebTarget bulletinBoard = mock(WebTarget.class);
         WebTarget publicInfoTarget = mock(WebTarget.class);
