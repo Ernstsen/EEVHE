@@ -50,15 +50,7 @@ public class VoteProofUtils {
         b[v] = h.modPow(y, p);
 
         BigInteger s = new BigInteger(
-                SecurityUtils.hash(new byte[][]{
-                        a[0].toByteArray(),
-                        b[0].toByteArray(),
-                        a[1].toByteArray(),
-                        b[1].toByteArray(),
-                        c.toByteArray(),
-                        d.toByteArray(),
-                        id.getBytes()
-                })).mod(q);
+                SecurityUtils.hash(a[0].toByteArray(), b[0].toByteArray(), a[1].toByteArray(), b[1].toByteArray(), c.toByteArray(), d.toByteArray(), id.getBytes())).mod(q);
 
         e[v] = s.subtract(e[fakeIndex]).mod(q);
         z[v] = y.subtract(e[v].multiply(witness)).mod(q);
@@ -126,15 +118,7 @@ public class VoteProofUtils {
         BigInteger b1 = h.modPow(z1, p).multiply(d.multiply(g.modInverse(p)).modPow(e1, p)).mod(p);
 
         BigInteger s = new BigInteger(
-                SecurityUtils.hash(new byte[][]{
-                        a0.toByteArray(),
-                        b0.toByteArray(),
-                        a1.toByteArray(),
-                        b1.toByteArray(),
-                        c.toByteArray(),
-                        d.toByteArray(),
-                        id.getBytes()
-                })).mod(publicKey.getQ());
+                SecurityUtils.hash(a0.toByteArray(), b0.toByteArray(), a1.toByteArray(), b1.toByteArray(), c.toByteArray(), d.toByteArray(), id.getBytes())).mod(publicKey.getQ());
 
         BigInteger e = e0.add(e1);
 

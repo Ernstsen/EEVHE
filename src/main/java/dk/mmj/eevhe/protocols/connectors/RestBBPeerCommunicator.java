@@ -30,7 +30,7 @@ public class RestBBPeerCommunicator implements BBPeerCommunicator {
     }
 
     @Override
-    public void sendMessage(String baId, String message) {
+    public void sendMessageBA(String baId, String message) {
         Entity<SignedEntity<BAMessage>> entity = Entity.entity(new SignedEntity<>(new BAMessage(baId, message, null), sk), MediaType.APPLICATION_JSON);
 
         Response resp = target.path("BAMessage").request().post(entity);
@@ -40,12 +40,17 @@ public class RestBBPeerCommunicator implements BBPeerCommunicator {
     }
 
     @Override
-    public void sendMessage(String baId, Boolean message) {
+    public void sendMessageBA(String baId, Boolean message) {
         Entity<SignedEntity<BAMessage>> entity = Entity.entity(new SignedEntity<>(new BAMessage(baId, null, message), sk), MediaType.APPLICATION_JSON);
 
         Response resp = target.path("BAMessage").request().post(entity);
         if (!(resp.getStatus() == 204)) {
             logger.error("Failed to post secret to with status= " + resp.getStatus() + " webtarget: " + target);
         }
+    }
+
+    @Override
+    public void sendMessageBroadcast(String message) {
+
     }
 }

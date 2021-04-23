@@ -1,5 +1,7 @@
 package dk.mmj.eevhe.protocols.agreement;
 
+import dk.mmj.eevhe.crypto.SecurityUtils;
+import dk.mmj.eevhe.crypto.signature.SignatureHelper;
 import dk.mmj.eevhe.protocols.agreement.broadcast.BroadcastManager;
 import dk.mmj.eevhe.protocols.agreement.mvba.ByzantineAgreementCommunicator;
 
@@ -26,7 +28,7 @@ public class AgreementHelper {
      * @param message message to broadcast, and then agree on
      */
     public void agree(String message) {
-        String id = UUID.randomUUID().toString(); //TODO Determine in deterministic way
+        String id = new String(SecurityUtils.hash(message.getBytes()));
         broadcastManager.broadcast(id, message);
     }
 

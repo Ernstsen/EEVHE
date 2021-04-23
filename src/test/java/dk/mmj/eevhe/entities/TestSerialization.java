@@ -3,9 +3,7 @@ package dk.mmj.eevhe.entities;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.results.ElectionResult;
-import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -102,12 +100,17 @@ public class TestSerialization {
         serializables.add(new ElectionResult(Arrays.asList(1, 2, 41, 12, 12541), 12412134));
         serializables.add(new CertificateDTO("this is very much a certificate ", 23));
 
-        List<PeerInfo> peers = new ArrayList<PeerInfo>(){{
-            add(new PeerInfo(1, "123.123.123"));
-            add(new PeerInfo(2, "321.321.321"));
-        }};
+        List<BBPeerInfo> peers = Arrays.asList(
+                new BBPeerInfo(1, "123.123.123", "certificate stringy"),
+                new BBPeerInfo(2, "321.321.321", cert)
+        );
 
-        serializables.add(new BBInput(peers, peers));
+        List<PeerInfo> edges = Arrays.asList(
+                new PeerInfo(1, "123.123.123"),
+                new PeerInfo(2, "321.321.321")
+        );
+
+        serializables.add(new BBInput(peers, edges));
 
         serializables.add(new BAMessage("12", "", null));
         serializables.add(new BAMessage("456", "MsgString...", null));
@@ -158,7 +161,7 @@ public class TestSerialization {
                 field.setAccessible(true);
                 try {
                     Object val = field.get(serializable);
-                    if(val != null){
+                    if (val != null) {
                         String valueString = val.getClass().isArray() ? Arrays.toString(toObjectArray(val)) : val.toString();
                         assertTrue(serializableClass.getName() + ": toString for DTO must contain all fields", str.contains(valueString));
                     }

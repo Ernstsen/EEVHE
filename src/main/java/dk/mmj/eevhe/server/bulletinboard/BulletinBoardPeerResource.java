@@ -15,6 +15,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Handles requests from Edges
@@ -37,6 +38,12 @@ public class BulletinBoardPeerResource {
         return servletConfig.getInitParameter("id");
     }
 
+    @SuppressWarnings("unchecked")
+    private Consumer<BulletinBoardUpdatable> getConsumer() {
+        ServerState serverState = ServerState.getInstance();
+        return (Consumer<BulletinBoardUpdatable>) serverState.get("executeConsensusProtocol." + getId(), Consumer.class);
+    }
+
     @GET
     @Path("type")
     @Produces(MediaType.TEXT_HTML)
@@ -49,7 +56,6 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("getPublicInfo")
     @Produces(MediaType.APPLICATION_JSON)
-    @SuppressWarnings("unchecked")
     public List<SignedEntity<PartialPublicInfo>> getPublicInfos() {
         List<SignedEntity<PartialPublicInfo>> list = getState().getSignedPartialPublicInfos();
 
@@ -64,7 +70,6 @@ public class BulletinBoardPeerResource {
     @POST
     @Path("postBallot")
     @Consumes(MediaType.APPLICATION_JSON)
-    @SuppressWarnings("unchecked")
     public void postBallot(BallotDTO ballot) {
 //        TODO: Issue med Timestamp i PersistedBallot i forhold til MVBA protokol - send evt. ballot rundt i stedet for
 //        TODO: Consensus om timestamp?? unpleasant
@@ -77,10 +82,7 @@ public class BulletinBoardPeerResource {
             throw new NotAllowedException("A vote has already been registered with this ID");
         }
 
-        BulletinBoardPeer.executeConsensusProtocol(
-                new BBPackage<>(persistedBallot),
-                () -> state.addBallot(persistedBallot)
-        );
+        getConsumer().accept(persistedBallot);
     }
 
     /**
@@ -102,10 +104,7 @@ public class BulletinBoardPeerResource {
     @Path("result")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postResult(SignedEntity<PartialResultList> partialDecryptions) {
-        BulletinBoardPeer.executeConsensusProtocol(
-                new BBPackage<>(partialDecryptions),
-                () -> getState().addResult(partialDecryptions)
-        );
+        getConsumer().accept(partialDecryptions);
     }
 
     @GET
@@ -128,13 +127,9 @@ public class BulletinBoardPeerResource {
         logger.debug("Received commitment from DA with id=" + commitment.getEntity().getId() +
                 ", for protocol=" + commitment.getEntity().getProtocol());
 
-        BulletinBoardPeer.executeConsensusProtocol(
-                new BBPackage<>(commitment),
-                () -> getState().addSignedCommitment(commitment)
-        );
+        getConsumer().accept(commitment);
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("commitments")
     @Produces(MediaType.APPLICATION_JSON)
@@ -152,23 +147,16 @@ public class BulletinBoardPeerResource {
     @Path("pedersenComplain")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postPedersenComplaint(SignedEntity<PedersenComplaintDTO> complaint) {
-        BulletinBoardPeer.executeConsensusProtocol(
-                new BBPackage<>(complaint),
-                () -> getState().addSignedPedersenComplaint(complaint)
-        );
+        getConsumer().accept(complaint);
     }
 
     @POST
     @Path("feldmanComplain")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postFeldmanComplaint(SignedEntity<FeldmanComplaintDTO> complaint) {
-        BulletinBoardPeer.executeConsensusProtocol(
-                new BBPackage<>(complaint),
-                () -> getState().addSignedFeldmanComplaint(complaint)
-        );
+        getConsumer().accept(complaint);
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("pedersenComplaints")
     @Produces(MediaType.APPLICATION_JSON)
@@ -178,7 +166,6 @@ public class BulletinBoardPeerResource {
         return list != null ? list : new ArrayList<>();
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("feldmanComplaints")
     @Produces(MediaType.APPLICATION_JSON)
@@ -192,13 +179,9 @@ public class BulletinBoardPeerResource {
     @Path("resolveComplaint")
     @Consumes(MediaType.APPLICATION_JSON)
     public void resolveComplaint(SignedEntity<ComplaintResolveDTO> resolveDTO) {
-        BulletinBoardPeer.executeConsensusProtocol(
-                new BBPackage<>(resolveDTO),
-                () -> getState().addSignedComplaintResolve(resolveDTO)
-        );
+        getConsumer().accept(resolveDTO);
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("complaintResolves")
     @Produces(MediaType.APPLICATION_JSON)
@@ -212,13 +195,9 @@ public class BulletinBoardPeerResource {
     @Path("publicInfo")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postPublicInfo(SignedEntity<PartialPublicInfo> info) {
-        BulletinBoardPeer.executeConsensusProtocol(
-                new BBPackage<>(info),
-                () -> getState().addSignedPartialPublicInfo(info)
-        );
+        getConsumer().accept(info);
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("publicInfo")
     @Produces(MediaType.APPLICATION_JSON)
@@ -232,13 +211,9 @@ public class BulletinBoardPeerResource {
     @Path("certificates")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postCertificate(SignedEntity<CertificateDTO> certificate) {
-        BulletinBoardPeer.executeConsensusProtocol(
-                new BBPackage<>(certificate),
-                () -> getState().addSignedCertificate(certificate)
-        );
+        getConsumer().accept(certificate);
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("certificates")
     @Produces(MediaType.APPLICATION_JSON)

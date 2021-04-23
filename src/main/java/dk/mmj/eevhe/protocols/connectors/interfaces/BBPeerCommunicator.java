@@ -4,6 +4,26 @@ import dk.mmj.eevhe.server.bulletinboard.BulletinBoardState;
 import dk.mmj.eevhe.entities.SignedEntity;
 
 public interface BBPeerCommunicator {
-    void sendMessage(String baId, String message);
-    void sendMessage(String baId, Boolean message);
+    /**
+     * Sends message using Byzantine agreement protocol
+     *
+     * @param baId Identifier for Byzantine Agreement protocol
+     * @param message Message to be sent
+     */
+    void sendMessageBA(String baId, String message);
+
+    /**
+     * Sends message using Byzantine agreement protocol
+     *
+     * @param baId Identifier for Byzantine Agreement protocol
+     * @param message Message to be sent
+     */
+    void sendMessageBA(String baId, Boolean message);
+
+    /**
+     * Sends message to individual peers as part of a broadcast protocol
+     *
+     * @param message Message to be sent
+     */
+    void sendMessageBroadcast(String message);
 }

@@ -10,7 +10,6 @@ import dk.mmj.eevhe.protocols.agreement.broadcast.BrachaBroadcastManager;
 import dk.mmj.eevhe.protocols.agreement.mvba.CompositeCommunicator;
 import dk.mmj.eevhe.protocols.agreement.mvba.MultiValuedByzantineAgreementProtocolImpl;
 import dk.mmj.eevhe.protocols.connectors.RestBBPeerCommunicator;
-import dk.mmj.eevhe.protocols.connectors.interfaces.BBPeerCommunicator;
 import dk.mmj.eevhe.server.AbstractServer;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.commons.compress.utils.IOUtils;
@@ -24,8 +23,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -57,7 +56,7 @@ public class BulletinBoardPeer extends AbstractServer {
         try {
             bbInput = mapper.readValue(conf.resolve("BB_input.json").toFile(), BBInput.class);
             Map<Integer, String> peerCertificates = bbInput.getPeers().stream().collect(Collectors.toMap(BBPeerInfo::getId, BBPeerInfo::getCertificate));
-            ServerState.getInstance().put("peerCertificates", peerCertificates);
+            ServerState.getInstance().put("peerCertificates." + id, peerCertificates);
         } catch (IOException e) {
             logger.error("Failed to read BB input file", e);
             throw new RuntimeException("Failed to read BB from file", e);
@@ -89,41 +88,25 @@ public class BulletinBoardPeer extends AbstractServer {
 
         CompositeCommunicator compositeCommunicator = new CompositeCommunicator(this::sendString, this::sendBoolean);
 
-        Map<Integer, String> peerMap = bbInput.getPeers().stream().collect(Collectors.toMap(PeerInfo::getId, PeerInfo::getAddress));
+        Map<Integer, Consumer<String>> peerMap = communicators.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue()::sendMessageBroadcast));
 
         int t = peerMap.size() / 3;
         agreementHelper = new AgreementHelper(
-                new BrachaBroadcastManager(null, id, t),
+                new BrachaBroadcastManager(peerMap, id, t),
                 new MultiValuedByzantineAgreementProtocolImpl(compositeCommunicator, peerMap.size(), t),
                 this::updateState
-        );//TODO: Introduce!
+        );
+
+        Consumer<BulletinBoardUpdatable> consensus = this::executeConsensusProtocol;
+        ServerState.getInstance().put("executeConsensusProtocol." + id, consensus);
     }
 
     private void sendString(String baId, String message) {
-        communicators.values().forEach(c -> c.sendMessage(baId, message));
+        communicators.values().forEach(c -> c.sendMessageBA(baId, message));
     }
 
     private void sendBoolean(String baId, Boolean message) {
-        communicators.values().forEach(c -> c.sendMessage(baId, message));
-    }
-
-    /**
-     * Called when receiving network data from edge
-     * Passes data to MVBA protocol
-     * Receives responds back from MVBA protocol
-     * Updates BB state
-     */
-    @Deprecated
-    public static void executeConsensusProtocol(BBPackage<?> bbPackage, Runnable methodExecutor) {
-        //        TODO: Receive data from Edge
-        //        TODO: call MVBA protocol
-        //        TODO: receive result from MVBA protocol -> If ok:
-        boolean consensusObtained = true;
-
-        if (consensusObtained) {
-            //        TODO: update BB state
-            methodExecutor.run();
-        }
+        communicators.values().forEach(c -> c.sendMessageBA(baId, message));
     }
 
     private void updateState(String str) {
@@ -136,7 +119,7 @@ public class BulletinBoardPeer extends AbstractServer {
         }
     }
 
-    public void executeConsensusProtocol(SignedEntity<BulletinBoardUpdatable> entity) {
+    public void executeConsensusProtocol(BulletinBoardUpdatable entity) {
         //TODO: VERIFY!
         try {
             String s = mapper.writeValueAsString(entity);
