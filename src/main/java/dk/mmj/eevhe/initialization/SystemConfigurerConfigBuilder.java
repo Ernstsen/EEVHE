@@ -17,12 +17,14 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
     private static final String OUTPUT_FOLDER_PATH = "outputFolder=";
     private static final String CERT_KEY_PATH = "certKey=";
     private static final String CERT_PATH = "cert=";
-    private static final String DA_ADDRESSES = "addresses";
+    private static final String DA_ADDRESSES = "addresses"; // TODO: da_addresses??
+    private static final String BB_PEER_ADDRESSES = "bb_peer_addresses";
     private static final String TIME = "time";
     private static final String TIME_DAY = "day=";
     private static final String TIME_HR = "hour=";
     private static final String TIME_MIN = "min=";
     private final Map<Integer, String> daAddresses = new HashMap<>();
+    private final Map<Integer, String> bbPeerAddresses = new HashMap<>();
     //state
     private Path outputFolderPath = Paths.get("./conf/");
     private Path skFilePath = Paths.get("./certs/test_glob_key.pem");
@@ -53,6 +55,11 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
                 String[] split = param.split("_", 2);
                 daAddresses.put(Integer.parseInt(split[0]), split[1]);
             }
+        } else if (cmd.equalsIgnoreCase(BB_PEER_ADDRESSES)) {
+            for (String param : command.getParams()) {
+                String[] split = param.split("_", 2);
+                bbPeerAddresses.put(Integer.parseInt(split[0]), split[1]);
+            }
         } else if (cmd.startsWith(OUTPUT_FOLDER_PATH)) {
             outputFolderPath = Paths.get(cmd.substring(OUTPUT_FOLDER_PATH.length()));
         } else if (cmd.startsWith(CERT_PATH)) {
@@ -71,6 +78,7 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
                 skFilePath,
                 certFilePath,
                 daAddresses,
+                bbPeerAddresses,
                 new Date().getTime() + time);
     }
 

@@ -7,8 +7,10 @@ import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParametersImpl;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
-import dk.mmj.eevhe.entities.PeerInfo;
+import dk.mmj.eevhe.entities.BBInput;
+import dk.mmj.eevhe.entities.BBPeerInfo;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
+import dk.mmj.eevhe.entities.PeerInfo;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -31,6 +33,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +49,7 @@ public class SystemConfigurer implements Application {
     private final long endTime;
     private final Path outputFolderPath;
     private final Map<Integer, String> daAddresses;
+    private final Map<Integer, String> bbPeerAddresses;
     private final Path skFilePath;
     private final Path certFilePath;
 
@@ -55,6 +59,7 @@ public class SystemConfigurer implements Application {
         this.skFilePath = config.skFilePath;
         this.certFilePath = config.certFilePath;
         this.daAddresses = config.daAddresses;
+        this.bbPeerAddresses = config.bbPeerAddresses;
     }
 
     @Override
@@ -81,7 +86,7 @@ public class SystemConfigurer implements Application {
         }
         DecryptionAuthorityInput daInput = new DecryptionAuthorityInput(pHex, gHex, eHex, endTime, daInfos, certPem);
 
-        logger.info("Writing file");
+        logger.info("Writing common_input.json file");
         try (OutputStream ous = Files.newOutputStream(outputFolderPath.resolve("common_input.json"))) {
             mapper.writeValue(ous, daInput);
         } catch (IOException e) {
@@ -98,8 +103,7 @@ public class SystemConfigurer implements Application {
             return;
         }
 
-        AlgorithmIdentifier sha256WithRSASignature = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256WITHRSA");
-        AlgorithmIdentifier digestSha = new DefaultDigestAlgorithmIdentifierFinder().find("SHA-256");
+        ArrayList<BBPeerInfo> bbPeerInfos = new ArrayList<>();
 
         logger.info("Writing certificates");
         try {
@@ -109,20 +113,7 @@ public class SystemConfigurer implements Application {
                 PublicKey pk = keyPair.getPublic();
                 PrivateKey sk = keyPair.getPrivate();
 
-                X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
-                        new X500Name("CN=EEVHE_Configurer"),
-                        BigInteger.valueOf(daInfo.getId()),
-                        new Date(), notAfter,
-                        new X500Name("CN=DA" + daInfo.getId()),
-                        new SubjectPublicKeyInfo(sha256WithRSASignature, pk.getEncoded())
-                );
-
-                ContentSigner signer = new BcRSAContentSignerBuilder(
-                        sha256WithRSASignature,
-                        digestSha
-                ).build(globalSk);
-
-                X509CertificateHolder certificate = cb.build(signer);
+                X509CertificateHolder certificate = generateCertificate(globalSk, notAfter, daInfo.getId(), pk, "DA");
 
                 Path targetFile = outputFolderPath.resolve("DA" + daInfo.getId() + ".zip");
                 try (ZipOutputStream ous = new ZipOutputStream(Files.newOutputStream(targetFile))) {
@@ -132,12 +123,73 @@ public class SystemConfigurer implements Application {
                     CertificateHelper.writeCertificate(ous, certificate);
                 }
             }
+
+            for (Integer id : bbPeerAddresses.keySet()) {
+                KeyPair keyPair = KeyHelper.generateRSAKeyPair();
+                PublicKey pk = keyPair.getPublic();
+                PrivateKey sk = keyPair.getPrivate();
+
+                X509CertificateHolder certificate = generateCertificate(globalSk, notAfter, id, pk, "BB_peer");
+
+                Path targetFile = outputFolderPath.resolve("BB_peer" + id + ".zip");
+                try (ZipOutputStream ous = new ZipOutputStream(Files.newOutputStream(targetFile))) {
+                    ous.putNextEntry(new ZipEntry("sk.pem"));
+                    KeyHelper.writeKey(ous, sk.getEncoded());
+                    bbPeerInfos.add(new BBPeerInfo(id, bbPeerAddresses.get(id), CertificateHelper.certificateToPem(certificate)));
+                }
+            }
         } catch (NoSuchAlgorithmException | NoSuchProviderException | OperatorCreationException | IOException e) {
             logger.error("Failed to create certificates for DAs!", e);
             return;
         }
 
+        BBInput bbInput = new BBInput(bbPeerInfos, new ArrayList<>());
+        logger.info("Writing BB_input.json file");
+        try (OutputStream ous = Files.newOutputStream(outputFolderPath.resolve("BB_input.json"))) {
+            mapper.writeValue(ous, bbInput);
+        } catch (IOException e) {
+            logger.error("Failed to write BB input to file. Terminating", e);
+            return;
+        }
+
         logger.info("Finished.");
+    }
+
+    /**
+     * Certificate generation method
+     *
+     * @param globalSk Secret key for global signing certificate
+     * @param notAfter Expiration time for generated certificate
+     * @param id       ID of certificate owner
+     * @param pk       Public key for certificate
+     * @param prefix   Prefix for certificate name
+     * @return Signed certificate
+     * @throws OperatorCreationException If generation fails
+     */
+    private X509CertificateHolder generateCertificate(
+            AsymmetricKeyParameter globalSk,
+            Date notAfter,
+            int id,
+            PublicKey pk,
+            String prefix) throws OperatorCreationException {
+        AlgorithmIdentifier sha256WithRSASignature = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256WITHRSA");
+        AlgorithmIdentifier digestSha = new DefaultDigestAlgorithmIdentifierFinder().find("SHA-256");
+
+        X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
+                new X500Name("CN=EEVHE_Configurer"),
+                BigInteger.valueOf(id),
+                new Date(), notAfter,
+                new X500Name("CN=" + prefix + id),
+                new SubjectPublicKeyInfo(sha256WithRSASignature, pk.getEncoded())
+        );
+
+        ContentSigner signer = new BcRSAContentSignerBuilder(
+                sha256WithRSASignature,
+                digestSha
+        ).build(globalSk);
+
+        X509CertificateHolder certificate = cb.build(signer);
+        return certificate;
     }
 
     private void createIfNotExists(Path path) {
@@ -160,6 +212,7 @@ public class SystemConfigurer implements Application {
 
         private final long endTime;
         private final Map<Integer, String> daAddresses;
+        private final Map<Integer, String> bbPeerAddresses;
         private final Path outputFolderPath;
         private final Path skFilePath;
         private final Path certFilePath;
@@ -171,6 +224,7 @@ public class SystemConfigurer implements Application {
          * @param skFilePath        path to certificate private key as .pem file
          * @param certFilePath      path to certificate as .pem file
          * @param daAddresses       Map linking ids to addresses for DAs
+         * @param bbPeerAddresses   Map linking ids to addresses for BB Peers
          * @param endTime           When the vote comes to an end. ms since January 1, 1970, 00:00:00 GMT
          */
         SystemConfiguration(
@@ -178,12 +232,14 @@ public class SystemConfigurer implements Application {
                 Path skFilePath,
                 Path certFilePath,
                 Map<Integer, String> daAddresses,
+                Map<Integer, String> bbPeerAddresses,
                 long endTime) {
             super(SystemConfigurer.class);
             this.outputFolderPath = candidateListPath;
             this.skFilePath = skFilePath;
             this.certFilePath = certFilePath;
             this.daAddresses = daAddresses;
+            this.bbPeerAddresses = bbPeerAddresses;
             this.endTime = endTime;
         }
 
@@ -193,6 +249,10 @@ public class SystemConfigurer implements Application {
 
         public Map<Integer, String> getDaAddresses() {
             return daAddresses;
+        }
+
+        public Map<Integer, String> getBbPeerAddresses() {
+            return bbPeerAddresses;
         }
 
         public Path getOutputFolderPath() {
