@@ -1,12 +1,13 @@
 package dk.mmj.eevhe.protocols.agreement.mvba;
 
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 public class CompositeCommunicator implements Communicator {
     private final BiConsumer<String, String> onStringSend;
     private final BiConsumer<String, Boolean> onBoolSend;
-    private BiConsumer<String, String> onReceivedString;
-    private BiConsumer<String, Boolean> onReceivedBoolean;
+    private Consumer<Incoming<Message<String>>> onReceivedString;
+    private Consumer<Incoming<Message<Boolean>>> onReceivedBoolean;
 
     /**
      * Constructor taking functional interfaces for each supported functionality
@@ -33,22 +34,22 @@ public class CompositeCommunicator implements Communicator {
     }
 
     @Override
-    public void receive(String BAId, String msg) {
-        onReceivedString.accept(BAId, msg);
+    public void receiveString(Incoming<Message<String>> incoming){
+        onReceivedString.accept(incoming);
     }
 
     @Override
-    public void receive(String BAId, Boolean msg) {
-        onReceivedBoolean.accept(BAId, msg);
+    public void receiveBool(Incoming<Message<Boolean>> incoming) {
+        onReceivedBoolean.accept(incoming);
     }
 
     @Override
-    public void registerOnReceivedString(BiConsumer<String, String> onReceived) {
+    public void registerOnReceivedString(Consumer<Incoming<Message<String>>> onReceived) {
         this.onReceivedString = onReceived;
     }
 
     @Override
-    public void registerOnReceivedBoolean(BiConsumer<String, Boolean> onReceived) {
+    public void registerOnReceivedBoolean(Consumer<Incoming<Message<Boolean>>> onReceived) {
         this.onReceivedBoolean = onReceived;
     }
 }

@@ -4,7 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
-import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.BBInput;
+import dk.mmj.eevhe.entities.BBPeerInfo;
+import dk.mmj.eevhe.entities.BulletinBoardUpdatable;
+import dk.mmj.eevhe.entities.PeerInfo;
 import dk.mmj.eevhe.protocols.agreement.AgreementHelper;
 import dk.mmj.eevhe.protocols.agreement.broadcast.BrachaBroadcastManager;
 import dk.mmj.eevhe.protocols.agreement.mvba.CompositeCommunicator;
@@ -93,7 +96,7 @@ public class BulletinBoardPeer extends AbstractServer {
         int t = peerMap.size() / 3;
         agreementHelper = new AgreementHelper(
                 new BrachaBroadcastManager(peerMap, id, t),
-                new MultiValuedByzantineAgreementProtocolImpl(compositeCommunicator, peerMap.size(), t),
+                new MultiValuedByzantineAgreementProtocolImpl(compositeCommunicator, peerMap.size(), t, "BB_PEER" + id),//TODO
                 this::updateState
         );
 

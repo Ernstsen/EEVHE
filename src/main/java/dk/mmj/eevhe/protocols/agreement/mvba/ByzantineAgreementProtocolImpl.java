@@ -1,20 +1,31 @@
 package dk.mmj.eevhe.protocols.agreement.mvba;
 
+import dk.mmj.eevhe.protocols.agreement.TimeoutMap;
+
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<Boolean> {
 
     private final Communicator communicator;
-    private final Map<String, List<Boolean>> received = new HashMap<>();
+    private final Map<String, Map<String, Boolean>> received = new TimeoutMap<>(5, TimeUnit.MINUTES);
     private final Map<String, BANotifyItem<Boolean>> notifyItems = new HashMap<>();
     private final int peers;
     private final int t;
+    private final String identity;
 
-    public ByzantineAgreementProtocolImpl(Communicator communicator, int peers, int t) {
+    /**
+     * @param communicator handle for sending/receiving messages
+     * @param peers        #peers
+     * @param t            t value for the protocol - requirement for safety: t<n/5
+     * @param identity     identity of this entity
+     */
+    public ByzantineAgreementProtocolImpl(Communicator communicator, int peers, int t, String identity) {
         this.communicator = communicator;
         communicator.registerOnReceivedBoolean(this::handleReceived);
         this.peers = peers;
         this.t = t;
+        this.identity = identity;
     }
 
     @Override
@@ -22,22 +33,35 @@ public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommuni
         String id = UUID.randomUUID().toString();
         communicator.send(id, msg);
 
-        List<Boolean> conversation = received.computeIfAbsent(id, i -> new ArrayList<>());
-        conversation.add(msg);
+        Map<String, Boolean> conversation = received.computeIfAbsent(id, i -> new HashMap<>());
+        conversation.put(identity, msg);
 
         BANotifyItem<Boolean> notifyItem = new BANotifyItem<>();
         notifyItems.put(id, notifyItem);
         return notifyItem;
     }
 
-    private synchronized void handleReceived(String id, Boolean msg) {
-        //        TODO: Handle adversaries messages repeatedly
-        List<Boolean> conversation = received.computeIfAbsent(id, i -> new ArrayList<>());
-        conversation.add(msg);
+    private synchronized void handleReceived(Incoming<Communicator.Message<Boolean>> incoming) {
+        if (!incoming.isValid()) {
+            return;
+        }
+
+        String id = incoming.getContent().getBaId();
+        Boolean msg = incoming.getContent().getMessage();
+
+        Map<String, Boolean> conversation = received.computeIfAbsent(id, i -> new HashMap<>());
+
+        String sender = incoming.getIdentifier();
+        if (conversation.containsKey(sender)) {
+            return;
+        } else {
+            conversation.put(sender, msg);
+        }
+
 
         if (conversation.size() >= peers - t) {
             int[] cnt = {0, 0};
-            for (Boolean val : conversation) {
+            for (Boolean val : conversation.values()) {
                 cnt[val ? 1 : 0] += 1;
             }
 

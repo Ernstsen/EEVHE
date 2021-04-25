@@ -19,7 +19,7 @@ public class TestByzantineAgreementProtocolImpl {
         strings = new HashMap<>();
         bools = new HashMap<>();
 
-        communicator = new CompositeCommunicator(
+        communicator = new CompositeCommunicator (
                 strings::put,
                 bools::put
         );
@@ -29,15 +29,15 @@ public class TestByzantineAgreementProtocolImpl {
     public void shouldReachAgreementNoCorrupt() throws InterruptedException {
         Boolean testBool = true;
 
-        ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 3, 0);
+        ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 3, 0, "p1");
         ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool);
 
         assertEquals(1, bools.entrySet().size());
 
         String id = bools.keySet().toArray(new String[0])[0];
 
-        communicator.receive(id, testBool);
-        communicator.receive(id, testBool);
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, testBool), "p2", true ));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, testBool), "p3", true ));
 
         assertNotNull("BA Agreement was null, not yet terminated.", baAgreement.getAgreement());
         assertTrue("Majority >= t did not agree on all values sent.", baAgreement.getAgreement());
@@ -47,16 +47,43 @@ public class TestByzantineAgreementProtocolImpl {
     public void shouldReachAgreementSomeDisagree() {
         Boolean testBool = true;
 
-        ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 4, 1);
+        ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
         ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool);
 
         assertEquals(1, bools.entrySet().size());
 
         String id = bools.keySet().toArray(new String[0])[0];
 
-        communicator.receive(id, testBool);
-        communicator.receive(id, testBool);
-        communicator.receive(id, !testBool);
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, testBool), "p2", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, testBool), "p3", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, !testBool), "p4", true));
+
+        assertNotNull("BA Agreement was null, not yet terminated.", baAgreement.getAgreement());
+        assertTrue("Majority >= t did not agree on all values sent.", baAgreement.getAgreement());
+    }
+
+    @Test
+    public void shouldReachAgreementSomeDisagreeSpamming() {
+        Boolean testBool = true;
+
+        ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
+        ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool);
+
+        assertEquals(1, bools.entrySet().size());
+
+        String id = bools.keySet().toArray(new String[0])[0];
+
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, testBool), "p2", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, !testBool), "p4", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, !testBool), "p2", false));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, !testBool), "p2", false));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, !testBool), "p3", false));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, !testBool), "p3", false));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, !testBool), "p4", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, !testBool), "p4", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, !testBool), "p4", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, !testBool), "p4", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, testBool), "p3", true));
 
         assertNotNull("BA Agreement was null, not yet terminated.", baAgreement.getAgreement());
         assertTrue("Majority >= t did not agree on all values sent.", baAgreement.getAgreement());
@@ -66,15 +93,15 @@ public class TestByzantineAgreementProtocolImpl {
     public void shouldBeUndecided() {
         Boolean testBool = true;
 
-        ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 3, 0);
+        ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 3, 0, "p1");
         ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool);
 
         assertEquals(1, bools.entrySet().size());
 
         String id = bools.keySet().toArray(new String[0])[0];
 
-        communicator.receive(id, testBool);
-        new Thread(() -> communicator.receive(id, !testBool)).start();
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, testBool), "p2", true));
+        new Thread(() -> communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, !testBool), "p3", true))).start();
 
         baAgreement.waitForFinish();
 

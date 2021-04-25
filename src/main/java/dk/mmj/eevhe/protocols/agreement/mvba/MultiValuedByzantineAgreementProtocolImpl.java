@@ -2,24 +2,34 @@ package dk.mmj.eevhe.protocols.agreement.mvba;
 
 import dk.mmj.eevhe.protocols.agreement.TimeoutMap;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<String> {
 
     private final Communicator communicator;
     private final ByzantineAgreementCommunicator<Boolean> singleValueBA;
-    private final Map<String, List<String>> received = new TimeoutMap<>(5, TimeUnit.MINUTES);
+    private final Map<String, Map<String, String>> received = new TimeoutMap<>(5, TimeUnit.MINUTES);
     private final Map<String, BANotifyItem<String>> notifyItems = new HashMap<>();
     private final int peers;
     private final int t;
+    private final String identity;
 
-    public MultiValuedByzantineAgreementProtocolImpl(Communicator communicator, int peers, int t) {
+    /**
+     * @param communicator handle for sending/receiving messages
+     * @param peers        #peers
+     * @param t            t value for the protocol - requirement for safety: t<n/5
+     * @param identity     identity of this entity
+     */
+    public MultiValuedByzantineAgreementProtocolImpl(Communicator communicator, int peers, int t, String identity) {
         this.communicator = communicator;
         communicator.registerOnReceivedString(this::handleReceived);
         this.peers = peers;
-        singleValueBA = new ByzantineAgreementProtocolImpl(communicator, peers, t);
+        singleValueBA = new ByzantineAgreementProtocolImpl(communicator, peers, t, identity);
         this.t = t;
+        this.identity = identity;
     }
 
     @Override
@@ -27,23 +37,35 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
         String id = UUID.randomUUID().toString();
         communicator.send(id, msg);
 
-        List<String> conversation = received.computeIfAbsent(id, i -> new ArrayList<>());
-        conversation.add(msg);
+        Map<String, String> conversation = received.computeIfAbsent(id, i -> new HashMap<>());
+        conversation.put(identity, msg);
 
         BANotifyItem<String> notifyItem = new BANotifyItem<>();
         notifyItems.put(id, notifyItem);
         return notifyItem;
     }
 
-    private synchronized void handleReceived(String id, String msg) {
-//        TODO: Handle adversaries messages repeatedly
-        List<String> conversation = received.computeIfAbsent(id, i -> new ArrayList<>());
-        conversation.add(msg);
+    private synchronized void handleReceived(Incoming<Communicator.Message<String>> incoming) {
+        if (!incoming.isValid()) {
+            return;
+        }
+
+        String id = incoming.getContent().getBaId();
+        String msg = incoming.getContent().getMessage();
+
+        Map<String, String> conversation = received.computeIfAbsent(id, i -> new HashMap<>());
+
+        String sender = incoming.getIdentifier();
+        if (conversation.containsKey(sender)) {
+            return;
+        } else {
+            conversation.put(sender, msg);
+        }
 
         if (conversation.size() >= peers - t) {
             received.remove(id);
             HashMap<String, Integer> countMap = new HashMap<>();
-            for (String s : conversation) {
+            for (String s : conversation.values()) {
                 countMap.compute(s, (k, v) -> v != null ? v + 1 : 1);
             }
 

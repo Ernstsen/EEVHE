@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.results.ElectionResult;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
+import dk.mmj.eevhe.protocols.agreement.mvba.Communicator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -72,7 +73,6 @@ public class TestSerialization {
         serializables.add(partialResult);
 
         PartialResultList partialResultList = new PartialResultList(Arrays.asList(partialResult, partialResult2), 5, 1);
-        PartialResultList partialResultList2 = new PartialResultList(Arrays.asList(partialResult2, partialResult), 94, 2);
         serializables.add(partialResultList);
         serializables.add(new PartialSecretKey(new BigInteger("23422"), new BigInteger("2342124")));
 
@@ -117,6 +117,7 @@ public class TestSerialization {
         serializables.add(new BAMessage("7", null, true));
 
         serializables.add(new BBPeerInfo(1, "127.0.0.1:8081", "asdasdasd"));
+        serializables.add(new Communicator.Message("someId", "SomeImage"));
     }
 
     @Test

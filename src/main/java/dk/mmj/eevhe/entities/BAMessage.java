@@ -1,6 +1,7 @@
 package dk.mmj.eevhe.entities;
 
 import dk.mmj.eevhe.protocols.agreement.mvba.Communicator;
+import dk.mmj.eevhe.protocols.agreement.mvba.IncomingImpl;
 
 import java.util.Objects;
 
@@ -43,9 +44,9 @@ public class BAMessage {
 
     public void communicatorReceive(Communicator communicator) {
         if (msgString != null && !msgString.isEmpty()) {
-            communicator.receive(baId, msgString);
+//            communicator.receiveString(baId, msgString); //TODO!
         } else {
-          communicator.receive(baId, msgBoolean);
+//          communicator.receive(baId, msgBoolean); //TODO!
         }
     }
 

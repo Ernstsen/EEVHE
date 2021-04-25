@@ -11,7 +11,7 @@ import java.util.Map;
 
 public class IncomingImpl<T extends IdentityHaving> implements Incoming<T> {
     private static final Logger logger = LogManager.getLogger(IncomingImpl.class);
-    private SignedEntity<T> signedEntity;
+    private final SignedEntity<T> signedEntity;
 
     public IncomingImpl(SignedEntity<T> signedEntity) {
         this.signedEntity = signedEntity;

@@ -2,17 +2,21 @@ package dk.mmj.eevhe.protocols.agreement.broadcast;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dk.mmj.eevhe.protocols.agreement.TimeoutMap;
 import dk.mmj.eevhe.protocols.agreement.mvba.Incoming;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class BrachaBroadcastManager implements BroadcastManager {
+    private static final int TIMEOUT_MINUTES = 10;
+
     private static final ObjectMapper mapper = new ObjectMapper();
-    private final Map<Type, Set<String>> handledMessages = new HashMap<>();
+    private final Map<Type, Set<String>> handledMessages = new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES);
     private final Map<Integer, Consumer<String>> peerMap;
-    private final Map<String, Integer> totalReceived = new HashMap<>();
-    private final Map<String, Map<String, Set<Type>>> recordedParticipants = new HashMap<>();
+    private final Map<String, Integer> totalReceived = new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES);
+    private final Map<String, Map<String, Set<Type>>> recordedParticipants = new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES);
     private final List<Consumer<String>> listeners = new ArrayList<>();
     private final int peerId;
     private final int t;

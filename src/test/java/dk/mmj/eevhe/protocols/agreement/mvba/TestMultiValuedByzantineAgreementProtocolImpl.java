@@ -31,22 +31,22 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
         Boolean testBool = true;
 
         MultiValuedByzantineAgreementProtocolImpl baProtocol =
-                new MultiValuedByzantineAgreementProtocolImpl(communicator, 3, 0);
+                new MultiValuedByzantineAgreementProtocolImpl(communicator, 3, 0, "p1");
         ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
 
         assertEquals(1, strings.entrySet().size());
 
         String stringId = strings.keySet().toArray(new String[0])[0];
 
-        communicator.receive(stringId, testStr);
-        communicator.receive(stringId, testStr);
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr), "p2", true));
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr), "p3", true));
 
         assertEquals(1, bools.entrySet().size());
 
         String boolId = bools.keySet().toArray(new String[0])[0];
 
-        communicator.receive(boolId, testBool);
-        communicator.receive(boolId, testBool);
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p2", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p3", true));
 
         baAgreement.waitForFinish();
         assertNotNull("BA Agreement was null, not yet terminated.", baAgreement.getAgreement());
@@ -61,24 +61,24 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
         Boolean testBool = true;
 
         MultiValuedByzantineAgreementProtocolImpl baProtocol =
-                new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1);
+                new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
         ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
 
         assertEquals(1, strings.entrySet().size());
 
         String stringId = strings.keySet().toArray(new String[0])[0];
 
-        communicator.receive(stringId, testStr2);
-        communicator.receive(stringId, testStr);
-        communicator.receive(stringId, testStr);
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr2), "p2", true));
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr), "p3", true));
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr), "p4", true));
 
         assertEquals(1, bools.entrySet().size());
 
         String boolId = bools.keySet().toArray(new String[0])[0];
 
-        communicator.receive(boolId, testBool);
-        communicator.receive(boolId, testBool);
-        communicator.receive(boolId, testBool);
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p2", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p3", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p4", true));
 
         baAgreement.waitForFinish();
         assertNotNull("BA Agreement was null, not yet terminated.", baAgreement.getAgreement());
@@ -93,24 +93,24 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
         Boolean testBool = true;
 
         MultiValuedByzantineAgreementProtocolImpl baProtocol =
-                new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1);
+                new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
         ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
 
         assertEquals(1, strings.entrySet().size());
 
         String stringId = strings.keySet().toArray(new String[0])[0];
 
-        communicator.receive(stringId, testStr2);
-        communicator.receive(stringId, testStr2);
-        communicator.receive(stringId, testStr);
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr2), "p2", true));
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr2), "p3", true));
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr), "p4", true));
 
         assertEquals(1, bools.entrySet().size());
 
         String boolId = bools.keySet().toArray(new String[0])[0];
 
-        communicator.receive(boolId, !testBool);
-        communicator.receive(boolId, testBool);
-        communicator.receive(boolId, testBool);
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, !testBool), "p2", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p3", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p4", true));
 
         baAgreement.waitForFinish();
         assertNotNull("BA Agreement was null, not yet terminated.", baAgreement.getAgreement());
@@ -125,24 +125,24 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
         Boolean testBool = true;
 
         MultiValuedByzantineAgreementProtocolImpl baProtocol =
-                new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1);
+                new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
         ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
 
         assertEquals(1, strings.entrySet().size());
 
         String stringId = strings.keySet().toArray(new String[0])[0];
 
-        communicator.receive(stringId, testStr2);
-        communicator.receive(stringId, testStr2);
-        communicator.receive(stringId, testStr);
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr2), "p2", true));
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr2), "p3", true));
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr), "p4", true));
 
         assertEquals(1, bools.entrySet().size());
 
         String boolId = bools.keySet().toArray(new String[0])[0];
 
-        communicator.receive(boolId, testBool);
-        communicator.receive(boolId, testBool);
-        communicator.receive(boolId, testBool);
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p2", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p3", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p4", true));
 
         baAgreement.waitForFinish();
         assertNotNull("BA Agreement was null, not yet terminated.", baAgreement.getAgreement());
@@ -157,24 +157,24 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
         Boolean testBool = false;
 
         MultiValuedByzantineAgreementProtocolImpl baProtocol =
-                new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1);
+                new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
         ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
 
         assertEquals(1, strings.entrySet().size());
 
         String stringId = strings.keySet().toArray(new String[0])[0];
 
-        communicator.receive(stringId, testStr2);
-        communicator.receive(stringId, testStr2);
-        communicator.receive(stringId, testStr);
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr2), "p2", true));
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr2), "p3", true));
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(stringId, testStr), "p4", true));
 
         assertEquals(1, bools.entrySet().size());
 
         String boolId = bools.keySet().toArray(new String[0])[0];
 
-        communicator.receive(boolId, testBool);
-        communicator.receive(boolId, testBool);
-        communicator.receive(boolId, testBool);
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p2", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p3", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(boolId, testBool), "p4", true));
 
         baAgreement.waitForFinish();
         assertNotNull("BA Agreement was null, not yet terminated.", baAgreement.getAgreement());
