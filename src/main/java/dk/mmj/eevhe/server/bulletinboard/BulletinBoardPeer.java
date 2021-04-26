@@ -58,7 +58,8 @@ public class BulletinBoardPeer extends AbstractServer {
 
         try {
             bbInput = mapper.readValue(conf.resolve("BB_input.json").toFile(), BBInput.class);
-            Map<Integer, String> peerCertificates = bbInput.getPeers().stream().collect(Collectors.toMap(BBPeerInfo::getId, BBPeerInfo::getCertificate));
+            Map<String, String> peerCertificates = bbInput.getPeers().stream()
+                    .collect(Collectors.toMap(i -> Integer.toString(i.getId()), BBPeerInfo::getCertificate));
             ServerState.getInstance().put("peerCertificates." + id, peerCertificates);
         } catch (IOException e) {
             logger.error("Failed to read BB input file", e);
@@ -116,10 +117,15 @@ public class BulletinBoardPeer extends AbstractServer {
         try {
             BulletinBoardUpdatable updatable = mapper.readValue(str, BulletinBoardUpdatable.class);
 
-            updatable.update(null);//TODO: GET STATE
+            updatable.update(getState());
         } catch (JsonProcessingException e) {
             logger.error("Failed to deserialize BulletinBoardUpdatable", e);
         }
+    }
+
+    private BulletinBoardState getState() {
+        ServerState serverState = ServerState.getInstance();
+        return serverState.computeIfAbsent("bbState." + id, s -> new BulletinBoardState());
     }
 
     public void executeConsensusProtocol(BulletinBoardUpdatable entity) {

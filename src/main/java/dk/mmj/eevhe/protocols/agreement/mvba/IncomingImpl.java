@@ -9,7 +9,7 @@ import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 
 import java.util.Map;
 
-public class IncomingImpl<T extends IdentityHaving> implements Incoming<T> {
+public class IncomingImpl<T extends SenderIdentityHaving> implements Incoming<T> {
     private static final Logger logger = LogManager.getLogger(IncomingImpl.class);
     private final SignedEntity<T> signedEntity;
 
@@ -24,17 +24,13 @@ public class IncomingImpl<T extends IdentityHaving> implements Incoming<T> {
 
     @Override
     public String getIdentifier() {
-        return getId().toString();
-    }
-
-    private Integer getId() {
-        return signedEntity.getEntity().getId();
+        return signedEntity.getEntity().getSenderId();
     }
 
     @Override
     public boolean isValid() {
 //        TODO: prettify:
-        AsymmetricKeyParameter pk = (AsymmetricKeyParameter) ServerState.getInstance().get("peerCertificates", Map.class).get(getId());
+        AsymmetricKeyParameter pk = (AsymmetricKeyParameter) ServerState.getInstance().get("peerCertificates", Map.class).get(getIdentifier());
         try {
             return signedEntity.verifySignature(pk);
         } catch (JsonProcessingException e) {

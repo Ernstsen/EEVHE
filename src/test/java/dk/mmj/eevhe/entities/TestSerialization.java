@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.results.ElectionResult;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
-import dk.mmj.eevhe.protocols.agreement.mvba.Communicator;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -112,12 +111,11 @@ public class TestSerialization {
 
         serializables.add(new BBInput(peers, edges));
 
-        serializables.add(new BAMessage("12", "", null));
-        serializables.add(new BAMessage("456", "MsgString...", null));
-        serializables.add(new BAMessage("7", null, true));
+        serializables.add(new BAMessage("12", "", null, " a very likely sender"));
+        serializables.add(new BAMessage("456", "MsgString...", null, " a very likely sender"));
+        serializables.add(new BAMessage("7", null, true, " a very likely sender"));
 
         serializables.add(new BBPeerInfo(1, "127.0.0.1:8081", "asdasdasd"));
-        serializables.add(new Communicator.Message("someId", "SomeImage"));
     }
 
     @Test

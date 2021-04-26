@@ -31,7 +31,8 @@ public class RestBBPeerCommunicator implements BBPeerCommunicator {
 
     @Override
     public void sendMessageBA(String baId, String message) {
-        Entity<SignedEntity<BAMessage>> entity = Entity.entity(new SignedEntity<>(new BAMessage(baId, message, null), sk), MediaType.APPLICATION_JSON);
+        //TODO: ID
+        Entity<SignedEntity<BAMessage>> entity = Entity.entity(new SignedEntity<>(new BAMessage(baId, message, null, null), sk), MediaType.APPLICATION_JSON);
 
         Response resp = target.path("BAMessage").request().post(entity);
         if (!(resp.getStatus() == 204)) {
@@ -41,7 +42,8 @@ public class RestBBPeerCommunicator implements BBPeerCommunicator {
 
     @Override
     public void sendMessageBA(String baId, Boolean message) {
-        Entity<SignedEntity<BAMessage>> entity = Entity.entity(new SignedEntity<>(new BAMessage(baId, null, message), sk), MediaType.APPLICATION_JSON);
+        //TODO: ID
+        Entity<SignedEntity<BAMessage>> entity = Entity.entity(new SignedEntity<>(new BAMessage(baId, null, message, null), sk), MediaType.APPLICATION_JSON);
 
         Response resp = target.path("BAMessage").request().post(entity);
         if (!(resp.getStatus() == 204)) {

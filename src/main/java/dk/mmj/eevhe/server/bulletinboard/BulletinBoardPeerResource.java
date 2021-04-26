@@ -235,6 +235,6 @@ public class BulletinBoardPeerResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public void postBAMessage(SignedEntity<BAMessage> message) {
         Communicator communicator = ServerState.getInstance().get("mvba.communicator." + getId(), Communicator.class);
-        message.getEntity().communicatorReceive(communicator); // TODO: Handle signed entity...
+        message.getEntity().getCommunicatorConsumer().accept(communicator, message);
     }
 }
