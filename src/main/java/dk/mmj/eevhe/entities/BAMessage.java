@@ -1,14 +1,22 @@
 package dk.mmj.eevhe.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import dk.mmj.eevhe.protocols.agreement.mvba.Communicator;
 import dk.mmj.eevhe.protocols.agreement.mvba.CompositeIncoming;
 import dk.mmj.eevhe.protocols.agreement.mvba.SenderIdentityHaving;
+import dk.mmj.eevhe.server.ServerState;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
+@SuppressWarnings("unused")
 public class BAMessage implements SenderIdentityHaving {
+    private static final Logger logger = LogManager.getLogger(BAMessage.class);
     private String baId;
     private String msgString;
     private Boolean msgBoolean;
@@ -22,6 +30,17 @@ public class BAMessage implements SenderIdentityHaving {
     }
 
     public BAMessage() {
+    }
+
+    static boolean validate(SignedEntity<BAMessage> se, String senderId) {
+//        TODO: prettify:
+        AsymmetricKeyParameter pk = (AsymmetricKeyParameter) ServerState.getInstance().get("peerCertificates", Map.class).get(senderId);
+        try {
+            return se.verifySignature(pk);
+        } catch (JsonProcessingException e) {
+            logger.warn("Failed to validate signature on incoming message", e);
+            return false;
+        }
     }
 
     public String getBaId() {
@@ -62,25 +81,28 @@ public class BAMessage implements SenderIdentityHaving {
         if (msgString != null && !msgString.isEmpty()) {
             return (c, sba) -> {
                 BAMessage ba = sba.getEntity();
-                CompositeIncoming<Communicator.Message<String>> inc = new CompositeIncoming<>(
-                        new Communicator.Message<>(
-                                ba.baId,
-                                ba.msgString),
-                        ba.senderId, null);
                 c.receiveString(
-                        inc
+                        new CompositeIncoming<>(
+                                new Communicator.Message<>(
+                                        ba.baId,
+                                        ba.msgString
+                                ),
+                                ba.senderId,
+                                () -> validate(sba, senderId)
+                        )
                 );
             };
         } else {
             return (c, sba) -> {
                 BAMessage ba = sba.getEntity();
-                CompositeIncoming<Communicator.Message<Boolean>> inc = new CompositeIncoming<>(
-                        new Communicator.Message<>(
-                                ba.baId,
-                                ba.msgBoolean),
-                        ba.senderId, null);
                 c.receiveBool(
-                        inc
+                        new CompositeIncoming<>(
+                                new Communicator.Message<>(
+                                        ba.baId,
+                                        ba.msgBoolean),
+                                ba.senderId,
+                                () -> validate(sba, senderId)
+                        )
                 );
             };
         }

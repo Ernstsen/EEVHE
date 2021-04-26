@@ -10,6 +10,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -157,12 +158,15 @@ public class TestSerialization {
             Class<?> serializableClass = serializable.getClass();
             String str = serializable.toString();
             for (Field field : serializableClass.getDeclaredFields()) {
+                if(Modifier.isStatic(field.getModifiers())){
+                    continue;//static fields should not be in toString method
+                }
                 field.setAccessible(true);
                 try {
                     Object val = field.get(serializable);
                     if (val != null) {
                         String valueString = val.getClass().isArray() ? Arrays.toString(toObjectArray(val)) : val.toString();
-                        assertTrue(serializableClass.getName() + ": toString for DTO must contain all fields", str.contains(valueString));
+                        assertTrue(serializableClass.getName() + ": toString for DTO must contain all fields, did not contain: " + valueString, str.contains(valueString));
                     }
                 } catch (IllegalAccessException | IllegalArgumentException e) {
                     e.printStackTrace();

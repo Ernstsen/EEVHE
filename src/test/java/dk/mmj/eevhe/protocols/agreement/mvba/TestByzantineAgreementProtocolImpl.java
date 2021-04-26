@@ -10,23 +10,21 @@ import static org.junit.Assert.*;
 
 @SuppressWarnings("ConstantConditions")
 public class TestByzantineAgreementProtocolImpl {
-    private Map<String, String> strings;
     private Map<String, Boolean> bools;
     private CompositeCommunicator communicator;
 
     @Before
     public void setupCommunicator() {
-        strings = new HashMap<>();
         bools = new HashMap<>();
 
         communicator = new CompositeCommunicator (
-                strings::put,
+                new HashMap<>()::put,
                 bools::put
         );
     }
 
     @Test
-    public void shouldReachAgreementNoCorrupt() throws InterruptedException {
+    public void shouldReachAgreementNoCorrupt(){
         Boolean testBool = true;
 
         ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 3, 0, "p1");
