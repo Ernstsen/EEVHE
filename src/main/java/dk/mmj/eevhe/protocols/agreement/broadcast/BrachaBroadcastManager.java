@@ -3,7 +3,6 @@ package dk.mmj.eevhe.protocols.agreement.broadcast;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.protocols.agreement.TimeoutMap;
-import dk.mmj.eevhe.protocols.agreement.mvba.CompositeIncoming;
 import dk.mmj.eevhe.protocols.agreement.mvba.Incoming;
 
 import java.util.*;
@@ -19,19 +18,16 @@ public class BrachaBroadcastManager implements BroadcastManager {
     private final Map<String, Integer> totalReceived = new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES);
     private final Map<String, Map<String, Set<Type>>> recordedParticipants = new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES);
     private final List<Consumer<String>> listeners = new ArrayList<>();
-    private final int peerId;
-    @SuppressWarnings("FieldMayBeFinal") // To allow reflection in tests
-    private int t;
+    private final int t;
 
-    public BrachaBroadcastManager(Map<Integer, Consumer<String>> peerMap, int peerId, int t) {
+    public BrachaBroadcastManager(Map<Integer, Consumer<String>> peerMap, int t) {
         this.peerMap = peerMap;
-        this.peerId = peerId;
         this.t = t;
     }
 
     @Override
     public void broadcast(String broadcastId, String msg) {
-        sendMessage(new Message(Type.SEND, peerId, broadcastId, msg));
+        sendMessage(new Message(Type.SEND, broadcastId, msg));
     }
 
     @Override
@@ -48,7 +44,6 @@ public class BrachaBroadcastManager implements BroadcastManager {
         try {
             String messageString = mapper.writeValueAsString(message);
             peerMap.values().forEach(c -> c.accept(messageString));
-            receive(new CompositeIncoming<>(messageString, "BB_PEER" + peerId, () -> true));
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize message object.", e);
         }
@@ -88,7 +83,7 @@ public class BrachaBroadcastManager implements BroadcastManager {
                 break;
             case ECHO:
                 totalReceived.compute(msg, (msgStr, cnt) -> cnt != null ? cnt + 1 : 1);
-                if (totalReceived.get(msg) >= peerMap.size() - (t + 1) && !readiedMessages.contains(broadcastId)) {
+                if (totalReceived.get(msg) >= peerMap.size() - t && !readiedMessages.contains(broadcastId)) {
                     readiedMessages.add(broadcastId);
                     received.setType(Type.READY);
                     sendMessage(received);
@@ -96,13 +91,13 @@ public class BrachaBroadcastManager implements BroadcastManager {
                 break;
             case READY:
                 totalReceived.compute(msg, (msgStr, cnt) -> cnt != null ? cnt + 1 : 1);
-                if (totalReceived.get(msg) >= t + 2 && !readiedMessages.contains(broadcastId)) {
+                if (totalReceived.get(msg) >= t + 1 && !readiedMessages.contains(broadcastId)) {
                     readiedMessages.add(broadcastId);
                     received.setType(Type.READY);
                     sendMessage(received);
                 }
                 Set<String> terminated = handledMessages.computeIfAbsent(Type.READY, k -> new HashSet<>());
-                if (totalReceived.get(msg) >= peerMap.size() - (t + 1) && !terminated.contains(broadcastId)) {
+                if (totalReceived.get(msg) >= peerMap.size() - t && !terminated.contains(broadcastId)) {
                     listeners.forEach(l -> l.accept(received.getMessage()));
                     terminated.add(broadcastId);
                 }
@@ -119,13 +114,11 @@ public class BrachaBroadcastManager implements BroadcastManager {
     @SuppressWarnings("unused")
     static class Message {
         Type type;
-        int senderId;
         String broadcastId;
         String message;
 
-        public Message(Type type, int senderId, String broadcastId, String message) {
+        public Message(Type type, String broadcastId, String message) {
             this.type = type;
-            this.senderId = senderId;
             this.broadcastId = broadcastId;
             this.message = message;
         }
@@ -140,14 +133,6 @@ public class BrachaBroadcastManager implements BroadcastManager {
 
         public void setType(Type type) {
             this.type = type;
-        }
-
-        public int getSenderId() {
-            return senderId;
-        }
-
-        public void setSenderId(int senderId) {
-            this.senderId = senderId;
         }
 
         public String getBroadcastId() {
@@ -171,15 +156,15 @@ public class BrachaBroadcastManager implements BroadcastManager {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Message message1 = (Message) o;
-            return senderId == message1.senderId &&
+            return
                     type == message1.type &&
-                    Objects.equals(broadcastId, message1.broadcastId) &&
-                    Objects.equals(message, message1.message);
+                            Objects.equals(broadcastId, message1.broadcastId) &&
+                            Objects.equals(message, message1.message);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(type, senderId, broadcastId, message);
+            return Objects.hash(type, broadcastId, message);
         }
     }
 }

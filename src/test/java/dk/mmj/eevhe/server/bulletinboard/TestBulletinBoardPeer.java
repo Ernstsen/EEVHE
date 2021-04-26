@@ -3,27 +3,16 @@ package dk.mmj.eevhe.server.bulletinboard;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.SSLHelper;
-import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.protocols.agreement.AgreementHelper;
 import dk.mmj.eevhe.protocols.agreement.broadcast.BrachaBroadcastManager;
-import dk.mmj.eevhe.protocols.agreement.broadcast.BroadcastManager;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.asn1.x500.X500Name;
-import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
-import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
-import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
-import org.bouncycastle.operator.ContentSigner;
-import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
-import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.glassfish.jersey.client.JerseyWebTarget;
 import org.junit.After;
 import org.junit.Before;
@@ -37,13 +26,8 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.PrivateKey;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -53,9 +37,9 @@ import static org.junit.Assert.*;
 public class TestBulletinBoardPeer {
     private static final Logger logger = LogManager.getLogger(TestBulletinBoardPeer.class);
     private static final int port = 18081;
-    private BulletinBoardPeer bulletinBoardPeer;
-    private ObjectMapper mapper = new ObjectMapper();
     private final List<File> files = new ArrayList<>();
+    private BulletinBoardPeer bulletinBoardPeer;
+    private final ObjectMapper mapper = new ObjectMapper();
     private String confPath;
 
     private void buildTempFiles() throws IOException {
@@ -69,7 +53,7 @@ public class TestBulletinBoardPeer {
         String certString = new String(Files.readAllBytes(Paths.get("certs/test_glob.pem")));
 
         BBInput input = new BBInput(
-                Arrays.asList(new BBPeerInfo(1, "https://localhost:18081", certString)),
+                Collections.singletonList(new BBPeerInfo(1, "https://localhost:18081", certString)),
                 new ArrayList<>());
 
         mapper.writeValue(common, input);
@@ -95,18 +79,6 @@ public class TestBulletinBoardPeer {
 
         BulletinBoardPeer.BulletinBoardPeerConfiguration config = new BulletinBoardPeer.BulletinBoardPeerConfiguration(port, confPath, 1);
         bulletinBoardPeer = new BulletinBoardPeer(config);
-
-        Field agreementHelperField = BulletinBoardPeer.class.getDeclaredField("agreementHelper");
-        agreementHelperField.setAccessible(true);
-        AgreementHelper agreementHelper = (AgreementHelper) agreementHelperField.get(bulletinBoardPeer);
-
-        Field broadcastManagerField = AgreementHelper.class.getDeclaredField("broadcastManager");
-        broadcastManagerField.setAccessible(true);
-        BrachaBroadcastManager broadcastManager = (BrachaBroadcastManager) broadcastManagerField.get(agreementHelper);
-
-        Field tField = BrachaBroadcastManager.class.getDeclaredField("t");
-        tField.setAccessible(true);
-        tField.set(broadcastManager, -1);
     }
 
     @Test
@@ -191,7 +163,9 @@ public class TestBulletinBoardPeer {
         assertEquals("should be successful post", 204,
                 target.path("postBallot").request().post(Entity.entity(ballotDTO, mediaType)).getStatus()
         );
-        assertEquals("should be successful post", 204,
+
+        Thread.sleep(500);//Allow first ballot to be expected
+        assertEquals("should be rejected as ballot is already posted", 405,
                 target.path("postBallot").request().post(Entity.entity(ballotDTO, mediaType)).getStatus()
         );
         assertEquals("should be successful post", 204,
@@ -234,7 +208,7 @@ public class TestBulletinBoardPeer {
                 .get(String.class);
         List<PersistedBallot> fetchedBallotList = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {
         });
-        assertEquals("Unexpected list size", 2, fetchedBallotList.size());
+        assertEquals("Unexpected list size", 1, fetchedBallotList.size());
         PersistedBallot persistedBallot = fetchedBallotList.get(0);
         assertEquals("Fetched ballot did not match posted one; votes", ballotDTO.getCandidateVotes(), persistedBallot.getCandidateVotes());
         assertEquals("Fetched ballot did not match posted one; id", ballotDTO.getId(), persistedBallot.getId());

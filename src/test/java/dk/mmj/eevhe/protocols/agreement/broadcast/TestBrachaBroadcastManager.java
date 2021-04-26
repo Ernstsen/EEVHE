@@ -109,7 +109,7 @@ public class TestBrachaBroadcastManager {
 
 
         DummyConsumer spy = new DummyConsumer();
-        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 0);
+        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1);
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> sendWrap(manager, goToNextMessage(s), 2));
@@ -130,7 +130,7 @@ public class TestBrachaBroadcastManager {
 
 
         DummyConsumer spy = new DummyConsumer();
-        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 0);
+        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers,  0);
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> sendWrap(manager, goToNextMessage(s), 2, true, false));
@@ -150,7 +150,7 @@ public class TestBrachaBroadcastManager {
 
 
         DummyConsumer spy = new DummyConsumer();
-        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 1);
+        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1);
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> sendWrap(manager, goToNextMessage(s), 2));
@@ -172,7 +172,7 @@ public class TestBrachaBroadcastManager {
 
 
         DummyConsumer spy = new DummyConsumer();
-        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 1);
+        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1);
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> sendWrap(manager, goToNextMessage(s), 2));
@@ -195,7 +195,7 @@ public class TestBrachaBroadcastManager {
 
 
         DummyConsumer spy = new DummyConsumer();
-        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 1);
+        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1);
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> repeat(() -> sendWrap(manager, replaceMessage(s, "msg"), 2, false, true), 8));
@@ -205,8 +205,8 @@ public class TestBrachaBroadcastManager {
         });
 
         String broadcastId = "BID";
-        BrachaBroadcastManager.Message echo = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO, 1, broadcastId, message);
-        BrachaBroadcastManager.Message ready = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, 1, broadcastId, message);
+        BrachaBroadcastManager.Message echo = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO, broadcastId, message);
+        BrachaBroadcastManager.Message ready = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, broadcastId, message);
 
         manager.broadcast(broadcastId, message);
 
@@ -227,7 +227,7 @@ public class TestBrachaBroadcastManager {
         Map<Integer, Consumer<String>> peers = new HashMap<>();
 
         DummyConsumer spy = new DummyConsumer();
-        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 1);
+        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1);
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> {
@@ -259,7 +259,7 @@ public class TestBrachaBroadcastManager {
 
 
         DummyConsumer spy = new DummyConsumer();
-        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 1);
+        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1);
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> sendWrap(manager, goToNextMessage(s), 2));
@@ -282,7 +282,7 @@ public class TestBrachaBroadcastManager {
 
 
         DummyConsumer spy = new DummyConsumer();
-        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 1);
+        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1);
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> {
@@ -292,16 +292,16 @@ public class TestBrachaBroadcastManager {
         });
 
         String broadcastId = "BID";
-        BrachaBroadcastManager.Message echo = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO, 1, broadcastId, message);
-        BrachaBroadcastManager.Message ready = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, 1, broadcastId, message);
+        BrachaBroadcastManager.Message echo = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO,  broadcastId, message);
+        BrachaBroadcastManager.Message ready = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, broadcastId, message);
 
         manager.broadcast(broadcastId, message);
 
-        sendWrap(manager, mapper.writeValueAsString(new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO, 2, broadcastId, message)), 2, true, true);
-        sendWrap(manager, mapper.writeValueAsString(new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO, 4, broadcastId, message)), 4, true, true);
+        sendWrap(manager, mapper.writeValueAsString(echo), 2, true, true);
+        sendWrap(manager, mapper.writeValueAsString(echo), 4, true, true);
 
-        sendWrap(manager, mapper.writeValueAsString(new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, 2, broadcastId, message)), 2, true, true);
-        sendWrap(manager, mapper.writeValueAsString(new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, 4, broadcastId, message)), 4, true, true);
+        sendWrap(manager, mapper.writeValueAsString(ready), 2, true, true);
+        sendWrap(manager, mapper.writeValueAsString(ready), 4, true, true);
         assertEquals("Expected exactly one output val", 1, spy.vals.size());
         assertEquals("Did not call listener with proper output!", message, spy.vals.get(0));
     }
@@ -311,12 +311,12 @@ public class TestBrachaBroadcastManager {
     public void shouldHandleReceivedBroadcastSuccessfully() throws JsonProcessingException {
         String message = "This is the message that is broadcasted";
         BrachaBroadcastManager.Message broadcast = new BrachaBroadcastManager.Message(
-                BrachaBroadcastManager.Type.SEND, 2, "BID", message);
+                BrachaBroadcastManager.Type.SEND,  "BID", message);
 
         Map<Integer, Consumer<String>> peers = new HashMap<>();
 
         DummyConsumer spy = new DummyConsumer();
-        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 0);
+        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 0);
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> sendWrap(manager, s, 2));
@@ -329,24 +329,8 @@ public class TestBrachaBroadcastManager {
     }
 
     @Test
-    public void shouldWorkWithOnlyOnePeer() {
-        String message = "This is the message that is broadcasted";
-
-        Map<Integer, Consumer<String>> peers = new HashMap<>();
-
-        DummyConsumer spy = new DummyConsumer();
-        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 0);
-        manager.registerOnReceived(spy);
-
-        manager.broadcast("BID", message);
-
-        assertEquals("Expected exactly one output val", 1, spy.vals.size());
-        assertEquals("Did not call listener with proper output!", message, spy.vals.get(0));
-    }
-
-    @Test
     public void testMessageEqualsAndSerialization() throws JsonProcessingException {
-        BrachaBroadcastManager.Message msg = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, 234, "weuigfwnjefw", "!iowuuengfwefg");
+        BrachaBroadcastManager.Message msg = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY,  "weuigfwnjefw", "!iowuuengfwefg");
 
         BrachaBroadcastManager.Message deserialized = mapper.readValue(mapper.writeValueAsString(msg), BrachaBroadcastManager.Message.class);
 

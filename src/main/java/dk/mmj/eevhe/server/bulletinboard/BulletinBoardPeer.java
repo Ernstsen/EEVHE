@@ -10,6 +10,8 @@ import dk.mmj.eevhe.entities.BulletinBoardUpdatable;
 import dk.mmj.eevhe.entities.PeerInfo;
 import dk.mmj.eevhe.protocols.agreement.AgreementHelper;
 import dk.mmj.eevhe.protocols.agreement.broadcast.BrachaBroadcastManager;
+import dk.mmj.eevhe.protocols.agreement.broadcast.BroadcastManager;
+import dk.mmj.eevhe.protocols.agreement.broadcast.DummyBroadcastManager;
 import dk.mmj.eevhe.protocols.agreement.mvba.CompositeCommunicator;
 import dk.mmj.eevhe.protocols.agreement.mvba.MultiValuedByzantineAgreementProtocolImpl;
 import dk.mmj.eevhe.protocols.connectors.RestBBPeerCommunicator;
@@ -26,6 +28,8 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -90,14 +94,23 @@ public class BulletinBoardPeer extends AbstractServer {
         Map<Integer, Consumer<String>> peerMap = communicators.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue()::sendMessageBroadcast));
 
+        int brachaT = peerMap.size() != 0 ? peerMap.size() / 3 : -1;//-1 to ensure that broadcasting terminates when no peers are present in the system
         agreementHelper = new AgreementHelper(
-                new BrachaBroadcastManager(peerMap, id, peerMap.size() / 3),
+                getBroadcastManager(peerMap),
                 new MultiValuedByzantineAgreementProtocolImpl(compositeCommunicator, peerMap.size(), peerMap.size() / 5, "BB_PEER" + id),//TODO
                 this::updateState
         );
 
         Consumer<BulletinBoardUpdatable> consensus = this::executeConsensusProtocol;
         ServerState.getInstance().put("executeConsensusProtocol." + id, consensus);
+    }
+
+    private BroadcastManager getBroadcastManager(Map<Integer, Consumer<String>> peers){
+        if(peers.size() > 0){
+            return new BrachaBroadcastManager(peers,  peers.size() / 3);
+        } else {
+            return new DummyBroadcastManager();
+        }
     }
 
     private void sendString(String baId, String message) {
