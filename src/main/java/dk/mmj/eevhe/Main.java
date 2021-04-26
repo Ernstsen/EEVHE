@@ -48,7 +48,6 @@ public class Main {
         HashMap<String, CommandLineParser.ConfigBuilder<? extends InstanceCreatingConfiguration<? extends Application>>> mapping = new HashMap<>();
         mapping.put("--client", new ClientConfigBuilder());
         mapping.put("--authority", new DecryptionAuthorityConfigBuilder());
-//        mapping.put("--bulletinBoard", new BulletinBoardConfigBuilder());
         mapping.put("--bulletinBoardPeer", new BulletinBoardPeerConfigBuilder());
         mapping.put("--configuration", new SystemConfigurerConfigBuilder());
         mapping.put("--integrationTest", new IntegrationTestConfigBuilder());

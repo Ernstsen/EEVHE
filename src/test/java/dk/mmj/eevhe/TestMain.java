@@ -3,9 +3,13 @@ package dk.mmj.eevhe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.JerseyWebTarget;
+import org.junit.After;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 import static org.junit.Assert.assertEquals;
@@ -16,8 +20,10 @@ public class TestMain {
 
     @Test
     public void testBulletinBoard() throws InterruptedException {
+        Main.main(new String[]{"--configuration", "--bb_peer_addresses", "-1_https://localhost:18081"});
+
 //        TODO: Fix:
-        Thread thread = new Thread(() -> Main.main(new String[]{"--bulletinBoard"}));
+        Thread thread = new Thread(() -> Main.main(new String[]{"--bulletinBoardPeer", "--id=1"}));
         thread.start();
 
 
@@ -31,6 +37,12 @@ public class TestMain {
             fail("BulletinBoard did not return 200 on type request");
         }
 
-        assertEquals("Wrong type returned", "<b>ServerType:</b> Bulletin Board", resp.readEntity(String.class));
+        assertEquals("Wrong type returned", "<b>ServerType:</b> Bulletin Board Peer", resp.readEntity(String.class));
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        Files.delete(Paths.get("./conf/BB_Peer1.zip"));
+        Files.delete(Paths.get("./conf/BB_input.json"));
     }
 }

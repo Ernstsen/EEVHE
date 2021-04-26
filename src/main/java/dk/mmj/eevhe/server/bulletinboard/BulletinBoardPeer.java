@@ -39,10 +39,9 @@ public class BulletinBoardPeer extends AbstractServer {
     private final Logger logger;
     private final int port;
     private final Integer id;
-    private final BBInput bbInput;
     private final AsymmetricKeyParameter sk;
     private final Map<Integer, RestBBPeerCommunicator> communicators;
-    private AgreementHelper agreementHelper;
+    private final AgreementHelper agreementHelper;
 
     public BulletinBoardPeer(BulletinBoardPeerConfiguration configuration) {
         logger = LogManager.getLogger(BulletinBoardPeer.class + " " + configuration.id + ":");
@@ -55,6 +54,7 @@ public class BulletinBoardPeer extends AbstractServer {
             terminate();
         }
 
+        BBInput bbInput;
         try {
             bbInput = mapper.readValue(conf.resolve("BB_input.json").toFile(), BBInput.class);
             Map<String, String> peerCertificates = bbInput.getPeers().stream()

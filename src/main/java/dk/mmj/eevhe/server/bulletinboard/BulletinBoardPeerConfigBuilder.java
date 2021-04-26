@@ -7,7 +7,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class BulletinBoardPeerConfigBuilder implements CommandLineParser.ConfigBuilder<BulletinBoardPeer.BulletinBoardPeerConfiguration>, TestableConfigurationBuilder {
@@ -22,7 +21,7 @@ public class BulletinBoardPeerConfigBuilder implements CommandLineParser.ConfigB
     //State
     private Integer port = 8080;
     private Integer id = null;
-    private String confPath = "";
+    private String confPath = "conf";
 
 
     @Override

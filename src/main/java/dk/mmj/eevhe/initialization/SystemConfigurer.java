@@ -188,8 +188,7 @@ public class SystemConfigurer implements Application {
                 digestSha
         ).build(globalSk);
 
-        X509CertificateHolder certificate = cb.build(signer);
-        return certificate;
+        return cb.build(signer);
     }
 
     private void createIfNotExists(Path path) {

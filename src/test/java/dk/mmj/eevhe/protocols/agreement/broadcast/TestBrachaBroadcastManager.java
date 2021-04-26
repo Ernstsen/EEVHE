@@ -297,11 +297,11 @@ public class TestBrachaBroadcastManager {
 
         manager.broadcast(broadcastId, message);
 
-        sendWrap(manager, mapper.writeValueAsString(echo), 2, true, true);
-        sendWrap(manager, mapper.writeValueAsString(echo), 4, true, true);
+        sendWrap(manager, mapper.writeValueAsString(new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO, 2, broadcastId, message)), 2, true, true);
+        sendWrap(manager, mapper.writeValueAsString(new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO, 4, broadcastId, message)), 4, true, true);
 
-        sendWrap(manager, mapper.writeValueAsString(ready), 2, true, true);
-        sendWrap(manager, mapper.writeValueAsString(ready), 4, true, true);
+        sendWrap(manager, mapper.writeValueAsString(new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, 2, broadcastId, message)), 2, true, true);
+        sendWrap(manager, mapper.writeValueAsString(new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, 4, broadcastId, message)), 4, true, true);
         assertEquals("Expected exactly one output val", 1, spy.vals.size());
         assertEquals("Did not call listener with proper output!", message, spy.vals.get(0));
     }
@@ -329,7 +329,7 @@ public class TestBrachaBroadcastManager {
     }
 
     @Test
-    public void shouldWorkWithOnlyOnePeer() throws JsonProcessingException {
+    public void shouldWorkWithOnlyOnePeer() {
         String message = "This is the message that is broadcasted";
 
         Map<Integer, Consumer<String>> peers = new HashMap<>();
