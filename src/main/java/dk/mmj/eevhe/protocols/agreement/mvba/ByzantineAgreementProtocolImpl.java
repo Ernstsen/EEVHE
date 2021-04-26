@@ -33,11 +33,11 @@ public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommuni
         String id = UUID.randomUUID().toString();
         communicator.send(id, msg);
 
-        Map<String, Boolean> conversation = received.computeIfAbsent(id, i -> new HashMap<>());
-        conversation.put(identity, msg);
-
         BANotifyItem<Boolean> notifyItem = new BANotifyItem<>();
         notifyItems.put(id, notifyItem);
+
+        handleReceived(new CompositeIncoming<>(new Communicator.Message<>(id, msg), identity, () -> true));
+
         return notifyItem;
     }
 
@@ -65,7 +65,7 @@ public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommuni
                 cnt[val ? 1 : 0] += 1;
             }
 
-            int idx = cnt[0] >= peers - (2 * t) ? 0 : 1;
+            int idx = cnt[1] >= peers - (2 * t) ? 1 : 0;
 
             //Find d s.t. d_i = d for n-2t of values then v = true, else v=false
             Boolean d = cnt[idx] >= peers - (2 * t) ? idx == 1 : null;

@@ -329,6 +329,22 @@ public class TestBrachaBroadcastManager {
     }
 
     @Test
+    public void shouldWorkWithOnlyOnePeer() throws JsonProcessingException {
+        String message = "This is the message that is broadcasted";
+
+        Map<Integer, Consumer<String>> peers = new HashMap<>();
+
+        DummyConsumer spy = new DummyConsumer();
+        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 1, 0);
+        manager.registerOnReceived(spy);
+
+        manager.broadcast("BID", message);
+
+        assertEquals("Expected exactly one output val", 1, spy.vals.size());
+        assertEquals("Did not call listener with proper output!", message, spy.vals.get(0));
+    }
+
+    @Test
     public void testMessageEqualsAndSerialization() throws JsonProcessingException {
         BrachaBroadcastManager.Message msg = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, 234, "weuigfwnjefw", "!iowuuengfwefg");
 

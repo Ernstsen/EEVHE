@@ -181,4 +181,22 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
         assertFalse("BA Agreement should be false.", baAgreement.getAgreement());
         assertNull("Majority >= t should not agree on values sent, thus msg should be null.", baAgreement.getMessage());
     }
+
+    @Test
+    public void shouldReachAgreementForStringWhenNoPeers() {
+        String testStr = "true";
+
+        MultiValuedByzantineAgreementProtocolImpl baProtocol =
+                new MultiValuedByzantineAgreementProtocolImpl(communicator, 0, 0, "p1");
+        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
+
+        assertEquals(1, strings.entrySet().size());
+
+        assertEquals(1, bools.entrySet().size());
+
+        baAgreement.waitForFinish();
+        assertNotNull("BA Agreement was null, not yet terminated.", baAgreement.getAgreement());
+        assertTrue("BA Agreement should be true.", baAgreement.getAgreement());
+        assertEquals("Majority >= t did not agree on all values sent.", testStr, baAgreement.getMessage());
+    }
 }

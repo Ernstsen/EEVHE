@@ -3,6 +3,7 @@ package dk.mmj.eevhe.protocols.agreement.broadcast;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.protocols.agreement.TimeoutMap;
+import dk.mmj.eevhe.protocols.agreement.mvba.CompositeIncoming;
 import dk.mmj.eevhe.protocols.agreement.mvba.Incoming;
 
 import java.util.*;
@@ -19,7 +20,8 @@ public class BrachaBroadcastManager implements BroadcastManager {
     private final Map<String, Map<String, Set<Type>>> recordedParticipants = new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES);
     private final List<Consumer<String>> listeners = new ArrayList<>();
     private final int peerId;
-    private final int t;
+    @SuppressWarnings("FieldMayBeFinal") // To allow reflection in tests
+    private int t;
 
     public BrachaBroadcastManager(Map<Integer, Consumer<String>> peerMap, int peerId, int t) {
         this.peerMap = peerMap;
@@ -46,6 +48,7 @@ public class BrachaBroadcastManager implements BroadcastManager {
         try {
             String messageString = mapper.writeValueAsString(message);
             peerMap.values().forEach(c -> c.accept(messageString));
+            receive(new CompositeIncoming<>(messageString, "BB_PEER" + peerId, () -> true));
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Failed to serialize message object.", e);
         }
@@ -85,7 +88,7 @@ public class BrachaBroadcastManager implements BroadcastManager {
                 break;
             case ECHO:
                 totalReceived.compute(msg, (msgStr, cnt) -> cnt != null ? cnt + 1 : 1);
-                if (totalReceived.get(msg) >= peerMap.size() - t && !readiedMessages.contains(broadcastId)) {
+                if (totalReceived.get(msg) >= peerMap.size() - (t + 1) && !readiedMessages.contains(broadcastId)) {
                     readiedMessages.add(broadcastId);
                     received.setType(Type.READY);
                     sendMessage(received);
@@ -93,13 +96,13 @@ public class BrachaBroadcastManager implements BroadcastManager {
                 break;
             case READY:
                 totalReceived.compute(msg, (msgStr, cnt) -> cnt != null ? cnt + 1 : 1);
-                if (totalReceived.get(msg) >= t + 1 && !readiedMessages.contains(broadcastId)) {
+                if (totalReceived.get(msg) >= t + 2 && !readiedMessages.contains(broadcastId)) {
                     readiedMessages.add(broadcastId);
                     received.setType(Type.READY);
                     sendMessage(received);
                 }
                 Set<String> terminated = handledMessages.computeIfAbsent(Type.READY, k -> new HashSet<>());
-                if (totalReceived.get(msg) >= peerMap.size() - t && !terminated.contains(broadcastId)) {
+                if (totalReceived.get(msg) >= peerMap.size() - (t + 1) && !terminated.contains(broadcastId)) {
                     listeners.forEach(l -> l.accept(received.getMessage()));
                     terminated.add(broadcastId);
                 }

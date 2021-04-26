@@ -41,7 +41,6 @@ public class BulletinBoardPeer extends AbstractServer {
     private final Integer id;
     private final BBInput bbInput;
     private final AsymmetricKeyParameter sk;
-    private final String certString;
     private final Map<Integer, RestBBPeerCommunicator> communicators;
     private AgreementHelper agreementHelper;
 
@@ -70,14 +69,9 @@ public class BulletinBoardPeer extends AbstractServer {
         logger.info("Reading private input from file: " + privateInput);
         try (ZipFile zipFile = new ZipFile(privateInput.toFile())) {
             ZipEntry skEntry = zipFile.getEntry("sk.pem");
-            ZipEntry certEntry = zipFile.getEntry("cert.pem");
 
             try (InputStream is = zipFile.getInputStream(skEntry)) {
                 sk = KeyHelper.readKey(IOUtils.toByteArray(is));
-            }
-
-            try (InputStream is = zipFile.getInputStream(certEntry)) {
-                certString = new String(IOUtils.toByteArray(is));
             }
 
         } catch (IOException e) {
@@ -86,18 +80,19 @@ public class BulletinBoardPeer extends AbstractServer {
         }
 
         communicators = bbInput.getPeers().stream()
+                .filter(p -> p.getId() != id)
                 .collect(Collectors.toMap(
                         PeerInfo::getId,
                         p -> new RestBBPeerCommunicator(configureWebTarget(logger, p.getAddress()), sk)));
 
         CompositeCommunicator compositeCommunicator = new CompositeCommunicator(this::sendString, this::sendBoolean);
 
-        Map<Integer, Consumer<String>> peerMap = communicators.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue()::sendMessageBroadcast));
+        Map<Integer, Consumer<String>> peerMap = communicators.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue()::sendMessageBroadcast));
 
-        int t = peerMap.size() / 3;
         agreementHelper = new AgreementHelper(
-                new BrachaBroadcastManager(peerMap, id, t),
-                new MultiValuedByzantineAgreementProtocolImpl(compositeCommunicator, peerMap.size(), t, "BB_PEER" + id),//TODO
+                new BrachaBroadcastManager(peerMap, id, peerMap.size() / 3),
+                new MultiValuedByzantineAgreementProtocolImpl(compositeCommunicator, peerMap.size(), peerMap.size() / 5, "BB_PEER" + id),//TODO
                 this::updateState
         );
 

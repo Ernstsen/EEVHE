@@ -3,41 +3,110 @@ package dk.mmj.eevhe.server.bulletinboard;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.SSLHelper;
+import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.protocols.agreement.AgreementHelper;
+import dk.mmj.eevhe.protocols.agreement.broadcast.BrachaBroadcastManager;
+import dk.mmj.eevhe.protocols.agreement.broadcast.BroadcastManager;
 import dk.mmj.eevhe.server.ServerState;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.glassfish.jersey.client.JerseyWebTarget;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.Type;
+import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.PrivateKey;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static java.math.BigInteger.valueOf;
 import static org.junit.Assert.*;
 
 public class TestBulletinBoardPeer {
     private static final Logger logger = LogManager.getLogger(TestBulletinBoardPeer.class);
-    private static final int port = 4894;
+    private static final int port = 18081;
     private BulletinBoardPeer bulletinBoardPeer;
+    private ObjectMapper mapper = new ObjectMapper();
+    private final List<File> files = new ArrayList<>();
+    private String confPath;
+
+    private void buildTempFiles() throws IOException {
+        File file = new File(confPath);
+
+        //noinspection ResultOfMethodCallIgnored
+        file.mkdirs();
+
+        File common = new File(file, "BB_input.json");
+
+        String certString = new String(Files.readAllBytes(Paths.get("certs/test_glob.pem")));
+
+        BBInput input = new BBInput(
+                Arrays.asList(new BBPeerInfo(1, "https://localhost:18081", certString)),
+                new ArrayList<>());
+
+        mapper.writeValue(common, input);
+        files.add(common);
+
+        File zip = new File(file, "BB_Peer1.zip");
+        try (ZipOutputStream ous = new ZipOutputStream(new FileOutputStream(zip))) {
+            ous.putNextEntry(new ZipEntry("sk.pem"));
+            IOUtils.copy(Files.newInputStream(Paths.get("certs/test_glob_key.pem")), ous);
+        }
+
+        files.add(zip);
+        files.add(file);
+    }
 
     @Before
     public void setUp() throws Exception {
-        BulletinBoardPeer.BulletinBoardPeerConfiguration config = new BulletinBoardPeer.BulletinBoardPeerConfiguration(port, "conf/", 1);
+        confPath = "temp_conf/";
+
+        ServerState.getInstance().reset();
+
+        buildTempFiles();
+
+        BulletinBoardPeer.BulletinBoardPeerConfiguration config = new BulletinBoardPeer.BulletinBoardPeerConfiguration(port, confPath, 1);
         bulletinBoardPeer = new BulletinBoardPeer(config);
+
+        Field agreementHelperField = BulletinBoardPeer.class.getDeclaredField("agreementHelper");
+        agreementHelperField.setAccessible(true);
+        AgreementHelper agreementHelper = (AgreementHelper) agreementHelperField.get(bulletinBoardPeer);
+
+        Field broadcastManagerField = AgreementHelper.class.getDeclaredField("broadcastManager");
+        broadcastManagerField.setAccessible(true);
+        BrachaBroadcastManager broadcastManager = (BrachaBroadcastManager) broadcastManagerField.get(agreementHelper);
+
+        Field tField = BrachaBroadcastManager.class.getDeclaredField("t");
+        tField.setAccessible(true);
+        tField.set(broadcastManager, -1);
     }
 
     @Test
@@ -47,7 +116,6 @@ public class TestBulletinBoardPeer {
 
     @Test
     public void serverTypeAndTime() throws InterruptedException {
-        ServerState.getInstance().reset();
         Thread thread = new Thread(bulletinBoardPeer);
         thread.start();
         Thread.sleep(2_000);
@@ -67,7 +135,6 @@ public class TestBulletinBoardPeer {
 
     @Test
     public void postAndRetrieve() throws InterruptedException, IOException {
-        ServerState.getInstance().reset();
         Thread thread = new Thread(bulletinBoardPeer);
         thread.start();
         Thread.sleep(2_000);
@@ -124,7 +191,7 @@ public class TestBulletinBoardPeer {
         assertEquals("should be successful post", 204,
                 target.path("postBallot").request().post(Entity.entity(ballotDTO, mediaType)).getStatus()
         );
-        assertEquals("should be disallowed", 405,
+        assertEquals("should be successful post", 204,
                 target.path("postBallot").request().post(Entity.entity(ballotDTO, mediaType)).getStatus()
         );
         assertEquals("should be successful post", 204,
@@ -165,8 +232,9 @@ public class TestBulletinBoardPeer {
 
         String ballotsString = target.path("getBallots").request()
                 .get(String.class);
-        List<PersistedBallot> fetchedBallotList = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {});
-        assertEquals("Unexpected list size", 1, fetchedBallotList.size());
+        List<PersistedBallot> fetchedBallotList = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {
+        });
+        assertEquals("Unexpected list size", 2, fetchedBallotList.size());
         PersistedBallot persistedBallot = fetchedBallotList.get(0);
         assertEquals("Fetched ballot did not match posted one; votes", ballotDTO.getCandidateVotes(), persistedBallot.getCandidateVotes());
         assertEquals("Fetched ballot did not match posted one; id", ballotDTO.getId(), persistedBallot.getId());
@@ -211,5 +279,16 @@ public class TestBulletinBoardPeer {
 
         bulletinBoardPeer.terminate();
         thread.join();
+    }
+
+    @After
+    public void tearDown() {
+        for (File file : files) {
+            try {
+                //noinspection ResultOfMethodCallIgnored
+                file.delete();
+            } catch (Exception ignored) {
+            }
+        }
     }
 }

@@ -37,11 +37,11 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
         String id = UUID.randomUUID().toString();
         communicator.send(id, msg);
 
-        Map<String, String> conversation = received.computeIfAbsent(id, i -> new HashMap<>());
-        conversation.put(identity, msg);
-
         BANotifyItem<String> notifyItem = new BANotifyItem<>();
         notifyItems.put(id, notifyItem);
+
+        handleReceived(new CompositeIncoming<>(new Communicator.Message<>(id, msg), identity, () -> true));
+
         return notifyItem;
     }
 
