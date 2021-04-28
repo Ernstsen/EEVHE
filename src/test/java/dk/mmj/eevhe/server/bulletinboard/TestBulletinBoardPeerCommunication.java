@@ -6,11 +6,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.SSLHelper;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.TestUtils;
+import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.glassfish.jersey.client.JerseyWebTarget;
 import org.junit.After;
 import org.junit.Before;
@@ -28,6 +30,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static java.math.BigInteger.valueOf;
 import static org.junit.Assert.assertEquals;
 
 public class TestBulletinBoardPeerCommunication {
@@ -107,17 +110,13 @@ public class TestBulletinBoardPeerCommunication {
         Thread.sleep(2_000);
     }
 
-    @Test
-    public void shouldAgreeOnSingleBallotWhenOnePeerReceivesFromEdge() throws JsonProcessingException, InterruptedException {
+    private void testPostSingleBallot(List<Integer> postTo) throws InterruptedException, JsonProcessingException {
         PublicKey publicKey = TestUtils.generateKeysFromP2048bitsG2().getPublicKey();
         BallotDTO ballotDTO = SecurityUtils.generateBallot(1, 3, "voter_id", publicKey);
 
-        JerseyWebTarget peerOneTarget = targets.get(1);
-
-        String mediaType = MediaType.APPLICATION_JSON;
-        assertEquals("Ballot should be successful posted", 204,
-                peerOneTarget.path("postBallot").request().post(Entity.entity(ballotDTO, mediaType)).getStatus()
-        );
+        for (Integer id : postTo) {
+            targets.get(id).path("postBallot").request().post(Entity.entity(ballotDTO, MediaType.APPLICATION_JSON));
+        }
 
         // Allow consensus protocol to be run
         Thread.sleep(4_000);
@@ -136,6 +135,82 @@ public class TestBulletinBoardPeerCommunication {
 
             lastSeenBallotList = fetchedBallotList;
         }
+    }
+
+    @Test
+    public void shouldAgreeOnSingleBallotWhenOnePeerReceivesFromEdge() throws InterruptedException, JsonProcessingException {
+        testPostSingleBallot(Arrays.asList(1));
+    }
+
+    @Test
+    public void shouldAgreeOnSingleBallotWhenTwoPeersReceivesFromEdge() throws InterruptedException, JsonProcessingException {
+        testPostSingleBallot(Arrays.asList(1, 2));
+    }
+
+    @Test
+    public void shouldAgreeOnSingleBallotWhenThreePeersReceivesFromEdge() throws InterruptedException, JsonProcessingException {
+        testPostSingleBallot(Arrays.asList(1, 2, 3));
+    }
+
+    @Test
+    public void shouldAgreeOnSingleBallotWhenFourPeersReceivesFromEdge() throws InterruptedException, JsonProcessingException {
+        testPostSingleBallot(Arrays.asList(1, 2, 3, 4));
+    }
+
+    private void testPostSinglePublicInfo(List<Integer> postTo) throws InterruptedException, IOException {
+        PublicKey publicKey = TestUtils.generateKeysFromP2048bitsG2().getPublicKey();
+        String cert = new String(Files.readAllBytes(Paths.get("certs/test_glob_key.pem")));
+        AsymmetricKeyParameter secretKey = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
+
+        SignedEntity<PartialPublicInfo> partialPublicInfo = new SignedEntity<PartialPublicInfo>(new PartialPublicInfo(
+                1, publicKey, valueOf(124121),
+                Arrays.asList(new Candidate(1, "name", "desc"), new Candidate(2, "name2", "desc2")),
+                6584198494L, cert
+        ), secretKey);
+
+        for (Integer id : postTo) {
+            targets.get(id).path("publicInfo").request().post(Entity.entity(partialPublicInfo, MediaType.APPLICATION_JSON));
+        }
+
+        // Allow consensus protocol to be run
+        Thread.sleep(4_000);
+
+        List<SignedEntity<PartialPublicInfo>> lastSeenPartialInfoList = new ArrayList<>();
+        for (JerseyWebTarget target : targets.values()) {
+            String publicInfoString = target.path("getPublicInfo").request()
+                    .get(String.class);
+            List<SignedEntity<PartialPublicInfo>> fetchedPublicInfoList
+                    = mapper.readValue(publicInfoString, new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {
+            });
+
+            if (!lastSeenPartialInfoList.isEmpty()) {
+                assertEquals("Bulletin Board Peers do not agree on partial public info lists", lastSeenPartialInfoList, fetchedPublicInfoList);
+            }
+
+            assertEquals("Partial public info list should be of size 1", 1, fetchedPublicInfoList.size());
+
+            lastSeenPartialInfoList = fetchedPublicInfoList;
+        }
+    }
+
+    @Test
+    public void shouldAgreeOnSinglePublicInfoWhenOnePeerReceivesFromEdge() throws InterruptedException, IOException {
+        testPostSinglePublicInfo(Arrays.asList(1));
+    }
+
+    @Test
+    public void shouldAgreeOnSinglePublicInfoWhenTwoPeersReceivesFromEdge() throws InterruptedException, IOException {
+        testPostSinglePublicInfo(Arrays.asList(1, 2));
+    }
+
+    @Test
+    public void shouldAgreeOnSinglePublicInfoWhenThreePeersReceivesFromEdge() throws InterruptedException, IOException {
+        testPostSinglePublicInfo(Arrays.asList(1, 2, 3));
+    }
+
+    @Test
+    public void shouldAgreeOnSinglePublicInfoWhenFourPeersReceivesFromEdge() throws InterruptedException, IOException {
+        testPostSinglePublicInfo(Arrays.asList(1, 2, 3, 4));
     }
 
     @After
