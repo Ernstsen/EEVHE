@@ -10,9 +10,10 @@ public interface ByzantineAgreementCommunicator<T> {
      * When the agreement protocol terminates, the notifyItem will be updated
      *
      * @param message the message for the protocol to agree on
+     * @param baId    Byzantine agreement identifier
      * @return notifyItem which will be updated with result, once finished
      */
-    BANotifyItem<T> agree(T message);
+    BANotifyItem<T> agree(T message, String baId);
 
     class BANotifyItem<T> extends NotifyItem {
         private T message;

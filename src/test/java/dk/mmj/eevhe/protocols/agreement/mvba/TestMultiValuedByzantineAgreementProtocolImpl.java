@@ -32,7 +32,7 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
 
         MultiValuedByzantineAgreementProtocolImpl baProtocol =
                 new MultiValuedByzantineAgreementProtocolImpl(communicator, 3, 0, "p1");
-        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
+        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr, "baId");
 
         assertEquals(1, strings.entrySet().size());
 
@@ -62,7 +62,7 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
 
         MultiValuedByzantineAgreementProtocolImpl baProtocol =
                 new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
-        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
+        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr, "baId");
 
         assertEquals(1, strings.entrySet().size());
 
@@ -94,7 +94,7 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
 
         MultiValuedByzantineAgreementProtocolImpl baProtocol =
                 new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
-        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
+        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr, "baId");
 
         assertEquals(1, strings.entrySet().size());
 
@@ -126,7 +126,7 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
 
         MultiValuedByzantineAgreementProtocolImpl baProtocol =
                 new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
-        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
+        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr, "baId");
 
         assertEquals(1, strings.entrySet().size());
 
@@ -158,7 +158,7 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
 
         MultiValuedByzantineAgreementProtocolImpl baProtocol =
                 new MultiValuedByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
-        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
+        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr, "baId");
 
         assertEquals(1, strings.entrySet().size());
 
@@ -188,7 +188,7 @@ public class TestMultiValuedByzantineAgreementProtocolImpl {
 
         MultiValuedByzantineAgreementProtocolImpl baProtocol =
                 new MultiValuedByzantineAgreementProtocolImpl(communicator, 0, 0, "p1");
-        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr);
+        ByzantineAgreementCommunicator.BANotifyItem<String> baAgreement = baProtocol.agree(testStr, "baId");
 
         assertEquals(1, strings.entrySet().size());
 

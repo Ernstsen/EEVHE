@@ -28,7 +28,7 @@ public class TestByzantineAgreementProtocolImpl {
         Boolean testBool = true;
 
         ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 3, 0, "p1");
-        ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool);
+        ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool, "baId");
 
         assertEquals(1, bools.entrySet().size());
 
@@ -46,7 +46,7 @@ public class TestByzantineAgreementProtocolImpl {
         Boolean testBool = true;
 
         ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
-        ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool);
+        ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool, "baId");
 
         assertEquals(1, bools.entrySet().size());
 
@@ -65,7 +65,7 @@ public class TestByzantineAgreementProtocolImpl {
         Boolean testBool = true;
 
         ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 4, 1, "p1");
-        ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool);
+        ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool, "baId");
 
         assertEquals(1, bools.entrySet().size());
 
@@ -92,7 +92,7 @@ public class TestByzantineAgreementProtocolImpl {
         Boolean testBool = true;
 
         ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 3, 0, "p1");
-        ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool);
+        ByzantineAgreementCommunicator.BANotifyItem<Boolean> baAgreement = baProtocol.agree(testBool, "baId");
 
         assertEquals(1, bools.entrySet().size());
 

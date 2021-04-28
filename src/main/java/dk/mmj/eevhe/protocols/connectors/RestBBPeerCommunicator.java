@@ -17,22 +17,24 @@ public class RestBBPeerCommunicator implements BBPeerCommunicator {
     private static final Logger logger = LogManager.getLogger(RestBBPeerCommunicator.class);
     private final WebTarget target;
     private final AsymmetricKeyParameter sk;
+    private String id;
 
     /**
      * Creates a peerCommunicator communicating through a webtarget
      *
      * @param target webTarget for communication
      * @param sk     secretKey used in signing outgoing messages
+     * @param id     identifier for sender
      */
-    public RestBBPeerCommunicator(WebTarget target, AsymmetricKeyParameter sk) {
+    public RestBBPeerCommunicator(WebTarget target, AsymmetricKeyParameter sk, String id) {
         this.target = target;
         this.sk = sk;
+        this.id = id;
     }
 
     @Override
     public void sendMessageBA(String baId, String message) {
-        //TODO: ID
-        Entity<SignedEntity<BAMessage>> entity = Entity.entity(new SignedEntity<>(new BAMessage(baId, message, null, null), sk), MediaType.APPLICATION_JSON);
+        Entity<SignedEntity<BAMessage>> entity = Entity.entity(new SignedEntity<>(new BAMessage(baId, message, null, id), sk), MediaType.APPLICATION_JSON);
 
         Response resp = target.path("BAMessage").request().post(entity);
         if (!(resp.getStatus() == 204)) {
@@ -42,8 +44,7 @@ public class RestBBPeerCommunicator implements BBPeerCommunicator {
 
     @Override
     public void sendMessageBA(String baId, Boolean message) {
-        //TODO: ID
-        Entity<SignedEntity<BAMessage>> entity = Entity.entity(new SignedEntity<>(new BAMessage(baId, null, message, null), sk), MediaType.APPLICATION_JSON);
+        Entity<SignedEntity<BAMessage>> entity = Entity.entity(new SignedEntity<>(new BAMessage(baId, null, message, id), sk), MediaType.APPLICATION_JSON);
 
         Response resp = target.path("BAMessage").request().post(entity);
         if (!(resp.getStatus() == 204)) {
@@ -53,6 +54,11 @@ public class RestBBPeerCommunicator implements BBPeerCommunicator {
 
     @Override
     public void sendMessageBroadcast(String message) {
+        Entity<SignedEntity<String>> entity = Entity.entity(new SignedEntity<>(message, sk), MediaType.APPLICATION_JSON);
 
+        Response resp = target.path("BroadcastMessage").path(id).request().post(entity);
+        if (!(resp.getStatus() == 204)) {
+            logger.error("Failed to post secret to with status= " + resp.getStatus() + " webtarget: " + target);
+        }
     }
 }

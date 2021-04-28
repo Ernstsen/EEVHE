@@ -1,5 +1,6 @@
 package dk.mmj.eevhe.protocols.agreement.mvba;
 
+import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.protocols.agreement.TimeoutMap;
 
 import java.util.HashMap;
@@ -33,8 +34,7 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
     }
 
     @Override
-    public BANotifyItem<String> agree(String msg) {
-        String id = UUID.randomUUID().toString();
+    public BANotifyItem<String> agree(String msg, String id) {
         communicator.send(id, msg);
 
         BANotifyItem<String> notifyItem = new BANotifyItem<>();
@@ -75,7 +75,7 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
                     .map(Map.Entry::getKey)
                     .findAny().orElse(null);
 
-            BANotifyItem<Boolean> agree = singleValueBA.agree(d != null);
+            BANotifyItem<Boolean> agree = singleValueBA.agree(d != null, id);
 
             new Thread(() -> {
                 agree.waitForFinish();
@@ -90,6 +90,7 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
                     //fail
                     conclusion.setAgreement(false);
                 }
+                System.out.println("Identity: " + identity + ". Finishing up");
                 conclusion.finish();
             }).start();
         }

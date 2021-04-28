@@ -15,6 +15,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -111,13 +112,7 @@ public class BulletinBoardPeerResource {
     @Path("getBallots")
     @Produces(MediaType.APPLICATION_JSON)
     public List<PersistedBallot> getBallots() {
-        List<PersistedBallot> ballotList = getState().getBallots();
-
-        if (ballotList == null || ballotList.isEmpty()) {
-            throw new NotFoundException("Voting has not been initialized");
-        }
-
-        return ballotList;
+        return getState().getBallots();
     }
 
     @POST
@@ -236,5 +231,15 @@ public class BulletinBoardPeerResource {
     public void postBAMessage(SignedEntity<BAMessage> message) {
         Communicator communicator = ServerState.getInstance().get("mvba.communicator." + getId(), Communicator.class);
         message.getEntity().getCommunicatorConsumer().accept(communicator, message);
+    }
+
+    @POST
+    @Path("BroadcastMessage/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public void postBroadcastMessage(SignedEntity<String> message, @PathParam("id") String identifier) {
+        ServerState serverState = ServerState.getInstance();
+        BiConsumer<SignedEntity<String>, String> brachaConsumer
+                = (BiConsumer<SignedEntity<String>, String>) serverState.get("bracha.consumer." + getId(), BiConsumer.class);
+        brachaConsumer.accept(message, identifier);
     }
 }

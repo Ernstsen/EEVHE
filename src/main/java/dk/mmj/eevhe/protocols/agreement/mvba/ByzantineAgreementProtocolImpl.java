@@ -29,12 +29,11 @@ public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommuni
     }
 
     @Override
-    public BANotifyItem<Boolean> agree(Boolean msg) {
-        String id = UUID.randomUUID().toString();
+    public BANotifyItem<Boolean> agree(Boolean msg, String id) {
         communicator.send(id, msg);
 
         BANotifyItem<Boolean> notifyItem = new BANotifyItem<>();
-        notifyItems.put(id, notifyItem);
+        notifyItems.computeIfAbsent(id, k -> new BANotifyItem<>());
 
         handleReceived(new CompositeIncoming<>(new Communicator.Message<>(id, msg), identity, () -> true));
 
@@ -60,6 +59,7 @@ public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommuni
 
 
         if (conversation.size() >= peers - t) {
+            received.remove(id);
             int[] cnt = {0, 0};
             for (Boolean val : conversation.values()) {
                 cnt[val ? 1 : 0] += 1;
@@ -70,7 +70,7 @@ public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommuni
             //Find d s.t. d_i = d for n-2t of values then v = true, else v=false
             Boolean d = cnt[idx] >= peers - (2 * t) ? idx == 1 : null;
 
-            BANotifyItem<Boolean> conclusion = notifyItems.get(id);
+            BANotifyItem<Boolean> conclusion = notifyItems.computeIfAbsent(id, k -> new BANotifyItem<>());
             conclusion.setAgreement(d);
             conclusion.setMessage(d);
             conclusion.finish();

@@ -4,15 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
-import dk.mmj.eevhe.entities.BBInput;
-import dk.mmj.eevhe.entities.BBPeerInfo;
-import dk.mmj.eevhe.entities.BulletinBoardUpdatable;
-import dk.mmj.eevhe.entities.PeerInfo;
+import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.protocols.agreement.AgreementHelper;
+import dk.mmj.eevhe.protocols.agreement.Utils;
 import dk.mmj.eevhe.protocols.agreement.broadcast.BrachaBroadcastManager;
 import dk.mmj.eevhe.protocols.agreement.broadcast.BroadcastManager;
 import dk.mmj.eevhe.protocols.agreement.broadcast.DummyBroadcastManager;
 import dk.mmj.eevhe.protocols.agreement.mvba.CompositeCommunicator;
+import dk.mmj.eevhe.protocols.agreement.mvba.CompositeIncoming;
+import dk.mmj.eevhe.protocols.agreement.mvba.Incoming;
 import dk.mmj.eevhe.protocols.agreement.mvba.MultiValuedByzantineAgreementProtocolImpl;
 import dk.mmj.eevhe.protocols.connectors.RestBBPeerCommunicator;
 import dk.mmj.eevhe.server.AbstractServer;
@@ -31,6 +31,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -46,11 +47,14 @@ public class BulletinBoardPeer extends AbstractServer {
     private final AsymmetricKeyParameter sk;
     private final Map<Integer, RestBBPeerCommunicator> communicators;
     private final AgreementHelper agreementHelper;
+    private final List<Consumer<Incoming<String>>> broadcastListeners;
 
     public BulletinBoardPeer(BulletinBoardPeerConfiguration configuration) {
         logger = LogManager.getLogger(BulletinBoardPeer.class + " " + configuration.id + ":");
         port = configuration.port;
         id = configuration.id;
+
+        broadcastListeners = new ArrayList<>();
 
         Path conf = Paths.get(configuration.confPath);
         if (!Files.exists(conf) || !Files.exists(conf)) {
@@ -63,7 +67,7 @@ public class BulletinBoardPeer extends AbstractServer {
             bbInput = mapper.readValue(conf.resolve("BB_input.json").toFile(), BBInput.class);
             Map<String, String> peerCertificates = bbInput.getPeers().stream()
                     .collect(Collectors.toMap(i -> Integer.toString(i.getId()), BBPeerInfo::getCertificate));
-            ServerState.getInstance().put("peerCertificates." + id, peerCertificates);
+            ServerState.getInstance().put("peerCertificates", peerCertificates);
         } catch (IOException e) {
             logger.error("Failed to read BB input file", e);
             throw new RuntimeException("Failed to read BB from file", e);
@@ -87,27 +91,39 @@ public class BulletinBoardPeer extends AbstractServer {
                 .filter(p -> p.getId() != id)
                 .collect(Collectors.toMap(
                         PeerInfo::getId,
-                        p -> new RestBBPeerCommunicator(configureWebTarget(logger, p.getAddress()), sk)));
+                        p -> new RestBBPeerCommunicator(configureWebTarget(logger, p.getAddress()), sk, id.toString())));
 
         CompositeCommunicator compositeCommunicator = new CompositeCommunicator(this::sendString, this::sendBoolean);
 
         Map<Integer, Consumer<String>> peerMap = communicators.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue()::sendMessageBroadcast));
 
-        int brachaT = peerMap.size() != 0 ? peerMap.size() / 3 : -1;//-1 to ensure that broadcasting terminates when no peers are present in the system
         agreementHelper = new AgreementHelper(
                 getBroadcastManager(peerMap),
-                new MultiValuedByzantineAgreementProtocolImpl(compositeCommunicator, peerMap.size(), peerMap.size() / 5, "BB_PEER" + id),//TODO
+                new MultiValuedByzantineAgreementProtocolImpl(compositeCommunicator, peerMap.size(), peerMap.size() / 5, id.toString()),//TODO
                 this::updateState
         );
 
+        ServerState.getInstance().put("mvba.communicator." + id, compositeCommunicator);
+
         Consumer<BulletinBoardUpdatable> consensus = this::executeConsensusProtocol;
         ServerState.getInstance().put("executeConsensusProtocol." + id, consensus);
+
+        BiConsumer<SignedEntity<String>, String> receiveBroadcast = this::receiveBroadcast;
+        ServerState.getInstance().put("bracha.consumer." + id, receiveBroadcast);
     }
 
-    private BroadcastManager getBroadcastManager(Map<Integer, Consumer<String>> peers){
-        if(peers.size() > 0){
-            return new BrachaBroadcastManager(peers,  peers.size() / 3);
+    private BroadcastManager getBroadcastManager(Map<Integer, Consumer<String>> peers) {
+        if (peers.size() > 0) {
+            BrachaBroadcastManager brachaBroadcastManager = new BrachaBroadcastManager(peers, peers.size() / 3);
+            broadcastListeners.add((s) -> {
+                try {
+                    brachaBroadcastManager.receive(s);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException("Not able to add Bracha Broadcast Manager to list of listeners", e);
+                }
+            });
+            return brachaBroadcastManager;
         } else {
             return new DummyBroadcastManager();
         }
@@ -144,6 +160,13 @@ public class BulletinBoardPeer extends AbstractServer {
         } catch (JsonProcessingException e) {
             logger.error("Failed to deserialize entity", e);
         }
+    }
+
+    public void receiveBroadcast(SignedEntity<String> message, String identifier) {
+        broadcastListeners.forEach(c -> c.accept(
+                new CompositeIncoming<>(message.getEntity(),
+                        identifier,
+                        () -> Utils.validate(message, identifier))));
     }
 
     @Override

@@ -116,7 +116,6 @@ public class TestBulletinBoardPeer {
         //Assert we get 404 when items are not found
         assertEquals("Expected 404", 404, target.path("publicKey").request().get().getStatus());
         assertEquals("Expected 404", 404, target.path("getPublicInfo").request().get().getStatus());
-        assertEquals("Expected 404", 404, target.path("getBallots").request().get().getStatus());
         assertEquals("Expected 404", 404, target.path("commitments").request().get().getStatus());
 
         //POST values

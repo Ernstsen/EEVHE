@@ -33,7 +33,8 @@ public class AgreementHelper {
     }
 
     private void executeMVBA(String message) {
-        ByzantineAgreementCommunicator.BANotifyItem<String> agree = mvba.agree(message);
+        String id = new String(SecurityUtils.hash(message.getBytes()));
+        ByzantineAgreementCommunicator.BANotifyItem<String> agree = mvba.agree(message, id);
 
         new Thread(() -> {
             agree.waitForFinish();

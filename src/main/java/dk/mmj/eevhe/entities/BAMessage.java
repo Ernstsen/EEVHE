@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
+import static dk.mmj.eevhe.protocols.agreement.Utils.validate;
+
 @SuppressWarnings("unused")
 public class BAMessage implements SenderIdentityHaving {
     private static final Logger logger = LogManager.getLogger(BAMessage.class);
@@ -30,17 +32,6 @@ public class BAMessage implements SenderIdentityHaving {
     }
 
     public BAMessage() {
-    }
-
-    static boolean validate(SignedEntity<BAMessage> se, String senderId) {
-//        TODO: prettify:
-        AsymmetricKeyParameter pk = (AsymmetricKeyParameter) ServerState.getInstance().get("peerCertificates", Map.class).get(senderId);
-        try {
-            return se.verifySignature(pk);
-        } catch (JsonProcessingException e) {
-            logger.warn("Failed to validate signature on incoming message", e);
-            return false;
-        }
     }
 
     public String getBaId() {

@@ -33,7 +33,7 @@ public class TestAgreementHelper {
 
         ByzantineAgreementCommunicator<String> mvba = mock(MultiValuedByzantineAgreementProtocolImpl.class);
         ByzantineAgreementCommunicator.BANotifyItem<String> notifyItem = mock(ByzantineAgreementCommunicator.BANotifyItem.class);
-        when(mvba.agree(any())).thenReturn(notifyItem);
+        when(mvba.agree(any(), any())).thenReturn(notifyItem);
         when(notifyItem.getAgreement()).thenReturn(true);
 
 
