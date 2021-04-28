@@ -1,8 +1,8 @@
 package dk.mmj.eevhe.crypto;
 
-import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.crypto.exceptions.UnableToDecryptException;
 import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
+import dk.mmj.eevhe.entities.*;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class TestElGamal {
-    private int maxIterations = 1000;
+    private final int maxIterations = 1000;
 
     @Test
     public void shouldBeAbleToEncryptAndDecrypt0() {
@@ -149,7 +149,7 @@ public class TestElGamal {
     }
 
     @Test
-    public void shouldFailAsCipherTextToBig(){
+    public void shouldFailAsCipherTextToBig() {
         KeyPair keyPair = generateKeysFromP2048bitsG2();
         CipherText cipherText = ElGamal.homomorphicEncryption(keyPair.getPublicKey(), BigInteger.valueOf(10));
 
@@ -262,8 +262,8 @@ public class TestElGamal {
     }
 
     public static class SimpleKeyGenParams implements KeyGenerationParameters {
-        private BigInteger g;
-        private PrimePair pair;
+        private final BigInteger g;
+        private final PrimePair pair;
 
         SimpleKeyGenParams(BigInteger g, PrimePair pair) {
             this.g = g;

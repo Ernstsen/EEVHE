@@ -34,7 +34,7 @@ public class CompositeCommunicator implements Communicator {
     }
 
     @Override
-    public void receiveString(Incoming<Message<String>> incoming){
+    public void receiveString(Incoming<Message<String>> incoming) {
         onReceivedString.accept(incoming);
     }
 

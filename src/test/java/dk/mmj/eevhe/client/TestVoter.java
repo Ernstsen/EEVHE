@@ -104,7 +104,8 @@ public class TestVoter extends TestUsingBouncyCastle {
 
         String ballotsString = target.path("getBallots").request()
                 .get(String.class);
-        List<PersistedBallot> ballots = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {});
+        List<PersistedBallot> ballots = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {
+        });
 
         assertEquals("Did not find exactly one vote!", 1, ballots.size());
 
@@ -137,7 +138,8 @@ public class TestVoter extends TestUsingBouncyCastle {
 
         String ballotsString = target.path("getBallots").request()
                 .get(String.class);
-        List<PersistedBallot> ballots = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {});
+        List<PersistedBallot> ballots = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {
+        });
         assertEquals("Did not find exactly twenty votes!", 20, ballots.size());
 
         for (PersistedBallot ballot : ballots) {

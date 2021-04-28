@@ -13,9 +13,7 @@ public class NotifyItem {
         synchronized (this) {
             if (!complete) {
                 try {
-                    System.out.println(this.toString() + ". In waitForFinish() - waiting for wait()");
                     wait();
-                    System.out.println(this.toString() + ". In waitForFinish() - DONE waiting for wait()");
                 } catch (InterruptedException e) {
                     throw new RuntimeException("Thread was interrupted", e);
                 }
@@ -28,7 +26,6 @@ public class NotifyItem {
      */
     public void finish() {
         synchronized (this) {
-            System.out.println(this.toString() + ". In finish()");
             complete = true;
             notifyAll();
         }

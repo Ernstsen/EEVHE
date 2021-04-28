@@ -1,6 +1,5 @@
 package dk.mmj.eevhe.protocols.agreement;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.entities.SignedEntity;
 import dk.mmj.eevhe.server.ServerState;

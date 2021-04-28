@@ -2,7 +2,8 @@ package dk.mmj.eevhe.protocols.agreement.mvba;
 
 import dk.mmj.eevhe.protocols.agreement.TimeoutMap;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<Boolean> {
@@ -32,8 +33,7 @@ public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommuni
     public BANotifyItem<Boolean> agree(Boolean msg, String id) {
         communicator.send(id, msg);
 
-        BANotifyItem<Boolean> notifyItem = new BANotifyItem<>();
-        notifyItems.computeIfAbsent(id, k -> new BANotifyItem<>());
+        BANotifyItem<Boolean> notifyItem = notifyItems.computeIfAbsent(id, k -> new BANotifyItem<>());
 
         handleReceived(new CompositeIncoming<>(new Communicator.Message<>(id, msg), identity, () -> true));
 

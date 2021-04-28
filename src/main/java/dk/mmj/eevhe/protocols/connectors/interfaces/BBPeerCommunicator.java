@@ -1,13 +1,10 @@
 package dk.mmj.eevhe.protocols.connectors.interfaces;
 
-import dk.mmj.eevhe.server.bulletinboard.BulletinBoardState;
-import dk.mmj.eevhe.entities.SignedEntity;
-
 public interface BBPeerCommunicator {
     /**
      * Sends message using Byzantine agreement protocol
      *
-     * @param baId Identifier for Byzantine Agreement protocol
+     * @param baId    Identifier for Byzantine Agreement protocol
      * @param message Message to be sent
      */
     void sendMessageBA(String baId, String message);
@@ -15,7 +12,7 @@ public interface BBPeerCommunicator {
     /**
      * Sends message using Byzantine agreement protocol
      *
-     * @param baId Identifier for Byzantine Agreement protocol
+     * @param baId    Identifier for Byzantine Agreement protocol
      * @param message Message to be sent
      */
     void sendMessageBA(String baId, Boolean message);

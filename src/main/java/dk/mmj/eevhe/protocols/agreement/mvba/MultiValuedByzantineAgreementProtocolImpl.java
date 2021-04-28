@@ -1,11 +1,9 @@
 package dk.mmj.eevhe.protocols.agreement.mvba;
 
-import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.protocols.agreement.TimeoutMap;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgreementCommunicator<String> {
@@ -37,8 +35,7 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
     public BANotifyItem<String> agree(String msg, String id) {
         communicator.send(id, msg);
 
-        BANotifyItem<String> notifyItem = new BANotifyItem<>();
-        notifyItems.put(id, notifyItem);
+        BANotifyItem<String> notifyItem = notifyItems.computeIfAbsent(id, k -> new BANotifyItem<>());
 
         handleReceived(new CompositeIncoming<>(new Communicator.Message<>(id, msg), identity, () -> true));
 
@@ -81,7 +78,7 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
                 agree.waitForFinish();
                 boolean e = Boolean.TRUE.equals(agree.getAgreement());//Undecided defaults to false
 
-                BANotifyItem<String> conclusion = notifyItems.get(id);
+                BANotifyItem<String> conclusion = notifyItems.computeIfAbsent(id, k -> new BANotifyItem<>());
                 if (e) {
                     //succeed
                     conclusion.setAgreement(true);
@@ -90,7 +87,6 @@ public class MultiValuedByzantineAgreementProtocolImpl implements ByzantineAgree
                     //fail
                     conclusion.setAgreement(false);
                 }
-                System.out.println("Identity: " + identity + ". Finishing up");
                 conclusion.finish();
             }).start();
         }

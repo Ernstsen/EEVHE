@@ -1,11 +1,9 @@
 package dk.mmj.eevhe.protocols.agreement;
 
 import dk.mmj.eevhe.crypto.SecurityUtils;
-import dk.mmj.eevhe.crypto.signature.SignatureHelper;
 import dk.mmj.eevhe.protocols.agreement.broadcast.BroadcastManager;
 import dk.mmj.eevhe.protocols.agreement.mvba.ByzantineAgreementCommunicator;
 
-import java.util.UUID;
 import java.util.function.Consumer;
 
 public class AgreementHelper {

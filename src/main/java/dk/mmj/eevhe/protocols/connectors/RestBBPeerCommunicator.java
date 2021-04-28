@@ -1,7 +1,6 @@
 package dk.mmj.eevhe.protocols.connectors;
 
 import dk.mmj.eevhe.entities.BAMessage;
-import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 import dk.mmj.eevhe.entities.SignedEntity;
 import dk.mmj.eevhe.protocols.connectors.interfaces.BBPeerCommunicator;
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +16,7 @@ public class RestBBPeerCommunicator implements BBPeerCommunicator {
     private static final Logger logger = LogManager.getLogger(RestBBPeerCommunicator.class);
     private final WebTarget target;
     private final AsymmetricKeyParameter sk;
-    private String id;
+    private final String id;
 
     /**
      * Creates a peerCommunicator communicating through a webtarget

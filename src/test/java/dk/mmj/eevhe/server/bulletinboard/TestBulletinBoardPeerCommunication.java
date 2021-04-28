@@ -34,9 +34,9 @@ public class TestBulletinBoardPeerCommunication {
     private static final Logger logger = LogManager.getLogger(TestBulletinBoardPeerCommunication.class);
     private static final List<Integer> ids = Arrays.asList(1, 2, 3, 4);
     private final List<File> files = new ArrayList<>();
-    private Map<Integer, BulletinBoardPeer> bulletinBoardPeers = new HashMap<>();
-    private Map<Integer, JerseyWebTarget> targets = new HashMap<>();
     private final ObjectMapper mapper = new ObjectMapper();
+    private final Map<Integer, BulletinBoardPeer> bulletinBoardPeers = new HashMap<>();
+    private final Map<Integer, JerseyWebTarget> targets = new HashMap<>();
     private String confPath;
     private ArrayList<Thread> threads;
 
@@ -120,12 +120,13 @@ public class TestBulletinBoardPeerCommunication {
         );
 
         // Allow consensus protocol to be run
-        Thread.sleep(10_000);
+        Thread.sleep(4_000);
 
         List<PersistedBallot> lastSeenBallotList = new ArrayList<>();
-        for (JerseyWebTarget target: targets.values()) {
+        for (JerseyWebTarget target : targets.values()) {
             String ballotsString = target.path("getBallots").request().get(String.class);
-            List<PersistedBallot> fetchedBallotList = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {});
+            List<PersistedBallot> fetchedBallotList = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {
+            });
 
             if (!lastSeenBallotList.isEmpty()) {
                 assertEquals("Bulletin Board Peers do not agree on ballot lists", lastSeenBallotList, fetchedBallotList);

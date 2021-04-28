@@ -25,7 +25,6 @@ public interface VSS {
      * Handles values received from peers, and which has been broadcasted.
      * <br>
      * Will often verify received values, using commitments made by other participants
-     *
      */
     void handleReceivedValues();
 

@@ -1,16 +1,12 @@
 package dk.mmj.eevhe.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import dk.mmj.eevhe.protocols.agreement.mvba.Communicator;
 import dk.mmj.eevhe.protocols.agreement.mvba.CompositeIncoming;
 import dk.mmj.eevhe.protocols.agreement.mvba.SenderIdentityHaving;
-import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 
