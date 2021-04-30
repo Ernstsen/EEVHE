@@ -2,6 +2,7 @@ package dk.mmj.eevhe.server;
 
 import dk.mmj.eevhe.server.bulletinboard.TestBulletinBoardConfigBuilder;
 import dk.mmj.eevhe.server.bulletinboard.TestBulletinBoardPeer;
+import dk.mmj.eevhe.server.bulletinboard.TestBulletinBoardPeerCommunication;
 import dk.mmj.eevhe.server.bulletinboard.TestBulletinBoardState;
 import dk.mmj.eevhe.server.decryptionauthority.TestDecrypterImpl;
 import dk.mmj.eevhe.server.decryptionauthority.TestDecryptionAuthorityConfigBuilder;
@@ -15,7 +16,8 @@ import org.junit.runners.Suite;
         TestDecrypterImpl.class,
         TestDecryptionAuthorityConfigBuilder.class,
         TestBulletinBoardPeer.class,
-        TestBulletinBoardState.class
+        TestBulletinBoardState.class,
+        TestBulletinBoardPeerCommunication.class
 })
 public class ServerTestSuite {
 }
