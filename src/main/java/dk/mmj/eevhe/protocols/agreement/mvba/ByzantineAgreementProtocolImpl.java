@@ -18,7 +18,7 @@ public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommuni
     /**
      * @param communicator handle for sending/receiving messages
      * @param peers        #peers
-     * @param t            t value for the protocol - requirement for safety: t<n/5
+     * @param t            t value for the protocol - requirement for safety: t&#60;n/5
      * @param identity     identity of this entity
      */
     public ByzantineAgreementProtocolImpl(Communicator communicator, int peers, int t, String identity) {
