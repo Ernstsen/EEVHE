@@ -153,6 +153,7 @@ public class TestBulletinBoardPeer {
                 6584198494L, cert
         ), sk);
 
+        SignedEntity<CertificateDTO> certificate = new SignedEntity<>(new CertificateDTO("Test certificate", 1), sk);
 
         //Do POSTs
         String mediaType = MediaType.APPLICATION_JSON;
@@ -181,6 +182,9 @@ public class TestBulletinBoardPeer {
         );
         assertEquals("should be successful post", 204,
                 target.path("publicInfo").request().post(Entity.entity(partialPublicInfo, mediaType)).getStatus()
+        );
+        assertEquals("should be successful post", 204,
+                target.path("certificates").request().post(Entity.entity(certificate, mediaType)).getStatus()
         );
 
         //Do gets and compares
@@ -246,6 +250,12 @@ public class TestBulletinBoardPeer {
         });
         assertEquals("Unexpected list size", 1, fetchedPublicInfoList.size());
         assertEquals("Fetched partial public info did not match posted one", partialPublicInfo, fetchedPublicInfoList.get(0));
+
+        String certificateString = target.path("certificates").request().get(String.class);
+        List<SignedEntity<CertificateDTO>> fetchedCertificateList = mapper.readValue(certificateString, new TypeReference<List<SignedEntity<CertificateDTO>>>() {
+        });
+        assertEquals("Unexpected list size", 1, fetchedCertificateList.size());
+        assertEquals("Fetched certificate did not match posted one", certificate, fetchedCertificateList.get(0));
 
         bulletinBoardPeer.terminate();
         thread.join();
