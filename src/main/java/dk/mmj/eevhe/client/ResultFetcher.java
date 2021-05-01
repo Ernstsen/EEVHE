@@ -28,6 +28,11 @@ public class ResultFetcher extends Client {
         this.forceCalculation = configuration.forceCalculations;
     }
 
+    public ResultFetcher(String address, boolean forceCalculation) {
+        super(new ResultFetcherConfiguration(address, forceCalculation));
+        this.forceCalculation = forceCalculation;
+    }
+
     @Override
     public void run() {
         logger.info("Initializing");
