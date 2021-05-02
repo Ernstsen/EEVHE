@@ -46,6 +46,7 @@ public class TestBulletinBoardPeerCommunication {
     private ArrayList<Thread> threads;
     private AsymmetricKeyParameter secretKey;
     private String cert;
+    private final int CONSENSUS_WAIT_TIMEOUT = 2000;
 
     private void buildTempFiles() throws IOException {
         File folder = new File(confPath);
@@ -116,7 +117,7 @@ public class TestBulletinBoardPeerCommunication {
         Thread.sleep(2_000);
     }
 
-    private void testPostSingleBallot(List<Integer> postTo) throws InterruptedException, JsonProcessingException {
+    private void testPostAndRetrieveBallot(List<Integer> postTo) throws InterruptedException, JsonProcessingException {
         PublicKey publicKey = TestUtils.generateKeysFromP2048bitsG2().getPublicKey();
         BallotDTO ballotDTO = SecurityUtils.generateBallot(1, 3, "voter_id", publicKey);
 
@@ -125,7 +126,7 @@ public class TestBulletinBoardPeerCommunication {
         }
 
         // Allow consensus protocol to be run
-        Thread.sleep(4_000);
+        Thread.sleep(CONSENSUS_WAIT_TIMEOUT);
 
         List<PersistedBallot> lastSeenBallotList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
@@ -145,25 +146,25 @@ public class TestBulletinBoardPeerCommunication {
 
     @Test
     public void shouldAgreeOnSingleBallotWhenOnePeerReceivesFromEdge() throws InterruptedException, JsonProcessingException {
-        testPostSingleBallot(Arrays.asList(1));
+        testPostAndRetrieveBallot(Arrays.asList(1));
     }
 
     @Test
     public void shouldAgreeOnSingleBallotWhenTwoPeersReceivesFromEdge() throws InterruptedException, JsonProcessingException {
-        testPostSingleBallot(Arrays.asList(1, 2));
+        testPostAndRetrieveBallot(Arrays.asList(1, 2));
     }
 
     @Test
     public void shouldAgreeOnSingleBallotWhenThreePeersReceivesFromEdge() throws InterruptedException, JsonProcessingException {
-        testPostSingleBallot(Arrays.asList(1, 2, 3));
+        testPostAndRetrieveBallot(Arrays.asList(1, 2, 3));
     }
 
     @Test
     public void shouldAgreeOnSingleBallotWhenFourPeersReceivesFromEdge() throws InterruptedException, JsonProcessingException {
-        testPostSingleBallot(Arrays.asList(1, 2, 3, 4));
+        testPostAndRetrieveBallot(Arrays.asList(1, 2, 3, 4));
     }
 
-    private void testPostSinglePublicInfo(List<Integer> postTo) throws InterruptedException, IOException {
+    private void testPostAndRetrievePublicInfo(List<Integer> postTo) throws InterruptedException, IOException {
         PublicKey publicKey = TestUtils.generateKeysFromP2048bitsG2().getPublicKey();
 
         SignedEntity<PartialPublicInfo> partialPublicInfo = new SignedEntity<PartialPublicInfo>(new PartialPublicInfo(
@@ -177,7 +178,7 @@ public class TestBulletinBoardPeerCommunication {
         }
 
         // Allow consensus protocol to be run
-        Thread.sleep(4_000);
+        Thread.sleep(CONSENSUS_WAIT_TIMEOUT);
 
         List<SignedEntity<PartialPublicInfo>> lastSeenPartialInfoList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
@@ -199,25 +200,25 @@ public class TestBulletinBoardPeerCommunication {
 
     @Test
     public void shouldAgreeOnSinglePublicInfoWhenOnePeerReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSinglePublicInfo(Arrays.asList(1));
+        testPostAndRetrievePublicInfo(Arrays.asList(1));
     }
 
     @Test
     public void shouldAgreeOnSinglePublicInfoWhenTwoPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSinglePublicInfo(Arrays.asList(1, 2));
+        testPostAndRetrievePublicInfo(Arrays.asList(1, 2));
     }
 
     @Test
     public void shouldAgreeOnSinglePublicInfoWhenThreePeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSinglePublicInfo(Arrays.asList(1, 2, 3));
+        testPostAndRetrievePublicInfo(Arrays.asList(1, 2, 3));
     }
 
     @Test
     public void shouldAgreeOnSinglePublicInfoWhenFourPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSinglePublicInfo(Arrays.asList(1, 2, 3, 4));
+        testPostAndRetrievePublicInfo(Arrays.asList(1, 2, 3, 4));
     }
 
-    private void testPostSingleResult(List<Integer> postTo) throws InterruptedException, IOException {
+    private void testPostAndRetrieveResultList(List<Integer> postTo) throws InterruptedException, IOException {
         CipherText c = new CipherText(valueOf(165), valueOf(684983));
         CipherText c2 = new CipherText(valueOf(1652), valueOf(68498));
         DLogProofUtils.Proof dp1 = new DLogProofUtils.Proof(valueOf(54), valueOf(9846));
@@ -236,7 +237,7 @@ public class TestBulletinBoardPeerCommunication {
         }
 
         // Allow consensus protocol to be run
-        Thread.sleep(4_000);
+        Thread.sleep(CONSENSUS_WAIT_TIMEOUT);
 
         List<SignedEntity<PartialResultList>> lastSeenResultList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
@@ -257,35 +258,37 @@ public class TestBulletinBoardPeerCommunication {
 
     @Test
     public void shouldAgreeOnSingleResultWhenOnePeerReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleResult(Arrays.asList(1));
+        testPostAndRetrieveResultList(Arrays.asList(1));
     }
 
     @Test
     public void shouldAgreeOnSingleResultWhenTwoPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleResult(Arrays.asList(1, 2));
+        testPostAndRetrieveResultList(Arrays.asList(1, 2));
     }
 
     @Test
     public void shouldAgreeOnSingleResultWhenThreePeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleResult(Arrays.asList(1, 2, 3));
+        testPostAndRetrieveResultList(Arrays.asList(1, 2, 3));
     }
 
     @Test
     public void shouldAgreeOnSingleResultWhenFourPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleResult(Arrays.asList(1, 2, 3, 4));
+        testPostAndRetrieveResultList(Arrays.asList(1, 2, 3, 4));
     }
 
-    private void testPostSingleCommitment(List<Integer> postTo) throws InterruptedException, IOException {
-        SignedEntity<CommitmentDTO> commitmentDTO = new SignedEntity<>(
-                new CommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1, "BAR"),
-                secretKey);
+    private SignedEntity<CommitmentDTO> getCommitmentDTO(BigInteger[] commitment, int id, String protocol) {
+        return new SignedEntity<>(new CommitmentDTO(commitment, id, protocol), secretKey);
+    }
 
+    private void testPostAndRetrieveCommitment(List<Integer> postTo, List<SignedEntity<CommitmentDTO>> commitmentDTOList) throws InterruptedException, IOException {
         for (Integer id : postTo) {
-            targets.get(id).path("commitments").request().post(Entity.entity(commitmentDTO, MediaType.APPLICATION_JSON));
+            for (SignedEntity<CommitmentDTO> commitmentDTO : commitmentDTOList) {
+                targets.get(id).path("commitments").request().post(Entity.entity(commitmentDTO, MediaType.APPLICATION_JSON));
+            }
         }
 
         // Allow consensus protocol to be run
-        Thread.sleep(4_000);
+        Thread.sleep(CONSENSUS_WAIT_TIMEOUT);
 
         List<SignedEntity<CommitmentDTO>> lastSeenCommitmentList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
@@ -298,7 +301,7 @@ public class TestBulletinBoardPeerCommunication {
                 assertEquals("Bulletin Board Peers do not agree on commitment lists", lastSeenCommitmentList, fetchedCommitmentList);
             }
 
-            assertEquals("Commitment list should be of size 1", 1, fetchedCommitmentList.size());
+            assertEquals("Commitment list should be of size " + commitmentDTOList.size(), commitmentDTOList.size(), fetchedCommitmentList.size());
 
             lastSeenCommitmentList = fetchedCommitmentList;
         }
@@ -306,33 +309,53 @@ public class TestBulletinBoardPeerCommunication {
 
     @Test
     public void shouldAgreeOnSingleCommitmentWhenOnePeerReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleCommitment(Arrays.asList(1));
+        List<SignedEntity<CommitmentDTO>> commitmentDTOList = Arrays.asList(
+                getCommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1, "BAR"));
+        testPostAndRetrieveCommitment(Arrays.asList(1), commitmentDTOList);
     }
 
     @Test
     public void shouldAgreeOnSingleCommitmentWhenTwoPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleCommitment(Arrays.asList(1, 2));
+        List<SignedEntity<CommitmentDTO>> commitmentDTOList = Arrays.asList(
+                getCommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1, "BAR"));
+        testPostAndRetrieveCommitment(Arrays.asList(1, 2), commitmentDTOList);
     }
 
     @Test
     public void shouldAgreeOnSingleCommitmentWhenThreePeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleCommitment(Arrays.asList(1, 2, 3));
+        List<SignedEntity<CommitmentDTO>> commitmentDTOList = Arrays.asList(
+                getCommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1, "BAR"));
+        testPostAndRetrieveCommitment(Arrays.asList(1, 2, 3), commitmentDTOList);
     }
 
     @Test
     public void shouldAgreeOnSingleCommitmentWhenFourPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleCommitment(Arrays.asList(1, 2, 3, 4));
+        List<SignedEntity<CommitmentDTO>> commitmentDTOList = Arrays.asList(
+                getCommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1, "BAR"));
+        testPostAndRetrieveCommitment(Arrays.asList(1, 2, 3, 4), commitmentDTOList);
     }
 
-    private void testPostSinglePedersenComplaint(List<Integer> postTo) throws InterruptedException, IOException {
-        SignedEntity<PedersenComplaintDTO> pedersenComplaint = new SignedEntity<>(new PedersenComplaintDTO(1, 2), secretKey);
+    @Test
+    public void shouldAgreeOnMultipleCommitmentsWhenOnePeerReceivesFromEdge() throws InterruptedException, IOException {
+        List<SignedEntity<CommitmentDTO>> commitmentDTOList = Arrays.asList(
+                getCommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1, "BAR"),
+                getCommitmentDTO(new BigInteger[]{valueOf(114), valueOf(31651), valueOf(951)}, 2, "FOO"));
+        testPostAndRetrieveCommitment(Arrays.asList(1), commitmentDTOList);
+    }
 
+    private SignedEntity<PedersenComplaintDTO> getPedersenComplaint(int senderId, int receiverId) {
+        return new SignedEntity<>(new PedersenComplaintDTO(senderId, receiverId), secretKey);
+    }
+
+    private void testPostAndRetrievePedersenComplaint(List<Integer> postTo, List<SignedEntity<PedersenComplaintDTO>> complaintList) throws InterruptedException, IOException {
         for (Integer id : postTo) {
-            targets.get(id).path("pedersenComplain").request().post(Entity.entity(pedersenComplaint, MediaType.APPLICATION_JSON));
+            for (SignedEntity<PedersenComplaintDTO> complaint : complaintList) {
+                targets.get(id).path("pedersenComplain").request().post(Entity.entity(complaint, MediaType.APPLICATION_JSON));
+            }
         }
 
         // Allow consensus protocol to be run
-        Thread.sleep(4_000);
+        Thread.sleep(CONSENSUS_WAIT_TIMEOUT);
 
         List<SignedEntity<PedersenComplaintDTO>> lastSeenComplaintsList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
@@ -346,7 +369,7 @@ public class TestBulletinBoardPeerCommunication {
                 assertEquals("Bulletin Board Peers do not agree on complaints lists", lastSeenComplaintsList, fetchedComplaintList);
             }
 
-            assertEquals("Complaints list should be of size 1", 1, fetchedComplaintList.size());
+            assertEquals("Complaints list should be of size " + complaintList.size(), complaintList.size(), fetchedComplaintList.size());
 
             lastSeenComplaintsList = fetchedComplaintList;
         }
@@ -354,34 +377,49 @@ public class TestBulletinBoardPeerCommunication {
 
     @Test
     public void shouldAgreeOnSinglePedersenComplaintWhenOnePeerReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSinglePedersenComplaint(Arrays.asList(1));
+        List<SignedEntity<PedersenComplaintDTO>> complaintList = Arrays.asList(getPedersenComplaint(1, 2));
+        testPostAndRetrievePedersenComplaint(Arrays.asList(1), complaintList);
     }
 
     @Test
     public void shouldAgreeOnSinglePedersenComplaintWhenTwoPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSinglePedersenComplaint(Arrays.asList(1, 2));
+        List<SignedEntity<PedersenComplaintDTO>> complaintList = Arrays.asList(getPedersenComplaint(1, 2));
+        testPostAndRetrievePedersenComplaint(Arrays.asList(1, 2), complaintList);
     }
 
     @Test
     public void shouldAgreeOnSinglePedersenComplaintWhenThreePeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSinglePedersenComplaint(Arrays.asList(1, 2, 3));
+        List<SignedEntity<PedersenComplaintDTO>> complaintList = Arrays.asList(getPedersenComplaint(1, 2));
+        testPostAndRetrievePedersenComplaint(Arrays.asList(1, 2, 3), complaintList);
     }
 
     @Test
     public void shouldAgreeOnSinglePedersenComplaintWhenFourPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSinglePedersenComplaint(Arrays.asList(1, 2, 3, 4));
+        List<SignedEntity<PedersenComplaintDTO>> complaintList = Arrays.asList(getPedersenComplaint(1, 2));
+        testPostAndRetrievePedersenComplaint(Arrays.asList(1, 2, 3, 4), complaintList);
     }
 
-    private void testPostSingleFeldmanComplaint(List<Integer> postTo) throws InterruptedException, IOException {
-        SignedEntity<FeldmanComplaintDTO> feldmanComplaint
-                = new SignedEntity<>(new FeldmanComplaintDTO(1, 2, valueOf(123), valueOf(123)), secretKey);
+    @Test
+    public void shouldAgreeOnMultiplePedersenComplaintsWhenTwoPeersReceivesFromEdge() throws InterruptedException, IOException {
+        List<SignedEntity<PedersenComplaintDTO>> complaintList = Arrays.asList(
+                getPedersenComplaint(1, 2),
+                getPedersenComplaint(2, 3));
+        testPostAndRetrievePedersenComplaint(Arrays.asList(1, 2), complaintList);
+    }
 
+    private SignedEntity<FeldmanComplaintDTO> getFeldmanComplaint(int senderId, int receiverId, int val1, int val2) {
+        return new SignedEntity<>(new FeldmanComplaintDTO(senderId, receiverId, valueOf(val1), valueOf(val2)), secretKey);
+    }
+
+    private void testPostAndRetrieveFeldmanComplaint(List<Integer> postTo, List<SignedEntity<FeldmanComplaintDTO>> complaintList) throws InterruptedException, IOException {
         for (Integer id : postTo) {
-            targets.get(id).path("feldmanComplain").request().post(Entity.entity(feldmanComplaint, MediaType.APPLICATION_JSON));
+            for (SignedEntity<FeldmanComplaintDTO> complaint : complaintList) {
+                targets.get(id).path("feldmanComplain").request().post(Entity.entity(complaint, MediaType.APPLICATION_JSON));
+            }
         }
 
         // Allow consensus protocol to be run
-        Thread.sleep(4_000);
+        Thread.sleep(CONSENSUS_WAIT_TIMEOUT);
 
         List<SignedEntity<FeldmanComplaintDTO>> lastSeenComplaintsList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
@@ -394,7 +432,7 @@ public class TestBulletinBoardPeerCommunication {
                 assertEquals("Bulletin Board Peers do not agree on complaints lists", lastSeenComplaintsList, fetchedComplaintList);
             }
 
-            assertEquals("Complaints list should be of size 1", 1, fetchedComplaintList.size());
+            assertEquals("Complaints list should be of size " + complaintList.size(), complaintList.size(), fetchedComplaintList.size());
 
             lastSeenComplaintsList = fetchedComplaintList;
         }
@@ -402,49 +440,69 @@ public class TestBulletinBoardPeerCommunication {
 
     @Test
     public void shouldAgreeOnSingleFeldmanComplaintWhenOnePeerReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleFeldmanComplaint(Arrays.asList(1));
+        List<SignedEntity<FeldmanComplaintDTO>> complaintList = Arrays.asList(getFeldmanComplaint(1, 2, 123, 456));
+        testPostAndRetrieveFeldmanComplaint(Arrays.asList(1), complaintList);
     }
 
     @Test
     public void shouldAgreeOnSingleFeldmanComplaintWhenTwoPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleFeldmanComplaint(Arrays.asList(1, 2));
+        List<SignedEntity<FeldmanComplaintDTO>> complaintList = Arrays.asList(getFeldmanComplaint(1, 2, 123, 456));
+        testPostAndRetrieveFeldmanComplaint(Arrays.asList(1, 2), complaintList);
     }
 
     @Test
     public void shouldAgreeOnSingleFeldmanComplaintWhenThreePeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleFeldmanComplaint(Arrays.asList(1, 2, 3));
+        List<SignedEntity<FeldmanComplaintDTO>> complaintList = Arrays.asList(getFeldmanComplaint(1, 2, 123, 456));
+        testPostAndRetrieveFeldmanComplaint(Arrays.asList(1, 2, 3), complaintList);
     }
 
     @Test
     public void shouldAgreeOnSingleFeldmanComplaintWhenFourPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleFeldmanComplaint(Arrays.asList(1, 2, 3, 4));
+        List<SignedEntity<FeldmanComplaintDTO>> complaintList = Arrays.asList(getFeldmanComplaint(1, 2, 123, 456));
+        testPostAndRetrieveFeldmanComplaint(Arrays.asList(1, 2, 3, 4), complaintList);
     }
 
-    private void testPostSingleComplaintResolve(List<Integer> postTo) throws InterruptedException, IOException {
-        SignedEntity<ComplaintResolveDTO> resolve
-                = new SignedEntity<>(new ComplaintResolveDTO(
-                1,
-                2,
-                new PartialSecretMessageDTO(valueOf(564), valueOf(568), 2, 1)), secretKey);
+    @Test
+    public void shouldAgreeOnMultipleFeldmanComplaintsWhenThreePeersReceivesFromEdge() throws InterruptedException, IOException {
+        List<SignedEntity<FeldmanComplaintDTO>> complaintList = Arrays.asList(
+                getFeldmanComplaint(1, 2, 123, 456),
+                getFeldmanComplaint(2, 3, 852, 6523));
+        testPostAndRetrieveFeldmanComplaint(Arrays.asList(1, 2, 3), complaintList);
+    }
 
+    private SignedEntity<ComplaintResolveDTO> getComplaintResolve(int senderId, int receiverId, int val1, int val2) {
+        return new SignedEntity<>(
+                new ComplaintResolveDTO(
+                        senderId,
+                        receiverId,
+                        new PartialSecretMessageDTO(valueOf(val1), valueOf(val2), receiverId, senderId)),
+                secretKey);
+    }
+
+    private void testPostAndRetrieveComplaintResolves(List<Integer> postTo, List<SignedEntity<ComplaintResolveDTO>> complaintResolveList) throws InterruptedException, IOException {
         for (Integer id : postTo) {
-            targets.get(id).path("resolveComplaint").request().post(Entity.entity(resolve, MediaType.APPLICATION_JSON));
+            for (SignedEntity<ComplaintResolveDTO> complaintResolve : complaintResolveList) {
+                targets.get(id).path("resolveComplaint").request().post(Entity.entity(complaintResolve, MediaType.APPLICATION_JSON));
+            }
         }
 
         // Allow consensus protocol to be run
-        Thread.sleep(4_000);
+        Thread.sleep(CONSENSUS_WAIT_TIMEOUT);
 
         List<SignedEntity<ComplaintResolveDTO>> lastSeenResolvesList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
             String complaintResolvesString = target.path("complaintResolves").request().get(String.class);
             List<SignedEntity<ComplaintResolveDTO>> fetchedResolvesList
-                    = mapper.readValue(complaintResolvesString, new TypeReference<List<SignedEntity<ComplaintResolveDTO>>>() {});
+                    = mapper.readValue(complaintResolvesString, new TypeReference<List<SignedEntity<ComplaintResolveDTO>>>() {
+            });
 
             if (!lastSeenResolvesList.isEmpty()) {
                 assertEquals("Bulletin Board Peers do not agree on complaint resolves lists", lastSeenResolvesList, fetchedResolvesList);
             }
 
-            assertEquals("Complaint resolves list should be of size 1", 1, fetchedResolvesList.size());
+            assertEquals("Complaint resolves list should be of size " + complaintResolveList.size(),
+                    complaintResolveList.size(),
+                    fetchedResolvesList.size());
 
             lastSeenResolvesList = fetchedResolvesList;
         }
@@ -452,45 +510,62 @@ public class TestBulletinBoardPeerCommunication {
 
     @Test
     public void shouldAgreeOnSingleComplaintResolveWhenOnePeerReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleComplaintResolve(Arrays.asList(1));
+        List<SignedEntity<ComplaintResolveDTO>> complaintResolveList = Arrays.asList(getComplaintResolve(1, 2, 123, 321));
+        testPostAndRetrieveComplaintResolves(Arrays.asList(1), complaintResolveList);
     }
 
     @Test
     public void shouldAgreeOnSingleComplaintResolveWhenTwoPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleComplaintResolve(Arrays.asList(1, 2));
+        List<SignedEntity<ComplaintResolveDTO>> complaintResolveList = Arrays.asList(getComplaintResolve(1, 2, 123, 321));
+        testPostAndRetrieveComplaintResolves(Arrays.asList(1, 2), complaintResolveList);
     }
 
     @Test
     public void shouldAgreeOnSingleComplaintResolveWhenThreePeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleComplaintResolve(Arrays.asList(1, 2, 3));
+        List<SignedEntity<ComplaintResolveDTO>> complaintResolveList = Arrays.asList(getComplaintResolve(1, 2, 123, 321));
+        testPostAndRetrieveComplaintResolves(Arrays.asList(1, 2, 3), complaintResolveList);
     }
 
     @Test
     public void shouldAgreeOnSingleComplaintResolveWhenFourPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleComplaintResolve(Arrays.asList(1, 2, 3, 4));
+        List<SignedEntity<ComplaintResolveDTO>> complaintResolveList = Arrays.asList(getComplaintResolve(1, 2, 123, 321));
+        testPostAndRetrieveComplaintResolves(Arrays.asList(1, 2, 3, 4), complaintResolveList);
     }
 
-    private void testPostSingleCertificate(List<Integer> postTo) throws InterruptedException, IOException {
-        SignedEntity<CertificateDTO> certificateDTOSignedEntity = new SignedEntity<>(new CertificateDTO("Test certificate", 1), secretKey);
+    @Test
+    public void shouldAgreeOnMultipleComplaintResolvesWhenFourPeersReceivesFromEdge() throws InterruptedException, IOException {
+        List<SignedEntity<ComplaintResolveDTO>> complaintResolveList = Arrays.asList(
+                getComplaintResolve(1, 2, 123, 321),
+                getComplaintResolve(2, 3, 541, 653));
+        testPostAndRetrieveComplaintResolves(Arrays.asList(1, 2, 3, 4), complaintResolveList);
+    }
 
+    private SignedEntity<CertificateDTO> getCertificateDTO(String certificateString, int id) {
+        return new SignedEntity<>(new CertificateDTO(certificateString, id), secretKey);
+    }
+
+    private void testPostAndRetrieveCertificate(List<Integer> postTo, List<SignedEntity<CertificateDTO>> certificateList) throws InterruptedException, IOException {
         for (Integer id : postTo) {
-            targets.get(id).path("certificates").request().post(Entity.entity(certificateDTOSignedEntity, MediaType.APPLICATION_JSON));
+            for (SignedEntity<CertificateDTO> certificateDTO : certificateList) {
+                targets.get(id).path("certificates").request().post(Entity.entity(certificateDTO, MediaType.APPLICATION_JSON));
+            }
         }
 
         // Allow consensus protocol to be run
-        Thread.sleep(4_000);
+        Thread.sleep(CONSENSUS_WAIT_TIMEOUT);
 
         List<SignedEntity<CertificateDTO>> lastSeenCertificateList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
             String certificateString = target.path("certificates").request().get(String.class);
-            List<SignedEntity<CertificateDTO>> fetchedCertificateList = mapper.readValue(certificateString, new TypeReference<List<SignedEntity<CertificateDTO>>>() {
+            List<SignedEntity<CertificateDTO>> fetchedCertificateList
+                    = mapper.readValue(certificateString, new TypeReference<List<SignedEntity<CertificateDTO>>>() {
             });
 
             if (!lastSeenCertificateList.isEmpty()) {
                 assertEquals("Bulletin Board Peers do not agree on certificate lists", lastSeenCertificateList, fetchedCertificateList);
             }
 
-            assertEquals("Certificate list should be of size 1", 1, fetchedCertificateList.size());
+            assertEquals("Certificate list should be of size " + certificateList.size(), certificateList.size(), fetchedCertificateList.size());
 
             lastSeenCertificateList = fetchedCertificateList;
         }
@@ -498,22 +573,65 @@ public class TestBulletinBoardPeerCommunication {
 
     @Test
     public void shouldAgreeOnSingleCertificateWhenOnePeerReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleCertificate(Arrays.asList(1));
+        List<SignedEntity<CertificateDTO>> certificateList = Arrays.asList(getCertificateDTO("Certificate", 1));
+        testPostAndRetrieveCertificate(Arrays.asList(1), certificateList);
     }
 
     @Test
     public void shouldAgreeOnSingleCertificateWhenTwoPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleCertificate(Arrays.asList(1, 2));
+        List<SignedEntity<CertificateDTO>> certificateList = Arrays.asList(getCertificateDTO("Certificate", 1));
+        testPostAndRetrieveCertificate(Arrays.asList(1, 2), certificateList);
     }
 
     @Test
     public void shouldAgreeOnSingleCertificateWhenThreePeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleCertificate(Arrays.asList(1, 2, 3));
+        List<SignedEntity<CertificateDTO>> certificateList = Arrays.asList(getCertificateDTO("Certificate", 1));
+        testPostAndRetrieveCertificate(Arrays.asList(1, 2, 3), certificateList);
     }
 
     @Test
     public void shouldAgreeOnSingleCertificateWhenFourPeersReceivesFromEdge() throws InterruptedException, IOException {
-        testPostSingleCertificate(Arrays.asList(1, 2, 3, 4));
+        List<SignedEntity<CertificateDTO>> certificateList = Arrays.asList(getCertificateDTO("Certificate", 1));
+        testPostAndRetrieveCertificate(Arrays.asList(1, 2, 3, 4), certificateList);
+    }
+
+    @Test
+    public void shouldAgreeOnMultipleCertificatesWhenOnePeerReceivesFromEdge() throws InterruptedException, IOException {
+        List<SignedEntity<CertificateDTO>> certificateList = Arrays.asList(
+                getCertificateDTO("Certificate", 1),
+                getCertificateDTO("Certificate2", 2));
+        testPostAndRetrieveCertificate(Arrays.asList(1), certificateList);
+    }
+
+    @Test
+    public void shouldAgreeOnMixedContent() throws InterruptedException, IOException {
+        testPostAndRetrieveBallot(Arrays.asList(1));
+
+        List<SignedEntity<CertificateDTO>> certificateList = Arrays.asList(
+                getCertificateDTO("Certificate", 1),
+                getCertificateDTO("Certificate2", 2));
+        testPostAndRetrieveCertificate(Arrays.asList(1), certificateList);
+
+        List<SignedEntity<ComplaintResolveDTO>> complaintResolveList = Arrays.asList(getComplaintResolve(1, 2, 123, 321));
+        testPostAndRetrieveComplaintResolves(Arrays.asList(1, 2, 3, 4), complaintResolveList);
+
+        List<SignedEntity<FeldmanComplaintDTO>> feldmanComplaintList = Arrays.asList(getFeldmanComplaint(1, 2, 123, 456));
+        testPostAndRetrieveFeldmanComplaint(Arrays.asList(1, 2), feldmanComplaintList);
+
+        List<SignedEntity<PedersenComplaintDTO>> pedersenComplaintList = Arrays.asList(
+                getPedersenComplaint(1, 2),
+                getPedersenComplaint(2, 3));
+        testPostAndRetrievePedersenComplaint(Arrays.asList(1, 2), pedersenComplaintList);
+
+        List<SignedEntity<CommitmentDTO>> commitmentDTOList = Arrays.asList(
+                getCommitmentDTO(new BigInteger[]{valueOf(584), valueOf(56498), valueOf(650)}, 1, "BAR"));
+        testPostAndRetrieveCommitment(Arrays.asList(1, 2), commitmentDTOList);
+
+        testPostAndRetrieveResultList(Arrays.asList(1, 2));
+
+        testPostAndRetrievePublicInfo(Arrays.asList(1));
+
+        testPostAndRetrieveBallot(Arrays.asList(1, 2, 3));
     }
 
     @After
