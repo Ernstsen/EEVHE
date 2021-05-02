@@ -16,6 +16,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
@@ -38,6 +39,8 @@ public class TestBulletinBoardPeer {
     private BulletinBoardPeer bulletinBoardPeer;
     private final ObjectMapper mapper = new ObjectMapper();
     private String confPath;
+    private Thread thread;
+    private JerseyWebTarget target;
 
     private void buildTempFiles() throws IOException {
         File file = new File(confPath);
@@ -76,6 +79,12 @@ public class TestBulletinBoardPeer {
 
         BulletinBoardPeer.BulletinBoardPeerConfiguration config = new BulletinBoardPeer.BulletinBoardPeerConfiguration(port, confPath, 1);
         bulletinBoardPeer = new BulletinBoardPeer(config);
+
+        thread = new Thread(bulletinBoardPeer);
+        thread.start();
+        Thread.sleep(2_000);
+
+        target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
     }
 
     @Test
@@ -84,32 +93,17 @@ public class TestBulletinBoardPeer {
     }
 
     @Test
-    public void serverTypeAndTime() throws InterruptedException {
-        Thread thread = new Thread(bulletinBoardPeer);
-        thread.start();
-        Thread.sleep(2_000);
-
-        JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
+    public void serverTypeAndTime() {
         String type = target.path("type").request().get(String.class);
         assertEquals("Wrong type string returned", "<b>ServerType:</b> Bulletin Board Peer", type);
 
         Long time = target.path("getCurrentTime").request().get(Long.class);
         long now = new Date().getTime();
         assertTrue("Time should have passed since fetching time there: " + time + ", now:" + now, time <= now);
-
-
-        bulletinBoardPeer.terminate();
-        thread.join();
     }
 
     @Test
     public void postAndRetrieve() throws InterruptedException, IOException {
-        Thread thread = new Thread(bulletinBoardPeer);
-        thread.start();
-        Thread.sleep(2_000);
-
-        JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
-
         //Assert we get 404 when items are not found
         assertEquals("Expected 404", 404, target.path("publicKey").request().get().getStatus());
         assertEquals("Expected 404", 404, target.path("getPublicInfo").request().get().getStatus());
@@ -257,12 +251,21 @@ public class TestBulletinBoardPeer {
         assertEquals("Unexpected list size", 1, fetchedCertificateList.size());
         assertEquals("Fetched certificate did not match posted one", certificate, fetchedCertificateList.get(0));
 
-        bulletinBoardPeer.terminate();
-        thread.join();
+        String singleBallotString = target.path("getBallot/id").request().get(String.class);
+        PersistedBallot singleBallot = mapper.readValue(singleBallotString, new TypeReference<PersistedBallot>() {
+        });
+        assertEquals("Unexpected id", "id", singleBallot.getId());
+        assertEquals("Unexpected candidate votes", candidates, singleBallot.getCandidateVotes());
+        assertEquals("Unexpected 'sum is one' proof", p3, singleBallot.getSumIsOneProof());
+    }
+
+    @Test(expected = NotFoundException.class)
+    public void shouldThrowExceptionWhenTryingToFetchNotCastBallot() {
+        target.path("getBallot/someNotCastBallotsId").request().get(String.class);
     }
 
     @After
-    public void tearDown() {
+    public void tearDown() throws InterruptedException {
         for (File file : files) {
             try {
                 //noinspection ResultOfMethodCallIgnored
@@ -270,5 +273,8 @@ public class TestBulletinBoardPeer {
             } catch (Exception ignored) {
             }
         }
+
+        bulletinBoardPeer.terminate();
+        thread.join();
     }
 }

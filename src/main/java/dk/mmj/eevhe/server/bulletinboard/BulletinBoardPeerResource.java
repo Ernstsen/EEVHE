@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Handles requests from Edges
@@ -113,6 +114,19 @@ public class BulletinBoardPeerResource {
     @Produces(MediaType.APPLICATION_JSON)
     public List<PersistedBallot> getBallots() {
         return getState().getBallots();
+    }
+
+    @GET
+    @Path("getBallot/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public PersistedBallot getBallot(@PathParam("id") String id) {
+        List<PersistedBallot> ballots = getState().getBallots().stream().filter(b -> b.getId().equals(id)).collect(Collectors.toList());
+
+        if (ballots.isEmpty()) {
+            throw new NotFoundException("Voter with id " + id + " has not cast a vote");
+        }
+
+        return ballots.get(0);
     }
 
     @POST
