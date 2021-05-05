@@ -37,7 +37,7 @@ public class RestBBPeerCommunicator implements BBPeerCommunicator {
 
         Response resp = target.path("BAMessage").request().post(entity);
         if (!(resp.getStatus() == 204)) {
-            logger.error("Failed to post secret to with status= " + resp.getStatus() + " webtarget: " + target);
+            logger.error("Failed to post message for Byzantine Agreement protocol with status= " + resp.getStatus() + " webtarget: " + target);
         }
     }
 
@@ -47,7 +47,7 @@ public class RestBBPeerCommunicator implements BBPeerCommunicator {
 
         Response resp = target.path("BAMessage").request().post(entity);
         if (!(resp.getStatus() == 204)) {
-            logger.error("Failed to post secret to with status= " + resp.getStatus() + " webtarget: " + target);
+            logger.error("Failed to post message for Byzantine Agreement protocol with status= " + resp.getStatus() + " webtarget: " + target);
         }
     }
 
@@ -57,7 +57,7 @@ public class RestBBPeerCommunicator implements BBPeerCommunicator {
 
         Response resp = target.path("BroadcastMessage").path(id).request().post(entity);
         if (!(resp.getStatus() == 204)) {
-            logger.error("Failed to post secret to with status= " + resp.getStatus() + " webtarget: " + target);
+            logger.error("Failed to post broadcast message with status= " + resp.getStatus() + " webtarget: " + target);
         }
     }
 }

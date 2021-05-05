@@ -48,6 +48,12 @@ public class BulletinBoardPeer extends AbstractServer {
     private final Map<Integer, RestBBPeerCommunicator> communicators;
     private final AgreementHelper agreementHelper;
     private final List<Consumer<Incoming<String>>> broadcastListeners;
+    private final Map<String, String> peerCertificates;
+
+    // Server state keys
+    static final String PEER_CERTIFICATES = "peerCertificates";
+    static final String SIGNED_PEER_CERTIFICATES = "signedPeerCertificates";
+
 
     public BulletinBoardPeer(BulletinBoardPeerConfiguration configuration) {
         logger = LogManager.getLogger(BulletinBoardPeer.class + " " + configuration.id + ":");
@@ -65,9 +71,9 @@ public class BulletinBoardPeer extends AbstractServer {
         BBInput bbInput;
         try {
             bbInput = mapper.readValue(conf.resolve("BB_input.json").toFile(), BBInput.class);
-            Map<String, String> peerCertificates = bbInput.getPeers().stream()
+            peerCertificates = bbInput.getPeers().stream()
                     .collect(Collectors.toMap(i -> Integer.toString(i.getId()), BBPeerInfo::getCertificate));
-            ServerState.getInstance().put("peerCertificates", peerCertificates);
+            ServerState.getInstance().put(PEER_CERTIFICATES, peerCertificates);
         } catch (IOException e) {
             logger.error("Failed to read BB input file", e);
             throw new RuntimeException("Failed to read BB from file", e);
@@ -86,6 +92,8 @@ public class BulletinBoardPeer extends AbstractServer {
             logger.error("Error occurred while reading private input file from " + privateInput, e);
             throw new RuntimeException("Failed to read private input from file");
         }
+
+        signPeerCertificates();
 
         communicators = bbInput.getPeers().stream()
                 .filter(p -> p.getId() != id)
@@ -111,6 +119,11 @@ public class BulletinBoardPeer extends AbstractServer {
 
         BiConsumer<SignedEntity<String>, String> receiveBroadcast = this::receiveBroadcast;
         ServerState.getInstance().put("bracha.consumer." + id, receiveBroadcast);
+    }
+
+    private void signPeerCertificates() {
+        SignedEntity<List<String>> signedPeerCertificates = new SignedEntity<>(new ArrayList<>(peerCertificates.values()), sk);
+        ServerState.getInstance().put(SIGNED_PEER_CERTIFICATES, signedPeerCertificates);
     }
 
     private BroadcastManager getBroadcastManager(Map<Integer, Consumer<String>> peers) {

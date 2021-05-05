@@ -42,13 +42,12 @@ public class TestBulletinBoardPeerCommunication {
     private final ObjectMapper mapper = new ObjectMapper();
     private final Map<Integer, BulletinBoardPeer> bulletinBoardPeers = new HashMap<>();
     private final Map<Integer, JerseyWebTarget> targets = new HashMap<>();
-    private String confPath;
     private ArrayList<Thread> threads;
     private AsymmetricKeyParameter secretKey;
     private String cert;
     private final int CONSENSUS_WAIT_TIMEOUT = 2000;
 
-    private void buildTempFiles() throws IOException {
+    public void buildTempFiles(String confPath) throws IOException {
         File folder = new File(confPath);
 
         //noinspection ResultOfMethodCallIgnored
@@ -82,11 +81,11 @@ public class TestBulletinBoardPeerCommunication {
 
     @Before
     public void setUp() throws Exception {
-        confPath = "temp_conf/";
+        String confPath = "temp_conf/";
 
         ServerState.getInstance().reset();
 
-        buildTempFiles();
+        buildTempFiles(confPath);
 
         secretKey = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
         cert = new String(Files.readAllBytes(Paths.get("certs/test_glob_key.pem")));

@@ -6,10 +6,12 @@ import dk.eSoftware.commandLineParser.WrongFormatException;
 import dk.mmj.eevhe.client.ResultFetcher;
 import dk.mmj.eevhe.client.Voter;
 import dk.mmj.eevhe.client.results.ElectionResult;
-import dk.mmj.eevhe.server.bulletinboard.BulletinBoard;
+import dk.mmj.eevhe.server.bulletinboard.BulletinBoardPeer;
+import dk.mmj.eevhe.server.bulletinboard.TestBulletinBoardPeerCommunication;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority;
 import joptsimple.internal.Strings;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.file.Files;
@@ -22,24 +24,6 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class IntegrationUnitTest {
-
-    @After
-    public void tearDown() throws Exception {
-        Path conf = Paths.get("conf");
-
-        List<Path> paths = Arrays.asList(
-                conf.resolve("DA1.zip"),
-                conf.resolve("DA2.zip"),
-                conf.resolve("DA3.zip")
-        );
-
-        for (Path path : paths) {
-            if (Files.exists(path)) {
-                Files.delete(path);
-            }
-        }
-    }
-
     @Test
     public void runTestElection() {
         IntegrationTestConfigBuilder builder = new IntegrationTestConfigBuilder();
@@ -51,6 +35,7 @@ public class IntegrationUnitTest {
                     new SingletonCommandLineParser<>(builder).parse(args.split(" "));
 
             assertEquals("All DAs should be active", Arrays.asList(1, 2, 3), config.getDecryptionAuthorities());
+            assertEquals("All Bulletin Board Peers should be active", Arrays.asList(1, 2, 3, 4), config.getBulletinBoardPeers());
             assertEquals("Should have one scheduled votes", 1, config.getVoteDelays().size());
             assertEquals("Did not respect duration param", 3, config.getDuration());
 
@@ -76,11 +61,31 @@ public class IntegrationUnitTest {
         }
     }
 
+    @After
+    public void tearDown() throws Exception {
+        Path conf = Paths.get("conf");
+
+        List<Path> paths = Arrays.asList(
+                conf.resolve("DA1.zip"),
+                conf.resolve("DA2.zip"),
+                conf.resolve("DA3.zip"),
+                conf.resolve("BB_Peer1.zip"),
+                conf.resolve("BB_Peer2.zip"),
+                conf.resolve("BB_Peer3.zip"),
+                conf.resolve("BB_Peer4.zip")
+        );
+
+        for (Path path : paths) {
+            if (Files.exists(path)) {
+                Files.delete(path);
+            }
+        }
+    }
 
     private static class TestObserver implements IntegrationTest.Observer {
         private final List<DecryptionAuthority> authorities = new ArrayList<>();
         private final List<Voter> multiVoters = new ArrayList<>();
-        private BulletinBoard bulletinBoard;
+        private final List<BulletinBoardPeer> bulletinBoardPeers = new ArrayList<>();
         private ResultFetcher resultFetcher;
         private List<String> errors;
         private boolean finalized = false;
@@ -99,8 +104,8 @@ public class IntegrationUnitTest {
         }
 
         @Override
-        public void registerBulletinBoard(BulletinBoard bulletinBoard) {
-            this.bulletinBoard = bulletinBoard;
+        public void registerBulletinBoardPeer(BulletinBoardPeer bulletinBoardPeer) {
+            bulletinBoardPeers.add(bulletinBoardPeer);
         }
 
         @Override
@@ -157,10 +162,10 @@ public class IntegrationUnitTest {
             for (DecryptionAuthority authority : authorities) {
                 authority.terminate();
             }
-            if (bulletinBoard != null) {
-                bulletinBoard.terminate();
-            }
 
+            for (BulletinBoardPeer bulletinBoardPeer : bulletinBoardPeers) {
+                bulletinBoardPeer.terminate();
+            }
         }
     }
 
