@@ -8,16 +8,18 @@ import dk.mmj.eevhe.entities.PersistedBallot;
 import dk.mmj.eevhe.entities.SignedEntity;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.cert.CertException;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
+import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.bc.BcRSAContentVerifierProviderBuilder;
 
 import javax.ws.rs.client.WebTarget;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -108,5 +110,113 @@ public class FetchingUtilities {
                     }
                 }
         ).map(SignedEntity::getEntity).collect(Collectors.toList());
+    }
+
+    /**
+     * Helper method for fetching all bb-peer certificates
+     *
+     * @param logger     logger for reporting errors
+     * @param edgeTarget webTarget pointing at an edge node
+     * @param electionPk the parent certificate for the election
+     * @return list of certificates for bb-peers on .pem format
+     */
+    static List<String> getBBPeerCertificates(Logger logger, WebTarget edgeTarget, AsymmetricKeyParameter electionPk) {
+        String responseString = edgeTarget.path("certificates").request().get(String.class);
+
+        ContentVerifierProvider verifier;
+        try {
+            verifier = new BcRSAContentVerifierProviderBuilder(new DefaultDigestAlgorithmIdentifierFinder())
+                    .build(electionPk);
+        } catch (OperatorCreationException e) {
+            logger.error("Failed to create verifier for election pk");
+            return null;
+        }
+
+        List<SignedEntity<List<String>>> certificates;
+        try {
+            certificates = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<List<String>>>>() {
+            });
+        } catch (IOException e) {
+            logger.error("FetchingUtilities: Failed to deserialize public informations list retrieved from bulletin board", e);
+            return null;
+        }
+
+        //Build map of all valid certificates:
+        Map<String, X509CertificateHolder> validCertificates = new HashMap<>();
+        for (SignedEntity<List<String>> se : certificates) {
+            for (String certString : se.getEntity()) {
+                try {
+                    X509CertificateHolder certHolder = CertificateHelper.readCertificate(certString.getBytes(StandardCharsets.UTF_8));
+                    if (certHolder.isSignatureValid(verifier) && certHolder.getSubject().toString().contains("BB_PEER")) {
+                        validCertificates.put(certHolder.getSubject().toString(), certHolder);
+                    }
+                } catch (IOException | CertException ignored) {
+                }
+            }
+        }
+
+        HashMap<List<String>, Integer> countMap = new HashMap<>();
+        certificates.stream()
+                .filter(e -> isValidlySignedByAny(e, validCertificates.values()))
+                .map(SignedEntity::getEntity)
+                .peek(Collections::sort)
+                .forEach(c -> countMap.compute(c, (l, cnt) -> cnt != null ? cnt += 1 : 1));
+
+        return countMap.entrySet()
+                .stream()
+                .reduce((curr, element) -> curr.getValue() > element.getValue() ? curr : element)
+                .map(Map.Entry::getKey)
+                .orElse(null);
+    }
+
+    private static boolean isValidlySignedByAny(SignedEntity<?> entity, Collection<X509CertificateHolder> certificates) {
+        for (X509CertificateHolder value : certificates) {
+            try {
+                if (entity.verifySignature(CertificateHelper.getPublicKeyFromCertificate(value))) {
+                    return true;
+                }
+            } catch (IOException ignored) {
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Iterates through both signed entities and certificates and returns a list of signed entities that is validly signed
+     * <br>
+     * If one certificate is used in signing multiple entities, only the first entity encountered is included in the result
+     *
+     * @param list list of signed entities
+     * @param certificates list of all valid certificates
+     * @param logger logger to be used if an error is encountered
+     * @param <T> type parameter for the entity
+     * @return list of signed entities, each signed by different entities, all with valid signatures
+     */
+    static <T> List<SignedEntity<T>> verifySignedAndValid(List<SignedEntity<T>> list, List<String> certificates, Logger logger) {
+        List<SignedEntity<T>> result = new ArrayList<>();
+
+        HashSet<String> unusedCerts = new HashSet<>(certificates);
+
+        for (SignedEntity<T> entity : list) {
+
+            Optional<String> any = unusedCerts.stream()
+                    .filter(c -> verifySignedEntity(entity, c, logger))
+                    .findAny();
+            if(any.isPresent()){
+                result.add(entity);
+                unusedCerts.remove(any.get());
+            }
+        }
+
+        return result;
+    }
+
+    private static boolean verifySignedEntity(SignedEntity<?> entity, String certString, Logger logger) {
+        try {
+            return entity.verifySignature(CertificateHelper.getPublicKeyFromCertificate(certString.getBytes(StandardCharsets.UTF_8)));
+        } catch (IOException exception) {
+            logger.error("Failed to get PK from certificate string", exception);
+        }
+        return false;
     }
 }

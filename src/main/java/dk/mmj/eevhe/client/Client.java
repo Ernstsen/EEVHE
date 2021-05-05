@@ -13,8 +13,12 @@ import org.glassfish.jersey.client.JerseyWebTarget;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import static dk.mmj.eevhe.client.FetchingUtilities.getBBPeerCertificates;
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
 public abstract class Client implements Application {
@@ -24,6 +28,7 @@ public abstract class Client implements Application {
     private PublicKey publicKey;
     private PartialPublicInfo publicInfo;
     private List<PartialPublicInfo> publicInfos;
+    private List<String> certificates;
 
     public Client(ClientConfiguration<?> configuration) {
         target = configureWebTarget(logger, configuration.targetUrl);
@@ -56,6 +61,18 @@ public abstract class Client implements Application {
             return null;
         }
         return info.getCandidates();
+    }
+
+    /**
+     * Fetches list of BB-peer certificates
+     *
+     * @return list of valid bb-peer certificates
+     */
+    protected List<String> getCertificates() {
+        if(certificates != null){
+            return certificates;
+        }
+        return certificates = getBBPeerCertificates(logger, target.path("certificates"), cert);
     }
 
     protected PartialPublicInfo fetchPublicInfo() {

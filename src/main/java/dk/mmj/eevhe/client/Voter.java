@@ -1,9 +1,13 @@
 package dk.mmj.eevhe.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.entities.BallotDTO;
 import dk.mmj.eevhe.entities.Candidate;
 import dk.mmj.eevhe.entities.PublicKey;
+import dk.mmj.eevhe.entities.SignedEntity;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthorityConfigBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,6 +22,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+
+import static dk.mmj.eevhe.client.FetchingUtilities.verifySignedAndValid;
 
 public class Voter extends Client {
     private static final Logger logger = LogManager.getLogger(DecryptionAuthorityConfigBuilder.class);
@@ -164,7 +170,38 @@ public class Voter extends Client {
             logger.warn("Failed to post vote to server: Error code was " + response.getStatus());
             return false;
         }
-        return true;
+
+        List<String> certs = getCertificates();
+        int peers = certs.size();
+
+        int retries = 0;
+        do {
+            try {
+                String fetchedBallot = target.path("getBallot")
+                        .path(id)
+                        .request().get(String.class);
+
+                List<SignedEntity<BallotDTO>> ballots = new ObjectMapper()
+                        .readValue(fetchedBallot, new TypeReference<List<SignedEntity<BallotDTO>>>() {
+                        });
+
+                List<SignedEntity<BallotDTO>> validBallotSignatures = verifySignedAndValid(ballots, certs, logger);
+
+                int threshold = (int) Math.ceil(((float) peers) / 2);
+                System.out.print("Received vote confirmation from " + validBallotSignatures.size() + "/" + threshold + " peers \r");
+                if (validBallotSignatures.size() > threshold) {
+                    return true;
+                }
+
+
+                Thread.sleep(1_000);
+            } catch (JsonProcessingException | InterruptedException e) {
+                logger.error("Failed to parse fetched ballots", e);
+                return false;
+            }
+        } while (retries++ < 10);
+
+        return false;
     }
 
     /**
