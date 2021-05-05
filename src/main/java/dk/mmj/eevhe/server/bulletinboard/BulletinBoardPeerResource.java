@@ -256,4 +256,11 @@ public class BulletinBoardPeerResource {
                 = (BiConsumer<SignedEntity<String>, String>) serverState.get("bracha.consumer." + getId(), BiConsumer.class);
         brachaConsumer.accept(message, identifier);
     }
+
+    @GET
+    @Path("getPeerCertificates")
+    @Produces(MediaType.APPLICATION_JSON)
+    public SignedEntity<List<String>> getPeerCertificates() {
+        return ServerState.getInstance().get(BulletinBoardPeer.SIGNED_PEER_CERTIFICATES, SignedEntity.class);
+    }
 }

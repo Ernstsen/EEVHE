@@ -207,11 +207,17 @@ public class BulletinBoardEdgeResource {
         return list != null ? list : new ArrayList<>();
     }
 
-
     @GET
     @Path("getCurrentTime")
     @Produces(MediaType.APPLICATION_JSON)
     public String getCurrentTime() {
         return Long.toString(new Date().getTime());
+    }
+
+    @GET
+    @Path("getPeerCertificateList")
+    @Produces(MediaType.TEXT_HTML)
+    public List<SignedEntity<String>> getPeerCertificateList() {
+        return state.get(BulletinBoardEdge.CERTIFICATE_LIST, List.class);
     }
 }
