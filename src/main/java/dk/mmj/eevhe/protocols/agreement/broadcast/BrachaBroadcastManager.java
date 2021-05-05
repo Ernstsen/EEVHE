@@ -13,10 +13,11 @@ public class BrachaBroadcastManager implements BroadcastManager {
     private static final int TIMEOUT_MINUTES = 10;
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    private final Map<Type, Set<String>> handledMessages = new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES);
+    private final Map<Type, Set<String>> handledMessages = Collections.synchronizedMap(new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES));
     private final Map<Integer, Consumer<String>> peerMap;
-    private final Map<String, Integer> totalReceived = new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES);
-    private final Map<String, Map<String, Set<Type>>> recordedParticipants = new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES);
+    private final Map<String, Integer> totalReceived = Collections.synchronizedMap(new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES));
+    private final Map<String, Map<String, Set<Type>>> recordedParticipants = Collections.synchronizedMap(new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES));
+//    private final Map<String, Object> locks = Collections.synchronizedMap(new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES));
     private final List<Consumer<String>> listeners = new ArrayList<>();
     private final int t;
 
@@ -62,6 +63,8 @@ public class BrachaBroadcastManager implements BroadcastManager {
         String msg = incoming.getContent();
         Message received = mapper.readValue(msg, Message.class);
         String broadcastId = received.getBroadcastId();
+
+//        Object lock = locks.computeIfAbsent(received.getBroadcastId(), s -> new Object());
 
         Map<String, Set<Type>> convParticipants = recordedParticipants.computeIfAbsent(broadcastId, k -> new HashMap<>());
         Set<Type> types = convParticipants.computeIfAbsent(incoming.getIdentifier(), k -> new HashSet<>());
