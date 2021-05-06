@@ -155,13 +155,25 @@ public class FetchingUtilities {
             }
         }
 
+        //We ensure that each sender has only posted ONE message - if more than one has been posted, first is used
+        HashSet<String> usedCertificates = new HashSet<>();
+        ArrayList<SignedEntity<List<String>>> uniqueCertificates = new ArrayList<>();
+        for (SignedEntity<List<String>> certificate : certificates) {
+            String signingCertificate = getSigningCertificate(certificate, validCertificates.values());
+            if(signingCertificate != null && !usedCertificates.contains(signingCertificate)){
+                uniqueCertificates.add(certificate);
+                usedCertificates.add(signingCertificate);
+            }
+        }
+
+        //We count how many times each cert list was posted
         HashMap<List<String>, Integer> countMap = new HashMap<>();
-        certificates.stream()
-                .filter(e -> isValidlySignedByAny(e, validCertificates.values()))
+        uniqueCertificates.stream()
                 .map(SignedEntity::getEntity)
                 .peek(Collections::sort)
                 .forEach(c -> countMap.compute(c, (l, cnt) -> cnt != null ? cnt += 1 : 1));
 
+        //Return most commonly posted
         return countMap.entrySet()
                 .stream()
                 .reduce((curr, element) -> curr.getValue() > element.getValue() ? curr : element)
@@ -169,16 +181,23 @@ public class FetchingUtilities {
                 .orElse(null);
     }
 
-    private static boolean isValidlySignedByAny(SignedEntity<?> entity, Collection<X509CertificateHolder> certificates) {
+    /**
+     * Iterates through certificates, and returns the identifier of the certificate which successfully validated the signature
+     *
+     * @param entity the entity whose signature must be verified
+     * @param certificates collection of valid certificates
+     * @return the name of the certificate that successfully validated the signature, null if no such signature
+     */
+    private static String getSigningCertificate(SignedEntity<?> entity, Collection<X509CertificateHolder> certificates) {
         for (X509CertificateHolder value : certificates) {
             try {
                 if (entity.verifySignature(CertificateHelper.getPublicKeyFromCertificate(value))) {
-                    return true;
+                    return value.getSubject().toString();
                 }
             } catch (IOException ignored) {
             }
         }
-        return false;
+        return null;
     }
 
     /**
