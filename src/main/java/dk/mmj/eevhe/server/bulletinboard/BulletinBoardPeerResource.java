@@ -46,6 +46,8 @@ public class BulletinBoardPeerResource {
         return (Consumer<BulletinBoardUpdatable>) serverState.get("executeConsensusProtocol." + getId(), Consumer.class);
     }
 
+    // TODO: Sign everything??
+
     @GET
     @Path("type")
     @Produces(MediaType.TEXT_HTML)
@@ -120,6 +122,7 @@ public class BulletinBoardPeerResource {
     @Path("getBallot/{id}")
     @Produces(MediaType.APPLICATION_JSON)
     public PersistedBallot getBallot(@PathParam("id") String id) {
+//        TODO: Signed entity
         List<PersistedBallot> ballots = getState().getBallots().stream().filter(b -> b.getId().equals(id)).collect(Collectors.toList());
 
         if (ballots.isEmpty()) {

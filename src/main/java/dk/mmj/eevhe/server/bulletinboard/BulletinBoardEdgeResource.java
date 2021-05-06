@@ -1,44 +1,63 @@
 package dk.mmj.eevhe.server.bulletinboard;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.glassfish.jersey.client.JerseyWebTarget;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.math.BigInteger;
 import java.util.*;
 
+import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 import static dk.mmj.eevhe.server.bulletinboard.BulletinBoard.*;
 
 @Path("/")
 public class BulletinBoardEdgeResource {
     private final static Logger logger = LogManager.getLogger(BulletinBoardEdgeResource.class);
     private final ServerState state = ServerState.getInstance();
+    private static final ObjectMapper mapper = new ObjectMapper();
+
+
+    private List<String> getPeerAddresses(){
+        return state.get(BulletinBoardEdge.PEER_ADDRESSES, List.class);
+    }
 
     @GET
     @Path("type")
     @Produces(MediaType.TEXT_HTML)
     public String getType() {
         logger.info("Received request for server type");
-        return "<b>ServerType:</b> Bulletin Board";
+        return "<b>ServerType:</b> Bulletin Board Edge";
     }
 
     @GET
     @Path("getPublicInfo")
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
-    public List<SignedEntity<PartialPublicInfo>> getPublicInfos() {
-        List<SignedEntity<PartialPublicInfo>> list = state.get(PUBLIC_INFO, List.class);
+    public List<List<SignedEntity<PartialPublicInfo>>> getPublicInfos() {
+        List<List<SignedEntity<PartialPublicInfo>>> responseObjectList = new ArrayList<>();
 
-        if (list == null) {
-            logger.warn("Attempt to fetch public infos before they were created");
-            throw new NotFoundException();
+        for (String peerAddress: getPeerAddresses()) {
+            JerseyWebTarget target = configureWebTarget(logger, peerAddress);
+            String responseString = target.path("getPublicInfo").request().get(String.class);
+            List<SignedEntity<PartialPublicInfo>> responseObject = null;
+            try {
+                responseObject = mapper.readValue(responseString, new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {});
+                responseObjectList.add(responseObject);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Failed to query <object (TODO)> from all bulletin board peers", e);
+
+            }
         }
 
-        return list;
+        return responseObjectList;
     }
 
     @POST
@@ -217,7 +236,7 @@ public class BulletinBoardEdgeResource {
     @GET
     @Path("getPeerCertificateList")
     @Produces(MediaType.TEXT_HTML)
-    public List<SignedEntity<String>> getPeerCertificateList() {
+    public List<SignedEntity<List<String>>> getPeerCertificateList() {
         return state.get(BulletinBoardEdge.CERTIFICATE_LIST, List.class);
     }
 }
