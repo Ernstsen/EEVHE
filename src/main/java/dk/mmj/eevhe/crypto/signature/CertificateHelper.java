@@ -4,6 +4,7 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.crypto.util.PublicKeyFactory;
 import org.bouncycastle.util.encoders.Base64;
+import org.bouncycastle.util.encoders.DecoderException;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -24,8 +25,13 @@ public class CertificateHelper {
      * @throws IOException if creating the CertificateHolder fails
      */
     public static X509CertificateHolder readCertificate(byte[] bytes) throws IOException {
-        byte[] decode = Base64.decode(new String(bytes).replace("-----BEGIN CERTIFICATE-----", "")
-                .replace("-----END CERTIFICATE-----", ""));
+        byte[] decode;
+        try {
+            decode = Base64.decode(new String(bytes).replace("-----BEGIN CERTIFICATE-----", "")
+                    .replace("-----END CERTIFICATE-----", ""));
+        } catch (DecoderException e) {
+            throw new IOException("Failed to read certificate", e);
+        }
         return new X509CertificateHolder(decode);
     }
 

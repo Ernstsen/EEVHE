@@ -137,7 +137,7 @@ public class FetchingUtilities {
             certificates = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<List<String>>>>() {
             });
         } catch (IOException e) {
-            logger.error("FetchingUtilities: Failed to deserialize public informations list retrieved from bulletin board", e);
+            logger.error("FetchingUtilities: Failed to deserialize certificate list retrieved from bulletin board", e);
             return null;
         }
 
@@ -155,7 +155,7 @@ public class FetchingUtilities {
             }
         }
 
-        return verifyAndDetermineCommon(certificates, validCertificates.values());
+        return verifyAndDetermineCommon(certificates, validCertificates.values(), logger);
     }
 
     /**
@@ -170,18 +170,10 @@ public class FetchingUtilities {
      * @param <T>               entity type
      * @return the entity list with the most unique, valid, signatures
      */
-    private static <T> T verifyAndDetermineCommon(List<SignedEntity<T>> entityList, Collection<X509CertificateHolder> validCertificates) {
+    static <T> T verifyAndDetermineCommon(List<SignedEntity<T>> entityList, Collection<X509CertificateHolder> validCertificates, Logger logger) {
         //We ensure that each sender has only posted ONE message - if more than one has been posted, first is used
-        HashSet<String> usedCertificates = new HashSet<>();
-        ArrayList<SignedEntity<T>> uniqueEntities = new ArrayList<>();
+        List<SignedEntity<T>> uniqueEntities = verifySignedAndValidInner(entityList, validCertificates, logger);
 
-        for (SignedEntity<T> entity : entityList) {
-            String signingCertificate = getSigningCertificate(entity, validCertificates);
-            if (signingCertificate != null && !usedCertificates.contains(signingCertificate)) {
-                uniqueEntities.add(entity);
-                usedCertificates.add(signingCertificate);
-            }
-        }
 
         //We count how many times each item was posted
         HashMap<T, Integer> countMap = new HashMap<>();
@@ -197,22 +189,26 @@ public class FetchingUtilities {
     }
 
     /**
-     * Iterates through certificates, and returns the identifier of the certificate which successfully validated the signature
+     * Iterates through both signed entities and certificates and returns a list of signed entities that is validly signed
+     * <br>
+     * If one certificate is used in signing multiple entities, only the first entity encountered is included in the result
      *
-     * @param entity       the entity whose signature must be verified
-     * @param certificates collection of valid certificates
-     * @return the name of the certificate that successfully validated the signature, null if no such signature
+     * @param list         list of signed entities
+     * @param certificates list of all valid certificates on .pem format
+     * @param logger       logger to be used if an error is encountered
+     * @param <T>          type parameter for the entity
+     * @return list of signed entities, each signed by different entities, all with valid signatures
      */
-    private static String getSigningCertificate(SignedEntity<?> entity, Collection<X509CertificateHolder> certificates) {
-        for (X509CertificateHolder value : certificates) {
-            try {
-                if (entity.verifySignature(CertificateHelper.getPublicKeyFromCertificate(value))) {
-                    return value.getSubject().toString();
-                }
-            } catch (IOException ignored) {
-            }
+    static <T> List<SignedEntity<T>> verifySignedAndValid(List<SignedEntity<T>> list, List<String> certificates, Logger logger) {
+        return verifySignedAndValidInner(list, certificates.stream().map(FetchingUtilities::toCertHolder).collect(Collectors.toList()), logger);
+    }
+
+    private static X509CertificateHolder toCertHolder(String cert) {
+        try {
+            return CertificateHelper.readCertificate(cert.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException ignored) {
+            return null;
         }
-        return null;
     }
 
     /**
@@ -226,14 +222,14 @@ public class FetchingUtilities {
      * @param <T>          type parameter for the entity
      * @return list of signed entities, each signed by different entities, all with valid signatures
      */
-    static <T> List<SignedEntity<T>> verifySignedAndValid(List<SignedEntity<T>> list, List<String> certificates, Logger logger) {
+    static <T> List<SignedEntity<T>> verifySignedAndValidInner(List<SignedEntity<T>> list, Collection<X509CertificateHolder> certificates, Logger logger) {
         List<SignedEntity<T>> result = new ArrayList<>();
 
-        HashSet<String> unusedCerts = new HashSet<>(certificates);
+        HashSet<X509CertificateHolder> unusedCerts = new HashSet<>(certificates);
 
         for (SignedEntity<T> entity : list) {
 
-            Optional<String> any = unusedCerts.stream()
+            Optional<X509CertificateHolder> any = unusedCerts.stream()
                     .filter(c -> verifySignedEntity(entity, c, logger))
                     .findAny();
             if (any.isPresent()) {
@@ -245,9 +241,9 @@ public class FetchingUtilities {
         return result;
     }
 
-    private static boolean verifySignedEntity(SignedEntity<?> entity, String certString, Logger logger) {
+    private static boolean verifySignedEntity(SignedEntity<?> entity, X509CertificateHolder cert, Logger logger) {
         try {
-            return entity.verifySignature(CertificateHelper.getPublicKeyFromCertificate(certString.getBytes(StandardCharsets.UTF_8)));
+            return entity.verifySignature(CertificateHelper.getPublicKeyFromCertificate(cert));
         } catch (IOException exception) {
             logger.error("Failed to get PK from certificate string", exception);
         }

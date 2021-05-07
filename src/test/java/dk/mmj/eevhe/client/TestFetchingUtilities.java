@@ -44,31 +44,91 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
     private X509CertificateHolder daOneCert;
     private AsymmetricKeyParameter daOneSk;
     private X509CertificateHolder electionCert;
+    private X509CertificateHolder bbOneCert;
+    private AsymmetricKeyParameter bbOneSk;
+    private X509CertificateHolder bbTwoCert;
+    private AsymmetricKeyParameter bbTwoSk;
+    private X509CertificateHolder bbThreeCert;
+    private AsymmetricKeyParameter bbThreeSk;
 
     @Before
     public void setUp() throws Exception {
-        AsymmetricKeyParameter sk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
+        AsymmetricKeyParameter electionSk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
+
         AlgorithmIdentifier sha256WithRSASignature = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256WITHRSA");
         AlgorithmIdentifier digestSha = new DefaultDigestAlgorithmIdentifierFinder().find("SHA-256");
 
-        java.security.KeyPair keyPair = KeyHelper.generateRSAKeyPair();
-        X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
-                new X500Name("CN=EEVHE_TESTSUITE"),
-                BigInteger.valueOf(1),
-                new Date(), new Date(System.currentTimeMillis() + (60 * 1000)),
-                new X500Name("CN=DA" + 1),
-                new SubjectPublicKeyInfo(sha256WithRSASignature, keyPair.getPublic().getEncoded())
-        );
-
-        ContentSigner signer = new BcRSAContentSignerBuilder(
-                sha256WithRSASignature,
-                digestSha
-        ).build(sk);
-
-        daOneCert = cb.build(signer);
-        daOneSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
         electionCert = CertificateHelper.readCertificate(Files.readAllBytes(Paths.get("certs/test_glob.pem")));
 
+        {
+            java.security.KeyPair keyPair = KeyHelper.generateRSAKeyPair();
+            X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
+                    new X500Name("CN=EEVHE_TESTSUITE"),
+                    BigInteger.valueOf(1),
+                    new Date(), new Date(System.currentTimeMillis() + (60 * 1000)),
+                    new X500Name("CN=DA" + 1),
+                    new SubjectPublicKeyInfo(sha256WithRSASignature, keyPair.getPublic().getEncoded())
+            );
+
+            ContentSigner signer = new BcRSAContentSignerBuilder(
+                    sha256WithRSASignature,
+                    digestSha
+            ).build(electionSk);
+
+            daOneCert = cb.build(signer);
+            daOneSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
+        }
+        {
+            java.security.KeyPair keyPair = KeyHelper.generateRSAKeyPair();
+            X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
+                    new X500Name("CN=EEVHE_TESTSUITE"),
+                    BigInteger.valueOf(1),
+                    new Date(), new Date(System.currentTimeMillis() + (60 * 1000)),
+                    new X500Name("CN=BB_PEER" + 1),
+                    new SubjectPublicKeyInfo(sha256WithRSASignature, keyPair.getPublic().getEncoded())
+            );
+
+            ContentSigner signer = new BcRSAContentSignerBuilder(
+                    sha256WithRSASignature,
+                    digestSha
+            ).build(electionSk);
+            bbOneCert = cb.build(signer);
+            bbOneSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
+        }
+        {
+            java.security.KeyPair keyPair = KeyHelper.generateRSAKeyPair();
+            X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
+                    new X500Name("CN=EEVHE_TESTSUITE"),
+                    BigInteger.valueOf(1),
+                    new Date(), new Date(System.currentTimeMillis() + (60 * 1000)),
+                    new X500Name("CN=BB_PEER" + 2),
+                    new SubjectPublicKeyInfo(sha256WithRSASignature, keyPair.getPublic().getEncoded())
+            );
+
+            ContentSigner signer = new BcRSAContentSignerBuilder(
+                    sha256WithRSASignature,
+                    digestSha
+            ).build(electionSk);
+            bbTwoCert = cb.build(signer);
+            bbTwoSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
+        }
+        {
+            java.security.KeyPair keyPair = KeyHelper.generateRSAKeyPair();
+            X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
+                    new X500Name("CN=EEVHE_TESTSUITE"),
+                    BigInteger.valueOf(1),
+                    new Date(), new Date(System.currentTimeMillis() + (60 * 1000)),
+                    new X500Name("CN=BB_BB_PEER" + 3),
+                    new SubjectPublicKeyInfo(sha256WithRSASignature, keyPair.getPublic().getEncoded())
+            );
+
+            ContentSigner signer = new BcRSAContentSignerBuilder(
+                    sha256WithRSASignature,
+                    digestSha
+            ).build(electionSk);
+            bbThreeCert = cb.build(signer);
+            bbThreeSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
+        }
     }
 
     @Test
@@ -222,5 +282,65 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
                 CertificateHelper.getPublicKeyFromCertificate(electionCert));
 
         assertNull("Should not be able to fetch infos", publicInfos);
+    }
+
+    @Test
+    public void testVerifyAndDetermineCommon() {
+        String expected = "ActualString";
+        List<SignedEntity<String>> entities = Arrays.asList(
+                new SignedEntity<>(expected, bbOneSk),
+                new SignedEntity<>("FaultyString", bbTwoSk),
+                new SignedEntity<>("FaultyString", bbTwoSk),
+                new SignedEntity<>("FaultyString", bbTwoSk),
+                new SignedEntity<>("FaultyString", bbTwoSk),
+                new SignedEntity<>(expected, bbThreeSk)
+        );
+
+
+        String chosen = FetchingUtilities.verifyAndDetermineCommon(
+                entities,
+                Arrays.asList(bbOneCert, bbTwoCert, bbThreeCert),
+                logger
+        );
+        assertEquals("Wrong resulting string", expected, chosen);
+
+    }
+
+    @Test
+    public void testGetBBCertificates() throws IOException {
+        List<String> expected = new ArrayList<>(Arrays.asList(
+                CertificateHelper.certificateToPem(bbOneCert),
+                CertificateHelper.certificateToPem(bbTwoCert),
+                CertificateHelper.certificateToPem(bbThreeCert)
+        ));
+        List<String> corrupt = new ArrayList<>(Arrays.asList(
+                CertificateHelper.certificateToPem(bbThreeCert),
+                CertificateHelper.certificateToPem(bbThreeCert) + "d"
+        ));
+
+
+        SignedEntity<List<String>>[] certList = Arrays.asList(
+                new SignedEntity<>(expected, bbOneSk),
+                new SignedEntity<>(expected, bbTwoSk),
+                new SignedEntity<>(corrupt, bbThreeSk)
+        ).toArray(new SignedEntity[0]);
+        String certsString = new ObjectMapper().writeValueAsString(
+                certList
+        );
+        System.out.println(certsString);
+
+        WebTarget bulletinBoard = mock(WebTarget.class);
+        WebTarget certsPath = mock(WebTarget.class);
+        Invocation.Builder request = mock(Invocation.Builder.class);
+        when(bulletinBoard.path("certificates")).thenReturn(certsPath);
+        when(certsPath.request()).thenReturn(request);
+        when(request.get(String.class)).thenReturn(certsString);
+
+        List<String> bbPeerCertificates = FetchingUtilities.getBBPeerCertificates(logger,
+                bulletinBoard,
+                CertificateHelper.getPublicKeyFromCertificate(electionCert));
+
+
+        assertEquals("Wrong list of bb certificates", expected, bbPeerCertificates);
     }
 }
