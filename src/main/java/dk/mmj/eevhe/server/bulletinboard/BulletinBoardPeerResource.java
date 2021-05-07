@@ -55,7 +55,7 @@ public class BulletinBoardPeerResource {
 
     @GET
     @Path("type")
-    @Produces(MediaType.TEXT_HTML)
+    @Produces(MediaType.APPLICATION_JSON)
     public SignedEntity<String> getType() {
         logger.info("Received request for server type");
 

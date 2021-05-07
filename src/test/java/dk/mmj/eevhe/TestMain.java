@@ -12,8 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class TestMain {
     private static final Logger logger = LogManager.getLogger(TestMain.class);
@@ -35,7 +34,7 @@ public class TestMain {
 
         assertEquals("BulletinBoard did not return 200 on type request", 200, resp.getStatus());
 
-        assertEquals("Wrong type returned", "<b>ServerType:</b> Bulletin Board Peer", resp.readEntity(String.class));
+        assertTrue("Wrong type returned", resp.readEntity(String.class).contains("<b>ServerType:</b> Bulletin Board Peer"));
     }
 
     @After
