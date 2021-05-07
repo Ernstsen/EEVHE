@@ -11,7 +11,9 @@ import org.apache.logging.log4j.Logger;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
 import javax.ws.rs.*;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -22,11 +24,94 @@ import static dk.mmj.eevhe.server.bulletinboard.BulletinBoard.*;
 public class BulletinBoardEdgeResource {
     private final static Logger logger = LogManager.getLogger(BulletinBoardEdgeResource.class);
     private final ServerState state = ServerState.getInstance();
+    private final List<JerseyWebTarget> targets = new ArrayList<>();
     private static final ObjectMapper mapper = new ObjectMapper();
 
-
-    private List<String> getPeerAddresses(){
+    private List<String> getPeerAddresses() {
         return state.get(BulletinBoardEdge.PEER_ADDRESSES, List.class);
+    }
+
+    private List<JerseyWebTarget> getTargets() {
+        if (targets.isEmpty()) {
+            for (String peerAddress : getPeerAddresses()) {
+                targets.add(configureWebTarget(logger, peerAddress));
+            }
+        }
+
+        return targets;
+    }
+
+    /**
+     * Waits for threads to finish for maximum 10 seconds
+     *
+     * @param threads List of threads
+     */
+    private void waitWithTimeout(List<Thread> threads) {
+        long timeout = System.currentTimeMillis() + 10_000;
+        for (Thread thread : threads) {
+            try {
+                thread.join(timeout - System.currentTimeMillis());
+            } catch (InterruptedException ignored) {
+            }
+        }
+    }
+
+    /**
+     * Fetches list of objects from Bulletin Board Peers using given REST endpoint
+     *
+     * @param path          REST endpoint
+     * @param typeReference Type reference needed for casting
+     * @param <T>           Generic type parameter
+     * @return Fetched object of type T
+     */
+    private <T> List<T> fetchFromPeers(String path, TypeReference<T> typeReference) {
+        List<T> result = Collections.synchronizedList(new ArrayList<>());
+        List<Thread> threads = new ArrayList<>();
+
+        for (JerseyWebTarget target : getTargets()) {
+            Thread thread = new Thread(() -> {
+                String responseString = target.path(path).request().get(String.class);
+                T responseObject = null;
+                try {
+                    responseObject = mapper.readValue(responseString, typeReference);
+                    result.add(responseObject);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException("Failed to query " + path + " from bulletin board peer: " + target, e);
+                }
+            });
+            thread.start();
+
+            threads.add(thread);
+        }
+
+        waitWithTimeout(threads);
+
+        return result;
+    }
+
+    /**
+     * Posts object of type T to all Bulletin Board Peers using given REST endpoint
+     *
+     * @param path   REST endpoint
+     * @param entity JAX-RS entity containing object of type T to be posted
+     * @param <T>    Type of object to be posted
+     * @return List of Response objects
+     */
+    private <T> List<Response> postToPeers(String path, Entity<T> entity) {
+        List<Response> result = Collections.synchronizedList(new ArrayList<>());
+        List<Thread> threads = new ArrayList<>();
+
+        for (JerseyWebTarget target : getTargets()) {
+            Thread thread = new Thread(() -> {
+                Response response = target.path(path).request().post(entity);
+                result.add(response);
+            });
+            thread.start();
+
+            threads.add(thread);
+        }
+
+        return result;
     }
 
     @GET
@@ -41,23 +126,9 @@ public class BulletinBoardEdgeResource {
     @Path("getPublicInfo")
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
-    public List<List<SignedEntity<PartialPublicInfo>>> getPublicInfos() {
-        List<List<SignedEntity<PartialPublicInfo>>> responseObjectList = new ArrayList<>();
-
-        for (String peerAddress: getPeerAddresses()) {
-            JerseyWebTarget target = configureWebTarget(logger, peerAddress);
-            String responseString = target.path("getPublicInfo").request().get(String.class);
-            List<SignedEntity<PartialPublicInfo>> responseObject = null;
-            try {
-                responseObject = mapper.readValue(responseString, new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {});
-                responseObjectList.add(responseObject);
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Failed to query <object (TODO)> from all bulletin board peers", e);
-
-            }
-        }
-
-        return responseObjectList;
+    public List<SignedEntity<List<SignedEntity<PartialPublicInfo>>>> getPublicInfos() {
+        return fetchFromPeers("getPublicInfo", new TypeReference<SignedEntity<List<SignedEntity<PartialPublicInfo>>>>() {
+        });
     }
 
     @POST
@@ -65,16 +136,7 @@ public class BulletinBoardEdgeResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
     public void postBallot(BallotDTO ballot) {
-        Set<String> hasVoted = state.get(HAS_VOTED, HashSet.class);
-        String voterId = ballot.getId();
-
-
-        if (hasVoted.contains(voterId)) {
-            logger.warn("Voter with id=" + voterId + " attempted to vote more than once");
-            throw new NotAllowedException("A vote has already been registered with this ID");
-        }
-        addToList(BALLOTS, new PersistedBallot(ballot));
-        hasVoted.add(voterId);
+        postToPeers("postBallot", Entity.entity(ballot, MediaType.APPLICATION_JSON));
     }
 
     /**
@@ -84,20 +146,16 @@ public class BulletinBoardEdgeResource {
     @Path("result")
     @Produces(MediaType.APPLICATION_JSON)
     @SuppressWarnings("unchecked")
-    public List<SignedEntity<PartialResultList>> getResult() {
-        try {
-            return state.get(RESULT, List.class);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+    public List<SignedEntity<List<SignedEntity<PartialResultList>>>> getResult() {
+        return fetchFromPeers("result", new TypeReference<SignedEntity<List<SignedEntity<PartialResultList>>>>() {
+        });
     }
 
     @POST
     @Path("result")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postResult(SignedEntity<PartialResultList> partialDecryptions) {
-        addToList(RESULT, partialDecryptions);
+        postToPeers("result", Entity.entity(partialDecryptions, MediaType.APPLICATION_JSON));
     }
 
     private void addToList(String key, Object element) {
@@ -108,122 +166,113 @@ public class BulletinBoardEdgeResource {
     @GET
     @Path("getBallots")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<PersistedBallot> getBallots() {
-        List<PersistedBallot> list = state.get(BALLOTS, List.class);
+    public List<SignedEntity<List<PersistedBallot>>> getBallots() {
+        return fetchFromPeers("getBallots", new TypeReference<SignedEntity<List<PersistedBallot>>>() {
+        });
+    }
 
-        if (list == null || list.isEmpty()) {
-            throw new NotFoundException("Voting has not been initialized");
-        }
-
-        return list;
+    @GET
+    @Path("getBallot/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<SignedEntity<PersistedBallot>> getBallot(@PathParam("id") String id) {
+        return fetchFromPeers("getBallot/" + id, new TypeReference<SignedEntity<PersistedBallot>>() {
+        });
     }
 
     @POST
     @Path("commitments")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postCommitments(SignedEntity<CommitmentDTO> commitment) {
-        logger.debug("Received commitment from DA with id=" + commitment.getEntity().getId() +
-                ", for protocol=" + commitment.getEntity().getProtocol());
-        addToList(COEFFICIENT_COMMITMENT, commitment);
+        postToPeers("commitments", Entity.entity(commitment, MediaType.APPLICATION_JSON));
     }
 
     @SuppressWarnings("unchecked")
     @GET
     @Path("commitments")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<CommitmentDTO>> getCommitments() {
-        List<SignedEntity<CommitmentDTO>> list = state.get(COEFFICIENT_COMMITMENT, List.class);
-
-        if (list == null) {
-            throw new NotFoundException("Voting has not been initialized");
-        }
-
-        return list;
+    public List<SignedEntity<List<SignedEntity<CommitmentDTO>>>> getCommitments() {
+        return fetchFromPeers("commitments", new TypeReference<SignedEntity<List<SignedEntity<CommitmentDTO>>>>() {
+        });
     }
 
     @POST
     @Path("pedersenComplain")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postPedersenComplaint(SignedEntity<PedersenComplaintDTO> complaint) {
-        addToList(PEDERSEN_COMPLAINTS, complaint);
+        postToPeers("pedersenComplain", Entity.entity(complaint, MediaType.APPLICATION_JSON));
     }
 
     @POST
     @Path("feldmanComplain")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postFeldmanComplaint(SignedEntity<FeldmanComplaintDTO> complaint) {
-        addToList(FELDMAN_COMPLAINTS, complaint);
+        postToPeers("feldmanComplain", Entity.entity(complaint, MediaType.APPLICATION_JSON));
     }
 
     @SuppressWarnings("unchecked")
     @GET
     @Path("pedersenComplaints")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<PedersenComplaintDTO>> getPedersenComplaints() {
-        List<SignedEntity<PedersenComplaintDTO>> list = state.get(PEDERSEN_COMPLAINTS, List.class);
-
-        return list != null ? list : new ArrayList<>();
+    public List<SignedEntity<List<SignedEntity<PedersenComplaintDTO>>>> getPedersenComplaints() {
+        return fetchFromPeers("pedersenComplaints", new TypeReference<SignedEntity<List<SignedEntity<PedersenComplaintDTO>>>>() {
+        });
     }
 
     @SuppressWarnings("unchecked")
     @GET
     @Path("feldmanComplaints")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<FeldmanComplaintDTO>> getFeldmanComplaints() {
-        List<SignedEntity<FeldmanComplaintDTO>> list = state.get(FELDMAN_COMPLAINTS, List.class);
-
-        return list != null ? list : new ArrayList<>();
+    public List<SignedEntity<List<SignedEntity<FeldmanComplaintDTO>>>> getFeldmanComplaints() {
+        return fetchFromPeers("feldmanComplaints", new TypeReference<SignedEntity<List<SignedEntity<FeldmanComplaintDTO>>>>() {
+        });
     }
 
     @POST
     @Path("resolveComplaint")
     @Consumes(MediaType.APPLICATION_JSON)
     public void resolveComplaint(SignedEntity<ComplaintResolveDTO> resolveDTO) {
-        addToList(RESOLVED_COMPLAINTS, resolveDTO);
+        postToPeers("resolveComplaint", Entity.entity(resolveDTO, MediaType.APPLICATION_JSON));
     }
 
     @SuppressWarnings("unchecked")
     @GET
     @Path("complaintResolves")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<ComplaintResolveDTO>> getComplaintResolves() {
-        List<SignedEntity<ComplaintResolveDTO>> list = state.get(RESOLVED_COMPLAINTS, List.class);
-
-        return list != null ? list : new ArrayList<>();
+    public List<SignedEntity<List<SignedEntity<ComplaintResolveDTO>>>> getComplaintResolves() {
+        return fetchFromPeers("complaintResolves", new TypeReference<SignedEntity<List<SignedEntity<ComplaintResolveDTO>>>>() {
+        });
     }
 
     @POST
     @Path("publicInfo")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postPublicInfo(SignedEntity<PartialPublicInfo> info) {
-        addToList(PUBLIC_INFO, info);
+        postToPeers("publicInfo", Entity.entity(info, MediaType.APPLICATION_JSON));
     }
 
     @SuppressWarnings("unchecked")
     @GET
     @Path("publicInfo")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<PartialPublicInfo>> getPublicInfo() {
-        List<SignedEntity<PartialPublicInfo>> list = state.get(PUBLIC_INFO, List.class);
-
-        return list != null ? list : new ArrayList<>();
+    public List<SignedEntity<List<SignedEntity<PartialPublicInfo>>>> getPublicInfo() {
+        return fetchFromPeers("publicInfo", new TypeReference<SignedEntity<List<SignedEntity<PartialPublicInfo>>>>() {
+        });
     }
 
     @POST
     @Path("certificates")
     @Consumes(MediaType.APPLICATION_JSON)
     public void postCertificate(SignedEntity<CertificateDTO> cert) {
-        addToList(CERTIFICATE, cert);
+        postToPeers("certificates", Entity.entity(cert, MediaType.APPLICATION_JSON));
     }
 
     @SuppressWarnings("unchecked")
     @GET
     @Path("certificates")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<CertificateDTO>> getCertificate() {
-        List<SignedEntity<CertificateDTO>> list = state.get(CERTIFICATE, List.class);
-
-        return list != null ? list : new ArrayList<>();
+    public List<SignedEntity<List<SignedEntity<CertificateDTO>>>> getCertificate() {
+        return fetchFromPeers("certificates", new TypeReference<SignedEntity<List<SignedEntity<CertificateDTO>>>>() {
+        });
     }
 
     @GET
@@ -237,6 +286,7 @@ public class BulletinBoardEdgeResource {
     @Path("getPeerCertificateList")
     @Produces(MediaType.TEXT_HTML)
     public List<SignedEntity<List<String>>> getPeerCertificateList() {
-        return state.get(BulletinBoardEdge.CERTIFICATE_LIST, List.class);
+        return fetchFromPeers("getPeerCertificateList", new TypeReference<SignedEntity<List<String>>>() {
+        });
     }
 }

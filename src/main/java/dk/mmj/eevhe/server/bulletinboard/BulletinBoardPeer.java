@@ -52,7 +52,7 @@ public class BulletinBoardPeer extends AbstractServer {
 
     // Server state keys
     static final String PEER_CERTIFICATES = "peerCertificates";
-    static final String SIGNED_PEER_CERTIFICATES = "signedPeerCertificates";
+    static final String SECRET_KEY = "secretKey";
 
 
     public BulletinBoardPeer(BulletinBoardPeerConfiguration configuration) {
@@ -93,8 +93,6 @@ public class BulletinBoardPeer extends AbstractServer {
             throw new RuntimeException("Failed to read private input from file");
         }
 
-        signPeerCertificates();
-
         communicators = bbInput.getPeers().stream()
                 .filter(p -> p.getId() != id)
                 .collect(Collectors.toMap(
@@ -119,11 +117,8 @@ public class BulletinBoardPeer extends AbstractServer {
 
         BiConsumer<SignedEntity<String>, String> receiveBroadcast = this::receiveBroadcast;
         ServerState.getInstance().put("bracha.consumer." + id, receiveBroadcast);
-    }
 
-    private void signPeerCertificates() {
-        SignedEntity<List<String>> signedPeerCertificates = new SignedEntity<>(new ArrayList<>(peerCertificates.values()), sk);
-        ServerState.getInstance().put(SIGNED_PEER_CERTIFICATES, signedPeerCertificates);
+        ServerState.getInstance().put(SECRET_KEY + "." + id, sk);
     }
 
     private BroadcastManager getBroadcastManager(Map<Integer, Consumer<String>> peers) {

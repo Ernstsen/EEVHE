@@ -6,6 +6,7 @@ import dk.mmj.eevhe.protocols.agreement.mvba.Communicator;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 
 import javax.servlet.ServletConfig;
 import javax.ws.rs.*;
@@ -15,6 +16,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -46,21 +48,24 @@ public class BulletinBoardPeerResource {
         return (Consumer<BulletinBoardUpdatable>) serverState.get("executeConsensusProtocol." + getId(), Consumer.class);
     }
 
-    // TODO: Sign everything??
+    private AsymmetricKeyParameter getSecretKey() {
+        ServerState serverState = ServerState.getInstance();
+        return serverState.get(BulletinBoardPeer.SECRET_KEY + "." + getId(), AsymmetricKeyParameter.class);
+    }
 
     @GET
     @Path("type")
     @Produces(MediaType.TEXT_HTML)
-    public String getType() {
+    public SignedEntity<String> getType() {
         logger.info("Received request for server type");
 
-        return "<b>ServerType:</b> Bulletin Board Peer";
+        return new SignedEntity<>("<b>ServerType:</b> Bulletin Board Peer", getSecretKey());
     }
 
     @GET
     @Path("getPublicInfo")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<PartialPublicInfo>> getPublicInfos() {
+    public SignedEntity<List<SignedEntity<PartialPublicInfo>>> getPublicInfos() {
         List<SignedEntity<PartialPublicInfo>> list = getState().getSignedPartialPublicInfos();
 
         if (list.isEmpty()) {
@@ -68,7 +73,7 @@ public class BulletinBoardPeerResource {
             throw new NotFoundException();
         }
 
-        return list;
+        return new SignedEntity<>(list, getSecretKey());
     }
 
     @POST
@@ -95,9 +100,9 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("result")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<PartialResultList>> getResult() {
+    public SignedEntity<List<SignedEntity<PartialResultList>>> getResult() {
         try {
-            return getState().getResults();
+            return new SignedEntity<>(getState().getResults(), getSecretKey());
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -114,22 +119,25 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("getBallots")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<PersistedBallot> getBallots() {
-        return getState().getBallots();
+    public SignedEntity<List<PersistedBallot>> getBallots() {
+        return new SignedEntity<>(getState().getBallots(), getSecretKey());
     }
 
     @GET
     @Path("getBallot/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public PersistedBallot getBallot(@PathParam("id") String id) {
-//        TODO: Signed entity
+    public SignedEntity<PersistedBallot> getBallot(@PathParam("id") String id) {
         List<PersistedBallot> ballots = getState().getBallots().stream().filter(b -> b.getId().equals(id)).collect(Collectors.toList());
 
         if (ballots.isEmpty()) {
             throw new NotFoundException("Voter with id " + id + " has not cast a vote");
         }
 
-        return ballots.get(0);
+        if (ballots.size() > 1){
+            logger.warn("Expected one ballot for voter with id " + id + ", but found " + ballots.size() + " ballots.");
+        }
+
+        return new SignedEntity<>(ballots.get(0), getSecretKey());
     }
 
     @POST
@@ -145,14 +153,14 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("commitments")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<CommitmentDTO>> getCommitments() {
+    public SignedEntity<List<SignedEntity<CommitmentDTO>>> getCommitments() {
         List<SignedEntity<CommitmentDTO>> list = getState().getSignedCommitments();
 
         if (list.isEmpty()) {
             throw new NotFoundException("Voting has not been initialized");
         }
 
-        return list;
+        return new SignedEntity<>(list, getSecretKey());
     }
 
     @POST
@@ -172,19 +180,19 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("pedersenComplaints")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<PedersenComplaintDTO>> getPedersenComplaints() {
+    public SignedEntity<List<SignedEntity<PedersenComplaintDTO>>> getPedersenComplaints() {
         List<SignedEntity<PedersenComplaintDTO>> list = getState().getSignedPedersenComplaints();
 
-        return list != null ? list : new ArrayList<>();
+        return list != null ? new SignedEntity<>(list, getSecretKey()) : new SignedEntity<>(new ArrayList<>(), getSecretKey());
     }
 
     @GET
     @Path("feldmanComplaints")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<FeldmanComplaintDTO>> getFeldmanComplaints() {
+    public SignedEntity<List<SignedEntity<FeldmanComplaintDTO>>> getFeldmanComplaints() {
         List<SignedEntity<FeldmanComplaintDTO>> list = getState().getSignedFeldmanComplaints();
 
-        return list != null ? list : new ArrayList<>();
+        return list != null ? new SignedEntity<>(list, getSecretKey()) : new SignedEntity<>(new ArrayList<>(), getSecretKey());
     }
 
     @POST
@@ -197,10 +205,10 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("complaintResolves")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<ComplaintResolveDTO>> getComplaintResolves() {
+    public SignedEntity<List<SignedEntity<ComplaintResolveDTO>>> getComplaintResolves() {
         List<SignedEntity<ComplaintResolveDTO>> list = getState().getSignedComplaintResolves();
 
-        return list != null ? list : new ArrayList<>();
+        return list != null ? new SignedEntity<>(list, getSecretKey()) : new SignedEntity<>(new ArrayList<>(), getSecretKey());
     }
 
     @POST
@@ -213,10 +221,10 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("publicInfo")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<PartialPublicInfo>> getPublicInfo() {
+    public SignedEntity<List<SignedEntity<PartialPublicInfo>>> getPublicInfo() {
         List<SignedEntity<PartialPublicInfo>> list = getState().getSignedPartialPublicInfos();
 
-        return list != null ? list : new ArrayList<>();
+        return list != null ? new SignedEntity<>(list, getSecretKey()) : new SignedEntity<>(new ArrayList<>(), getSecretKey());
     }
 
     @POST
@@ -229,17 +237,17 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("certificates")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<CertificateDTO>> getCertificate() {
+    public SignedEntity<List<SignedEntity<CertificateDTO>>> getCertificate() {
         List<SignedEntity<CertificateDTO>> list = getState().getSignedCertificates();
 
-        return list != null ? list : new ArrayList<>();
+        return list != null ? new SignedEntity<>(list, getSecretKey()) : new SignedEntity<>(new ArrayList<>(), getSecretKey());
     }
 
     @GET
     @Path("getCurrentTime")
     @Produces(MediaType.APPLICATION_JSON)
-    public String getCurrentTime() {
-        return Long.toString(new Date().getTime());
+    public SignedEntity<String> getCurrentTime() {
+        return new SignedEntity<>(Long.toString(new Date().getTime()), getSecretKey());
     }
 
     @POST
@@ -264,6 +272,8 @@ public class BulletinBoardPeerResource {
     @Path("getPeerCertificates")
     @Produces(MediaType.APPLICATION_JSON)
     public SignedEntity<List<String>> getPeerCertificates() {
-        return ServerState.getInstance().get(BulletinBoardPeer.SIGNED_PEER_CERTIFICATES, SignedEntity.class);
+        Map<Integer, String> peerCertificates = ServerState.getInstance().get(BulletinBoardPeer.PEER_CERTIFICATES, Map.class);
+
+        return new SignedEntity<>(new ArrayList<>(peerCertificates.values()), getSecretKey());
     }
 }
