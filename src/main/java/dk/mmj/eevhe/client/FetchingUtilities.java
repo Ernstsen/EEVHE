@@ -155,23 +155,38 @@ public class FetchingUtilities {
             }
         }
 
+        return verifyAndDetermineCommon(certificates, validCertificates.values());
+    }
+
+    /**
+     * Iterates through all passed items, and verifies their signatures.
+     * <br>
+     * Ensures that each entity has posted at most one of the entities
+     * <br>
+     * Executes simple 'vote' to determine valid entity - most votes win
+     *
+     * @param entityList        list of entities to be verified, and have commonly posted one found
+     * @param validCertificates collection of the valid certificates
+     * @param <T>               entity type
+     * @return the entity list with the most unique, valid, signatures
+     */
+    private static <T> T verifyAndDetermineCommon(List<SignedEntity<T>> entityList, Collection<X509CertificateHolder> validCertificates) {
         //We ensure that each sender has only posted ONE message - if more than one has been posted, first is used
         HashSet<String> usedCertificates = new HashSet<>();
-        ArrayList<SignedEntity<List<String>>> uniqueCertificates = new ArrayList<>();
-        for (SignedEntity<List<String>> certificate : certificates) {
-            String signingCertificate = getSigningCertificate(certificate, validCertificates.values());
-            if(signingCertificate != null && !usedCertificates.contains(signingCertificate)){
-                uniqueCertificates.add(certificate);
+        ArrayList<SignedEntity<T>> uniqueEntities = new ArrayList<>();
+
+        for (SignedEntity<T> entity : entityList) {
+            String signingCertificate = getSigningCertificate(entity, validCertificates);
+            if (signingCertificate != null && !usedCertificates.contains(signingCertificate)) {
+                uniqueEntities.add(entity);
                 usedCertificates.add(signingCertificate);
             }
         }
 
-        //We count how many times each cert list was posted
-        HashMap<List<String>, Integer> countMap = new HashMap<>();
-        uniqueCertificates.stream()
-                .map(SignedEntity::getEntity)
-                .peek(Collections::sort)
-                .forEach(c -> countMap.compute(c, (l, cnt) -> cnt != null ? cnt += 1 : 1));
+        //We count how many times each item was posted
+        HashMap<T, Integer> countMap = new HashMap<>();
+        uniqueEntities.stream().map(SignedEntity::getEntity)
+                .forEach(c -> countMap.compute(c, (k, cnt) -> cnt != null ? cnt += 1 : 1));
 
         //Return most commonly posted
         return countMap.entrySet()
@@ -184,7 +199,7 @@ public class FetchingUtilities {
     /**
      * Iterates through certificates, and returns the identifier of the certificate which successfully validated the signature
      *
-     * @param entity the entity whose signature must be verified
+     * @param entity       the entity whose signature must be verified
      * @param certificates collection of valid certificates
      * @return the name of the certificate that successfully validated the signature, null if no such signature
      */
@@ -205,10 +220,10 @@ public class FetchingUtilities {
      * <br>
      * If one certificate is used in signing multiple entities, only the first entity encountered is included in the result
      *
-     * @param list list of signed entities
+     * @param list         list of signed entities
      * @param certificates list of all valid certificates
-     * @param logger logger to be used if an error is encountered
-     * @param <T> type parameter for the entity
+     * @param logger       logger to be used if an error is encountered
+     * @param <T>          type parameter for the entity
      * @return list of signed entities, each signed by different entities, all with valid signatures
      */
     static <T> List<SignedEntity<T>> verifySignedAndValid(List<SignedEntity<T>> list, List<String> certificates, Logger logger) {
@@ -221,7 +236,7 @@ public class FetchingUtilities {
             Optional<String> any = unusedCerts.stream()
                     .filter(c -> verifySignedEntity(entity, c, logger))
                     .findAny();
-            if(any.isPresent()){
+            if (any.isPresent()) {
                 result.add(entity);
                 unusedCerts.remove(any.get());
             }
