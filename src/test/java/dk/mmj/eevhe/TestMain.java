@@ -31,11 +31,9 @@ public class TestMain {
 
         JerseyWebTarget target = configureWebTarget(logger, "https://localhost:8080");
 
-        Response resp = target.path("type").request().buildGet().invoke();
+        Response resp = target.path("type").request().get();
 
-        if (resp.getStatus() != 200) {
-            fail("BulletinBoard did not return 200 on type request");
-        }
+        assertEquals("BulletinBoard did not return 200 on type request", 200, resp.getStatus());
 
         assertEquals("Wrong type returned", "<b>ServerType:</b> Bulletin Board Peer", resp.readEntity(String.class));
     }
