@@ -35,6 +35,7 @@ public class BulletinBoardEdge extends AbstractServer {
 
     // Server state keys
     static final String CERTIFICATE_LIST = "certificateList";
+    static final String PEER_ADDRESSES = "peerAddresses";
 
     public BulletinBoardEdge(BulletinBoardEdgeConfiguration configuration) {
         this.configuration = configuration;
@@ -49,6 +50,7 @@ public class BulletinBoardEdge extends AbstractServer {
         try {
             BBInput bbInput = mapper.readValue(conf.resolve("BB_input.json").toFile(), BBInput.class);
             List<String> peerAddresses = bbInput.getPeers().stream().map(BBPeerInfo::getAddress).collect(Collectors.toList());
+            state.put(PEER_ADDRESSES, peerAddresses);
 
             for (String peerAddress: peerAddresses) {
                 JerseyWebTarget target = configureWebTarget(logger, peerAddress);
