@@ -2,6 +2,7 @@ package dk.mmj.eevhe.server.bulletinboard;
 
 
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.wrappers.*;
 import dk.mmj.eevhe.protocols.agreement.mvba.Communicator;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
@@ -26,10 +27,9 @@ import java.util.stream.Collectors;
  */
 @Path("/")
 public class BulletinBoardPeerResource {
+    private final static Logger logger = LogManager.getLogger(BulletinBoardPeerResource.class);
     @Context
     ServletConfig servletConfig;
-
-    private final static Logger logger = LogManager.getLogger(BulletinBoardPeerResource.class);
 
     private BulletinBoardState getState() {
         ServerState serverState = ServerState.getInstance();
@@ -62,20 +62,6 @@ public class BulletinBoardPeerResource {
         return new SignedEntity<>("<b>ServerType:</b> Bulletin Board Peer", getSecretKey());
     }
 
-    @GET
-    @Path("getPublicInfo")
-    @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<List<SignedEntity<PartialPublicInfo>>> getPublicInfos() {
-        List<SignedEntity<PartialPublicInfo>> list = getState().getSignedPartialPublicInfos();
-
-        if (list.isEmpty()) {
-            logger.warn("Attempt to fetch public infos before they were created");
-            throw new NotFoundException();
-        }
-
-        return new SignedEntity<>(list, getSecretKey());
-    }
-
     @POST
     @Path("postBallot")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -100,9 +86,9 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("result")
     @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<List<SignedEntity<PartialResultList>>> getResult() {
+    public SignedEntity<PartialResultWrapper> getResult() {
         try {
-            return new SignedEntity<>(getState().getResults(), getSecretKey());
+            return new SignedEntity<>(new PartialResultWrapper(getState().getResults()), getSecretKey());
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -119,8 +105,8 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("getBallots")
     @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<List<PersistedBallot>> getBallots() {
-        return new SignedEntity<>(getState().getBallots(), getSecretKey());
+    public SignedEntity<BallotWrapper> getBallots() {
+        return new SignedEntity<>(new BallotWrapper(getState().getBallots()), getSecretKey());
     }
 
     @GET
@@ -133,7 +119,7 @@ public class BulletinBoardPeerResource {
             throw new NotFoundException("Voter with id " + id + " has not cast a vote");
         }
 
-        if (ballots.size() > 1){
+        if (ballots.size() > 1) {
             logger.warn("Expected one ballot for voter with id " + id + ", but found " + ballots.size() + " ballots.");
         }
 
@@ -153,14 +139,14 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("commitments")
     @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<List<SignedEntity<CommitmentDTO>>> getCommitments() {
+    public SignedEntity<CommitmentWrapper> getCommitments() {
         List<SignedEntity<CommitmentDTO>> list = getState().getSignedCommitments();
 
         if (list.isEmpty()) {
             throw new NotFoundException("Voting has not been initialized");
         }
 
-        return new SignedEntity<>(list, getSecretKey());
+        return new SignedEntity<>(new CommitmentWrapper(list), getSecretKey());
     }
 
     @POST
@@ -180,19 +166,23 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("pedersenComplaints")
     @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<List<SignedEntity<PedersenComplaintDTO>>> getPedersenComplaints() {
+    public SignedEntity<PedersenComplaintWrapper> getPedersenComplaints() {
         List<SignedEntity<PedersenComplaintDTO>> list = getState().getSignedPedersenComplaints();
 
-        return list != null ? new SignedEntity<>(list, getSecretKey()) : new SignedEntity<>(new ArrayList<>(), getSecretKey());
+        PedersenComplaintWrapper wrapper = new PedersenComplaintWrapper(list != null ? list : new ArrayList<>());
+
+        return new SignedEntity<>(wrapper, getSecretKey());
     }
 
     @GET
     @Path("feldmanComplaints")
     @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<List<SignedEntity<FeldmanComplaintDTO>>> getFeldmanComplaints() {
+    public SignedEntity<FeldmanComplaintWrapper> getFeldmanComplaints() {
         List<SignedEntity<FeldmanComplaintDTO>> list = getState().getSignedFeldmanComplaints();
 
-        return list != null ? new SignedEntity<>(list, getSecretKey()) : new SignedEntity<>(new ArrayList<>(), getSecretKey());
+        FeldmanComplaintWrapper wrapper = new FeldmanComplaintWrapper(list != null ? list : new ArrayList<>());
+
+        return new SignedEntity<>(wrapper, getSecretKey());
     }
 
     @POST
@@ -205,10 +195,12 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("complaintResolves")
     @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<List<SignedEntity<ComplaintResolveDTO>>> getComplaintResolves() {
+    public SignedEntity<ComplaintResolveWrapper> getComplaintResolves() {
         List<SignedEntity<ComplaintResolveDTO>> list = getState().getSignedComplaintResolves();
 
-        return list != null ? new SignedEntity<>(list, getSecretKey()) : new SignedEntity<>(new ArrayList<>(), getSecretKey());
+        ComplaintResolveWrapper wrapper = new ComplaintResolveWrapper(list != null ? list : new ArrayList<>());
+
+        return new SignedEntity<>(wrapper, getSecretKey());
     }
 
     @POST
@@ -221,10 +213,15 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("publicInfo")
     @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<List<SignedEntity<PartialPublicInfo>>> getPublicInfo() {
+    public SignedEntity<PublicInfoWrapper> getPublicInfo() {
         List<SignedEntity<PartialPublicInfo>> list = getState().getSignedPartialPublicInfos();
 
-        return list != null ? new SignedEntity<>(list, getSecretKey()) : new SignedEntity<>(new ArrayList<>(), getSecretKey());
+        if (list.isEmpty()) {
+            logger.warn("Attempt to fetch public infos before they were created");
+            throw new NotFoundException();
+        }
+
+        return new SignedEntity<>(new PublicInfoWrapper(list), getSecretKey());
     }
 
     @POST
@@ -237,10 +234,12 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("certificates")
     @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<List<SignedEntity<CertificateDTO>>> getCertificate() {
+    public SignedEntity<CertificatesWrapper> getCertificate() {
         List<SignedEntity<CertificateDTO>> list = getState().getSignedCertificates();
 
-        return list != null ? new SignedEntity<>(list, getSecretKey()) : new SignedEntity<>(new ArrayList<>(), getSecretKey());
+        CertificatesWrapper wrapper = new CertificatesWrapper(list != null ? list : new ArrayList<>());
+
+        return new SignedEntity<>(wrapper, getSecretKey());
     }
 
     @GET

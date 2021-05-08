@@ -1,11 +1,14 @@
 package dk.mmj.eevhe.server.bulletinboard;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.SSLHelper;
+import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.wrappers.*;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -36,11 +40,12 @@ public class TestBulletinBoardPeer {
     private static final Logger logger = LogManager.getLogger(TestBulletinBoardPeer.class);
     private static final int port = 18081;
     private final List<File> files = new ArrayList<>();
-    private BulletinBoardPeer bulletinBoardPeer;
     private final ObjectMapper mapper = new ObjectMapper();
+    private BulletinBoardPeer bulletinBoardPeer;
     private String confPath;
     private Thread thread;
     private JerseyWebTarget target;
+    private AsymmetricKeyParameter pk;
 
     private void buildTempFiles() throws IOException {
         File file = new File(confPath);
@@ -51,6 +56,7 @@ public class TestBulletinBoardPeer {
         File common = new File(file, "BB_input.json");
 
         String certString = new String(Files.readAllBytes(Paths.get("certs/test_glob.pem")));
+        pk = CertificateHelper.getPublicKeyFromCertificate(certString.getBytes(StandardCharsets.UTF_8));
 
         BBInput input = new BBInput(
                 Collections.singletonList(new BBPeerInfo(1, "https://localhost:18081", certString)),
@@ -93,11 +99,16 @@ public class TestBulletinBoardPeer {
     }
 
     @Test
-    public void serverTypeAndTime() {
+    public void serverTypeAndTime() throws JsonProcessingException {
         String type = target.path("type").request().get(String.class);
-        assertEquals("Wrong type string returned", "<b>ServerType:</b> Bulletin Board Peer", type);
+        SignedEntity<String> entity = mapper.readValue(type, new TypeReference<SignedEntity<String>>() {
+        });
+        assertEquals("Wrong type string returned", "<b>ServerType:</b> Bulletin Board Peer", entity.getEntity());
 
-        Long time = target.path("getCurrentTime").request().get(Long.class);
+        String getCurrentTimeString = target.path("getCurrentTime").request().get(String.class);
+
+        Long time = mapper.readValue(getCurrentTimeString, new TypeReference<SignedEntity<Long>>() {
+        }).getEntity();
         long now = new Date().getTime();
         assertTrue("Time should have passed since fetching time there: " + time + ", now:" + now, time <= now);
     }
@@ -125,7 +136,7 @@ public class TestBulletinBoardPeer {
         DLogProofUtils.Proof dp2 = new DLogProofUtils.Proof(valueOf(62968), valueOf(613658874));
 
         AsymmetricKeyParameter sk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
-        String cert = new String(Files.readAllBytes(Paths.get("certs/test_glob_key.pem")));
+        String cert = new String(Files.readAllBytes(Paths.get("certs/test_glob.pem")));
 
         SignedEntity<PartialResultList> partialResultList = new SignedEntity<>(new PartialResultList(
                 Arrays.asList(
@@ -184,24 +195,33 @@ public class TestBulletinBoardPeer {
         //Do gets and compares
         ObjectMapper mapper = new ObjectMapper();
 
-        String publicInfoString = target.path("getPublicInfo").request()
+        String publicInfoString = target.path("publicInfo").request()
                 .get(String.class);
-        List<SignedEntity<PartialPublicInfo>> fetchedPublicInfos = mapper.readValue(publicInfoString, new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {
-        });
+        SignedEntity<PublicInfoWrapper> signedPublicInfo = mapper.readValue(
+                publicInfoString,
+                new TypeReference<SignedEntity<PublicInfoWrapper>>() {
+                });
+        List<SignedEntity<PartialPublicInfo>> fetchedPublicInfos = unpack(signedPublicInfo);
         assertEquals("Unexpected list size", 1, fetchedPublicInfos.size());
         assertEquals("Fetched publicInfo did not match posted one", partialPublicInfo, fetchedPublicInfos.get(0));
 
         String resultListString = target.path("result").request()
                 .get(String.class);
-        List<SignedEntity<PartialResultList>> fetchedResultList = mapper.readValue(resultListString, new TypeReference<List<SignedEntity<PartialResultList>>>() {
-        });
+        SignedEntity<PartialResultWrapper> signedResults = mapper.readValue(
+                resultListString,
+                new TypeReference<SignedEntity<PartialResultWrapper>>() {
+                });
+        List<SignedEntity<PartialResultList>> fetchedResultList = unpack(signedResults);
         assertEquals("Unexpected list size", 1, fetchedResultList.size());
         assertEquals("Fetched result did not match posted one", partialResultList, fetchedResultList.get(0));
 
         String ballotsString = target.path("getBallots").request()
                 .get(String.class);
-        List<PersistedBallot> fetchedBallotList = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {
-        });
+        SignedEntity<BallotWrapper> signedBallotList = mapper.readValue(
+                ballotsString,
+                new TypeReference<SignedEntity<BallotWrapper>>() {
+                });
+        List<PersistedBallot> fetchedBallotList = unpack(signedBallotList);
         assertEquals("Unexpected list size", 1, fetchedBallotList.size());
         PersistedBallot persistedBallot = fetchedBallotList.get(0);
         assertEquals("Fetched ballot did not match posted one; votes", ballotDTO.getCandidateVotes(), persistedBallot.getCandidateVotes());
@@ -209,54 +229,65 @@ public class TestBulletinBoardPeer {
         assertEquals("Fetched ballot did not match posted one; proof", ballotDTO.getSumIsOneProof(), persistedBallot.getSumIsOneProof());
         assertNotNull("Fetched ballot had no timestamp", persistedBallot.getTs());
 
-        String commitmentsString = target.path("commitments").request()
-                .get(String.class);
-        List<SignedEntity<CommitmentDTO>> fetchedCommitmentList = mapper.readValue(commitmentsString, new TypeReference<List<SignedEntity<CommitmentDTO>>>() {
-        });
+        String commitmentsString = target.path("commitments").request().get(String.class);
+
+        SignedEntity<CommitmentWrapper> signedCommits = mapper.readValue(
+                commitmentsString,
+                new TypeReference<SignedEntity<CommitmentWrapper>>() {
+                });
+        List<SignedEntity<CommitmentDTO>> fetchedCommitmentList = unpack(signedCommits);
         assertEquals("Unexpected list size", 1, fetchedCommitmentList.size());
         assertEquals("Fetched commitment did not match posted one", commitmentDTO, fetchedCommitmentList.get(0));
 
-        String complaintsString = target.path("pedersenComplaints").request()
-                .get(String.class);
-        List<SignedEntity<PedersenComplaintDTO>> fetchedComplaintList = mapper.readValue(complaintsString, new TypeReference<List<SignedEntity<PedersenComplaintDTO>>>() {
-        });
+        String complaintsString = target.path("pedersenComplaints").request().get(String.class);
+        SignedEntity<PedersenComplaintWrapper> signedPedersenComplaints = mapper.readValue(
+                complaintsString,
+                new TypeReference<SignedEntity<PedersenComplaintWrapper>>() {
+                });
+        List<SignedEntity<PedersenComplaintDTO>> fetchedComplaintList = unpack(signedPedersenComplaints);
         assertEquals("Unexpected list size", 1, fetchedComplaintList.size());
         assertEquals("Fetched complaint did not match posted one", pedersenComplaint, fetchedComplaintList.get(0));
 
-        String feldmanComplaintsString = target.path("feldmanComplaints").request()
-                .get(String.class);
-        List<SignedEntity<FeldmanComplaintDTO>> feldmanFetchedComplaintList = mapper.readValue(feldmanComplaintsString, new TypeReference<List<SignedEntity<FeldmanComplaintDTO>>>() {
-        });
+        String feldmanComplaintsString = target.path("feldmanComplaints").request().get(String.class);
+        SignedEntity<FeldmanComplaintWrapper> signedFeldmanComplaints = mapper.readValue(
+                feldmanComplaintsString,
+                new TypeReference<SignedEntity<FeldmanComplaintWrapper>>() {
+                });
+        List<SignedEntity<FeldmanComplaintDTO>> feldmanFetchedComplaintList = unpack(signedFeldmanComplaints);
         assertEquals("Unexpected list size", 1, feldmanFetchedComplaintList.size());
         assertEquals("Fetched complaint did not match posted one", feldmanComplaint, feldmanFetchedComplaintList.get(0));
 
-        String complaintResolvesString = target.path("complaintResolves").request()
-                .get(String.class);
-        List<SignedEntity<ComplaintResolveDTO>> fetchedResolvesList = mapper.readValue(complaintResolvesString, new TypeReference<List<SignedEntity<ComplaintResolveDTO>>>() {
-        });
+        String complaintResolvesString = target.path("complaintResolves").request().get(String.class);
+        SignedEntity<ComplaintResolveWrapper> signedResolves = mapper.readValue(
+                complaintResolvesString,
+                new TypeReference<SignedEntity<ComplaintResolveWrapper>>() {
+                });
+        List<SignedEntity<ComplaintResolveDTO>> fetchedResolvesList = unpack(signedResolves);
         assertEquals("Unexpected list size", 1, fetchedResolvesList.size());
         assertEquals("Fetched resolve did not match posted one", resolve, fetchedResolvesList.get(0));
 
-
-        String partialPublicInfoString = target.path("publicInfo").request()
-                .get(String.class);
-        List<SignedEntity<PartialPublicInfo>> fetchedPublicInfoList = mapper.readValue(partialPublicInfoString, new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {
-        });
-        assertEquals("Unexpected list size", 1, fetchedPublicInfoList.size());
-        assertEquals("Fetched partial public info did not match posted one", partialPublicInfo, fetchedPublicInfoList.get(0));
-
         String certificateString = target.path("certificates").request().get(String.class);
-        List<SignedEntity<CertificateDTO>> fetchedCertificateList = mapper.readValue(certificateString, new TypeReference<List<SignedEntity<CertificateDTO>>>() {
-        });
+        SignedEntity<CertificatesWrapper> signedCertificates = mapper.readValue(
+                certificateString,
+                new TypeReference<SignedEntity<CertificatesWrapper>>() {
+                });
+        List<SignedEntity<CertificateDTO>> fetchedCertificateList = unpack(signedCertificates);
         assertEquals("Unexpected list size", 1, fetchedCertificateList.size());
         assertEquals("Fetched certificate did not match posted one", certificate, fetchedCertificateList.get(0));
 
         String singleBallotString = target.path("getBallot/id").request().get(String.class);
-        PersistedBallot singleBallot = mapper.readValue(singleBallotString, new TypeReference<PersistedBallot>() {
+        SignedEntity<PersistedBallot> signedSingleBallot = mapper.readValue(singleBallotString, new TypeReference<SignedEntity<PersistedBallot>>() {
         });
+        assertTrue("Failed to verify signature on single ballot", signedSingleBallot.verifySignature(this.pk));
+        PersistedBallot singleBallot = signedSingleBallot.getEntity();
         assertEquals("Unexpected id", "id", singleBallot.getId());
         assertEquals("Unexpected candidate votes", candidates, singleBallot.getCandidateVotes());
         assertEquals("Unexpected 'sum is one' proof", p3, singleBallot.getSumIsOneProof());
+    }
+
+    private <T> T unpack(SignedEntity<? extends Wrapper<T>> entity) throws JsonProcessingException {
+        assertTrue("Failed to verify signature", entity.verifySignature(pk));
+        return entity.getEntity().getContent();
     }
 
     @Test(expected = NotFoundException.class)

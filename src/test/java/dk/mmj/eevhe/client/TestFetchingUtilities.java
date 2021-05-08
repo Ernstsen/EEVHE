@@ -251,7 +251,7 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
                 logger, bulletinBoard,
                 CertificateHelper.getPublicKeyFromCertificate(electionCert),
                 Collections.singletonList(daOneCert)
-                );
+        );
 
         assertNotNull("Should have fetched public infos", publicInfos);
         assertEquals("Only one info should be returned", 1, publicInfos.size());
@@ -348,7 +348,7 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
                 CertificateHelper.getPublicKeyFromCertificate(electionCert));
 
 
-        assertNotNull("No certificates returned",bbPeerCertificates);
+        assertNotNull("No certificates returned", bbPeerCertificates);
         List<String> asPem = bbPeerCertificates.stream().map(certificateHolder -> {
             try {
                 return CertificateHelper.certificateToPem(certificateHolder);

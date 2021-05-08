@@ -1,5 +1,7 @@
 package dk.mmj.eevhe.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.crypto.signature.SignatureHelper;
@@ -10,8 +12,10 @@ import java.util.Collections;
 import java.util.Objects;
 
 @SuppressWarnings("unused")
+//@JsonIgnoreProperties(ignoreUnknown = true)
 public class SignedEntity<T> implements BulletinBoardUpdatable {
 
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "entityClass")
     private T entity;
     private String signature;
 

@@ -7,6 +7,7 @@ import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.entities.PartialPublicInfo;
 import dk.mmj.eevhe.entities.PersistedBallot;
 import dk.mmj.eevhe.entities.SignedEntity;
+import dk.mmj.eevhe.entities.wrappers.CertificatesWrapper;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.CertException;
@@ -166,9 +167,9 @@ public class FetchingUtilities {
             return null;
         }
 
-        List<SignedEntity<List<String>>> certificates;
+        List<SignedEntity<CertificatesWrapper>> certificates;
         try {
-            certificates = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<List<String>>>>() {
+            certificates = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<CertificatesWrapper>>>() {
             });
         } catch (IOException e) {
             logger.error("FetchingUtilities: Failed to deserialize certificate list retrieved from bulletin board", e);
@@ -189,6 +190,7 @@ public class FetchingUtilities {
             }
         }
 
+        CertificatesWrapper certificatesWrapper = verifyAndDetermineCommon(certificates, validCertificates.values(), logger);
         List<String> certStrings = verifyAndDetermineCommon(certificates, validCertificates.values(), logger);
         return certStrings.stream().map(FetchingUtilities::toCertHolder).collect(Collectors.toList());
     }
