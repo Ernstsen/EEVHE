@@ -156,7 +156,7 @@ public class FetchingUtilities {
      * @return list of certificates for bb-peers on .pem format
      */
     static List<X509CertificateHolder> getBBPeerCertificates(Logger logger, WebTarget edgeTarget, AsymmetricKeyParameter electionPk) {
-        String responseString = edgeTarget.path("certificates").request().get(String.class);
+        String responseString = edgeTarget.path("getPeerCertificates").request().get(String.class);
 
         ContentVerifierProvider verifier;
         try {
@@ -167,9 +167,9 @@ public class FetchingUtilities {
             return null;
         }
 
-        List<SignedEntity<CertificatesWrapper>> certificates;
+        List<SignedEntity<List<String>>> certificates;
         try {
-            certificates = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<CertificatesWrapper>>>() {
+            certificates = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<List<String>>>>() {
             });
         } catch (IOException e) {
             logger.error("FetchingUtilities: Failed to deserialize certificate list retrieved from bulletin board", e);
@@ -190,7 +190,6 @@ public class FetchingUtilities {
             }
         }
 
-        CertificatesWrapper certificatesWrapper = verifyAndDetermineCommon(certificates, validCertificates.values(), logger);
         List<String> certStrings = verifyAndDetermineCommon(certificates, validCertificates.values(), logger);
         return certStrings.stream().map(FetchingUtilities::toCertHolder).collect(Collectors.toList());
     }
