@@ -107,8 +107,8 @@ public class TestBulletinBoardPeer {
 
         String getCurrentTimeString = target.path("getCurrentTime").request().get(String.class);
 
-        Long time = mapper.readValue(getCurrentTimeString, new TypeReference<SignedEntity<Long>>() {
-        }).getEntity();
+        Long time = new Long(mapper.readValue(getCurrentTimeString, new TypeReference<SignedEntity<String>>() {
+        }).getEntity());
         long now = new Date().getTime();
         assertTrue("Time should have passed since fetching time there: " + time + ", now:" + now, time <= now);
     }

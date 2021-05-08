@@ -6,9 +6,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.SSLHelper;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.TestUtils;
+import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.DLogProofUtils;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.wrappers.*;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
@@ -25,6 +27,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -34,6 +37,7 @@ import java.util.zip.ZipOutputStream;
 
 import static java.math.BigInteger.valueOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestBulletinBoardPeerCommunication {
     private static final Logger logger = LogManager.getLogger(TestBulletinBoardPeerCommunication.class);
@@ -46,8 +50,15 @@ public class TestBulletinBoardPeerCommunication {
     private AsymmetricKeyParameter secretKey;
     private String cert;
     private final int CONSENSUS_WAIT_TIMEOUT = 2000;
+    private AsymmetricKeyParameter pk;
+    private boolean setupDone = false;
 
-    public void buildTempFiles(String confPath) throws IOException {
+    private <T> T unpack(SignedEntity<? extends Wrapper<T>> entity) throws JsonProcessingException {
+        assertTrue("Failed to verify signature", entity.verifySignature(pk));
+        return entity.getEntity().getContent();
+    }
+
+    private void buildTempFiles(String confPath) throws IOException {
         File folder = new File(confPath);
 
         //noinspection ResultOfMethodCallIgnored
@@ -57,6 +68,7 @@ public class TestBulletinBoardPeerCommunication {
 
 //        TODO: Individual certificates
         String certString = new String(Files.readAllBytes(Paths.get("certs/test_glob.pem")));
+        pk = CertificateHelper.getPublicKeyFromCertificate(certString.getBytes(StandardCharsets.UTF_8));
 
         BBInput input = new BBInput(
                 ids.stream().map(id -> new BBPeerInfo(id, "https://localhost:1808" + id, certString))
@@ -81,9 +93,15 @@ public class TestBulletinBoardPeerCommunication {
 
     @Before
     public void setUp() throws Exception {
-        String confPath = "temp_conf/";
-
         ServerState.getInstance().reset();
+
+        if(setupDone){
+            return;
+        }
+
+        setupDone = true;
+
+        String confPath = "temp_conf/";
 
         buildTempFiles(confPath);
 
@@ -130,8 +148,11 @@ public class TestBulletinBoardPeerCommunication {
         List<PersistedBallot> lastSeenBallotList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
             String ballotsString = target.path("getBallots").request().get(String.class);
-            List<PersistedBallot> fetchedBallotList = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {
-            });
+            SignedEntity<BallotWrapper> signedBallotList = mapper.readValue(
+                    ballotsString,
+                    new TypeReference<SignedEntity<BallotWrapper>>() {
+                    });
+            List<PersistedBallot> fetchedBallotList = unpack(signedBallotList);
 
             if (!lastSeenBallotList.isEmpty()) {
                 assertEquals("Bulletin Board Peers do not agree on ballot lists", lastSeenBallotList, fetchedBallotList);
@@ -181,11 +202,14 @@ public class TestBulletinBoardPeerCommunication {
 
         List<SignedEntity<PartialPublicInfo>> lastSeenPartialInfoList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
-            String publicInfoString = target.path("getPublicInfo").request()
+            String publicInfoString = target.path("publicInfo").request()
                     .get(String.class);
-            List<SignedEntity<PartialPublicInfo>> fetchedPublicInfoList
-                    = mapper.readValue(publicInfoString, new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {
-            });
+            SignedEntity<PublicInfoWrapper> signedPublicInfo = mapper.readValue(
+                    publicInfoString,
+                    new TypeReference<SignedEntity<PublicInfoWrapper>>() {
+                    });
+            List<SignedEntity<PartialPublicInfo>> fetchedPublicInfoList = unpack(signedPublicInfo);
+
 
             if (!lastSeenPartialInfoList.isEmpty()) {
                 assertEquals("Bulletin Board Peers do not agree on partial public info lists", lastSeenPartialInfoList, fetchedPublicInfoList);
@@ -242,8 +266,11 @@ public class TestBulletinBoardPeerCommunication {
         for (JerseyWebTarget target : targets.values()) {
             String resultListString = target.path("result").request()
                     .get(String.class);
-            List<SignedEntity<PartialResultList>> fetchedResultList = mapper.readValue(resultListString, new TypeReference<List<SignedEntity<PartialResultList>>>() {
-            });
+            SignedEntity<PartialResultWrapper> signedResults = mapper.readValue(
+                    resultListString,
+                    new TypeReference<SignedEntity<PartialResultWrapper>>() {
+                    });
+            List<SignedEntity<PartialResultList>> fetchedResultList = unpack(signedResults);
 
             if (!lastSeenResultList.isEmpty()) {
                 assertEquals("Bulletin Board Peers do not agree on result lists", lastSeenResultList, fetchedResultList);
@@ -292,9 +319,11 @@ public class TestBulletinBoardPeerCommunication {
         List<SignedEntity<CommitmentDTO>> lastSeenCommitmentList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
             String commitmentsString = target.path("commitments").request().get(String.class);
-            List<SignedEntity<CommitmentDTO>> fetchedCommitmentList
-                    = mapper.readValue(commitmentsString, new TypeReference<List<SignedEntity<CommitmentDTO>>>() {
-            });
+            SignedEntity<CommitmentWrapper> signedCommits = mapper.readValue(
+                    commitmentsString,
+                    new TypeReference<SignedEntity<CommitmentWrapper>>() {
+                    });
+            List<SignedEntity<CommitmentDTO>> fetchedCommitmentList = unpack(signedCommits);
 
             if (!lastSeenCommitmentList.isEmpty()) {
                 assertEquals("Bulletin Board Peers do not agree on commitment lists", lastSeenCommitmentList, fetchedCommitmentList);
@@ -360,9 +389,11 @@ public class TestBulletinBoardPeerCommunication {
         for (JerseyWebTarget target : targets.values()) {
             String complaintsString = target.path("pedersenComplaints").request()
                     .get(String.class);
-            List<SignedEntity<PedersenComplaintDTO>> fetchedComplaintList
-                    = mapper.readValue(complaintsString, new TypeReference<List<SignedEntity<PedersenComplaintDTO>>>() {
-            });
+            SignedEntity<PedersenComplaintWrapper> signedPedersenComplaints = mapper.readValue(
+                    complaintsString,
+                    new TypeReference<SignedEntity<PedersenComplaintWrapper>>() {
+                    });
+            List<SignedEntity<PedersenComplaintDTO>> fetchedComplaintList = unpack(signedPedersenComplaints);
 
             if (!lastSeenComplaintsList.isEmpty()) {
                 assertEquals("Bulletin Board Peers do not agree on complaints lists", lastSeenComplaintsList, fetchedComplaintList);
@@ -423,9 +454,11 @@ public class TestBulletinBoardPeerCommunication {
         List<SignedEntity<FeldmanComplaintDTO>> lastSeenComplaintsList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
             String complaintsString = target.path("feldmanComplaints").request().get(String.class);
-            List<SignedEntity<FeldmanComplaintDTO>> fetchedComplaintList
-                    = mapper.readValue(complaintsString, new TypeReference<List<SignedEntity<FeldmanComplaintDTO>>>() {
-            });
+            SignedEntity<FeldmanComplaintWrapper> signedFeldmanComplaints = mapper.readValue(
+                    complaintsString,
+                    new TypeReference<SignedEntity<FeldmanComplaintWrapper>>() {
+                    });
+            List<SignedEntity<FeldmanComplaintDTO>> fetchedComplaintList = unpack(signedFeldmanComplaints);
 
             if (!lastSeenComplaintsList.isEmpty()) {
                 assertEquals("Bulletin Board Peers do not agree on complaints lists", lastSeenComplaintsList, fetchedComplaintList);
@@ -491,9 +524,11 @@ public class TestBulletinBoardPeerCommunication {
         List<SignedEntity<ComplaintResolveDTO>> lastSeenResolvesList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
             String complaintResolvesString = target.path("complaintResolves").request().get(String.class);
-            List<SignedEntity<ComplaintResolveDTO>> fetchedResolvesList
-                    = mapper.readValue(complaintResolvesString, new TypeReference<List<SignedEntity<ComplaintResolveDTO>>>() {
-            });
+            SignedEntity<ComplaintResolveWrapper> signedResolves = mapper.readValue(
+                    complaintResolvesString,
+                    new TypeReference<SignedEntity<ComplaintResolveWrapper>>() {
+                    });
+            List<SignedEntity<ComplaintResolveDTO>> fetchedResolvesList = unpack(signedResolves);
 
             if (!lastSeenResolvesList.isEmpty()) {
                 assertEquals("Bulletin Board Peers do not agree on complaint resolves lists", lastSeenResolvesList, fetchedResolvesList);
@@ -543,7 +578,7 @@ public class TestBulletinBoardPeerCommunication {
         return new SignedEntity<>(new CertificateDTO(certificateString, id), secretKey);
     }
 
-    private void testPostAndRetrieveCertificate(List<Integer> postTo, List<SignedEntity<CertificateDTO>> certificateList) throws InterruptedException, IOException {
+    private void testPostAndRetrieveDACertificate(List<Integer> postTo, List<SignedEntity<CertificateDTO>> certificateList) throws InterruptedException, IOException {
         for (Integer id : postTo) {
             for (SignedEntity<CertificateDTO> certificateDTO : certificateList) {
                 targets.get(id).path("certificates").request().post(Entity.entity(certificateDTO, MediaType.APPLICATION_JSON));
@@ -556,9 +591,11 @@ public class TestBulletinBoardPeerCommunication {
         List<SignedEntity<CertificateDTO>> lastSeenCertificateList = new ArrayList<>();
         for (JerseyWebTarget target : targets.values()) {
             String certificateString = target.path("certificates").request().get(String.class);
-            List<SignedEntity<CertificateDTO>> fetchedCertificateList
-                    = mapper.readValue(certificateString, new TypeReference<List<SignedEntity<CertificateDTO>>>() {
-            });
+            SignedEntity<CertificatesWrapper> signedCertificates = mapper.readValue(
+                    certificateString,
+                    new TypeReference<SignedEntity<CertificatesWrapper>>() {
+                    });
+            List<SignedEntity<CertificateDTO>> fetchedCertificateList = unpack(signedCertificates);
 
             if (!lastSeenCertificateList.isEmpty()) {
                 assertEquals("Bulletin Board Peers do not agree on certificate lists", lastSeenCertificateList, fetchedCertificateList);
@@ -573,25 +610,25 @@ public class TestBulletinBoardPeerCommunication {
     @Test
     public void shouldAgreeOnSingleCertificateWhenOnePeerReceivesFromEdge() throws InterruptedException, IOException {
         List<SignedEntity<CertificateDTO>> certificateList = Collections.singletonList(getCertificateDTO("Certificate", 1));
-        testPostAndRetrieveCertificate(Collections.singletonList(1), certificateList);
+        testPostAndRetrieveDACertificate(Collections.singletonList(1), certificateList);
     }
 
     @Test
     public void shouldAgreeOnSingleCertificateWhenTwoPeersReceivesFromEdge() throws InterruptedException, IOException {
         List<SignedEntity<CertificateDTO>> certificateList = Collections.singletonList(getCertificateDTO("Certificate", 1));
-        testPostAndRetrieveCertificate(Arrays.asList(1, 2), certificateList);
+        testPostAndRetrieveDACertificate(Arrays.asList(1, 2), certificateList);
     }
 
     @Test
     public void shouldAgreeOnSingleCertificateWhenThreePeersReceivesFromEdge() throws InterruptedException, IOException {
         List<SignedEntity<CertificateDTO>> certificateList = Collections.singletonList(getCertificateDTO("Certificate", 1));
-        testPostAndRetrieveCertificate(Arrays.asList(1, 2, 3), certificateList);
+        testPostAndRetrieveDACertificate(Arrays.asList(1, 2, 3), certificateList);
     }
 
     @Test
     public void shouldAgreeOnSingleCertificateWhenFourPeersReceivesFromEdge() throws InterruptedException, IOException {
         List<SignedEntity<CertificateDTO>> certificateList = Collections.singletonList(getCertificateDTO("Certificate", 1));
-        testPostAndRetrieveCertificate(Arrays.asList(1, 2, 3, 4), certificateList);
+        testPostAndRetrieveDACertificate(Arrays.asList(1, 2, 3, 4), certificateList);
     }
 
     @Test
@@ -599,7 +636,7 @@ public class TestBulletinBoardPeerCommunication {
         List<SignedEntity<CertificateDTO>> certificateList = Arrays.asList(
                 getCertificateDTO("Certificate", 1),
                 getCertificateDTO("Certificate2", 2));
-        testPostAndRetrieveCertificate(Collections.singletonList(1), certificateList);
+        testPostAndRetrieveDACertificate(Collections.singletonList(1), certificateList);
     }
 
     @Test
@@ -609,7 +646,7 @@ public class TestBulletinBoardPeerCommunication {
         List<SignedEntity<CertificateDTO>> certificateList = Arrays.asList(
                 getCertificateDTO("Certificate", 1),
                 getCertificateDTO("Certificate2", 2));
-        testPostAndRetrieveCertificate(Collections.singletonList(1), certificateList);
+        testPostAndRetrieveDACertificate(Collections.singletonList(1), certificateList);
 
         List<SignedEntity<ComplaintResolveDTO>> complaintResolveList = Collections.singletonList(getComplaintResolve(1, 2, 123, 321));
         testPostAndRetrieveComplaintResolves(Arrays.asList(1, 2, 3, 4), complaintResolveList);
