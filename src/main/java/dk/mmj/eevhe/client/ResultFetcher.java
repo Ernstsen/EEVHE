@@ -83,7 +83,7 @@ public class ResultFetcher extends Client {
 
         ResultCombinerImpl combiner = new ResultCombinerImpl(
                 forceCalculation, publicKey, candidates,
-                () -> FetchingUtilities.getPublicInfos(logger, target, cert),
+                () -> FetchingUtilities.getPublicInfos(logger, target, cert, getBBPeerCertificates()),
                 () -> FetchingUtilities.getBallots(logger, target),
                 endTime);
 

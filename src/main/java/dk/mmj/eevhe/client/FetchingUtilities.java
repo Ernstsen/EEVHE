@@ -1,5 +1,6 @@
 package dk.mmj.eevhe.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
@@ -26,6 +27,8 @@ import java.util.stream.Collectors;
  * Utility class for fetching information from the <i>BulletinBoard</i>
  */
 public class FetchingUtilities {
+
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
      * Fetches and verifies certificate for da with given id, and extracts it's publicKey
@@ -88,17 +91,18 @@ public class FetchingUtilities {
      * @param electionPk the parent certificate for the election
      * @return list of PartialPublicInformation entities, which was properly signed by their senders
      */
-    public static List<PartialPublicInfo> getPublicInfos(Logger logger, WebTarget target, AsymmetricKeyParameter electionPk) {
-        String responseString = target.path("publicInfo").request().get(String.class);
-
-        List<SignedEntity<PartialPublicInfo>> publicInfoList;
-        try {
-            publicInfoList = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {
-            });
-        } catch (IOException e) {
-            logger.error("FetchingUtilities: Failed to deserialize public informations list retrieved from bulletin board", e);
-            return null;
-        }
+    public static List<PartialPublicInfo> getPublicInfos(
+            Logger logger,
+            WebTarget target,
+            AsymmetricKeyParameter electionPk,
+            Collection<X509CertificateHolder> validCertificates) {
+        WebTarget queryTarget = target.path("publicInfo");
+        List<SignedEntity<PartialPublicInfo>> publicInfoList = fetch(
+                queryTarget,
+                new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {
+                },
+                validCertificates,
+                logger);
 
         return publicInfoList.stream().filter(
                 i -> {
@@ -112,6 +116,36 @@ public class FetchingUtilities {
         ).map(SignedEntity::getEntity).collect(Collectors.toList());
     }
 
+
+    /**
+     * Utility method for fetching, and determining the value that the BB-peers agrees on
+     *
+     * @param target            webTarget to query - this is the exact endpoint to query
+     * @param typeReference     typeReference to determine expected type from this method e.g. List of Ballots
+     * @param validCertificates collection of valid certificates for BB-Peers
+     * @param logger            logger to be used in reporting errors or warnings
+     * @param <T>               return-type
+     * @return the value(s) fetched and agreed upon by the BB-Peers. Null if no agreement is reached
+     */
+    private static <T> T fetch(
+            WebTarget target,
+            @SuppressWarnings("unused") TypeReference<T> typeReference,
+            Collection<X509CertificateHolder> validCertificates,
+            Logger logger
+    ) {
+        String serializedResponse = target.request().get(String.class);
+
+        List<SignedEntity<T>> deserializedResponse;
+        try {
+            deserializedResponse = mapper.readValue(serializedResponse, new TypeReference<List<SignedEntity<T>>>() {
+            });
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to deserialize response", e);
+        }
+
+        return verifyAndDetermineCommon(deserializedResponse, validCertificates, logger);
+    }
+
     /**
      * Helper method for fetching all bb-peer certificates
      *
@@ -120,7 +154,7 @@ public class FetchingUtilities {
      * @param electionPk the parent certificate for the election
      * @return list of certificates for bb-peers on .pem format
      */
-    static List<String> getBBPeerCertificates(Logger logger, WebTarget edgeTarget, AsymmetricKeyParameter electionPk) {
+    static List<X509CertificateHolder> getBBPeerCertificates(Logger logger, WebTarget edgeTarget, AsymmetricKeyParameter electionPk) {
         String responseString = edgeTarget.path("certificates").request().get(String.class);
 
         ContentVerifierProvider verifier;
@@ -155,7 +189,8 @@ public class FetchingUtilities {
             }
         }
 
-        return verifyAndDetermineCommon(certificates, validCertificates.values(), logger);
+        List<String> certStrings = verifyAndDetermineCommon(certificates, validCertificates.values(), logger);
+        return certStrings.stream().map(FetchingUtilities::toCertHolder).collect(Collectors.toList());
     }
 
     /**
@@ -199,8 +234,8 @@ public class FetchingUtilities {
      * @param <T>          type parameter for the entity
      * @return list of signed entities, each signed by different entities, all with valid signatures
      */
-    static <T> List<SignedEntity<T>> verifySignedAndValid(List<SignedEntity<T>> list, List<String> certificates, Logger logger) {
-        return verifySignedAndValidInner(list, certificates.stream().map(FetchingUtilities::toCertHolder).collect(Collectors.toList()), logger);
+    static <T> List<SignedEntity<T>> verifySignedAndValid(List<SignedEntity<T>> list, List<X509CertificateHolder> certificates, Logger logger) {
+        return verifySignedAndValidInner(list, certificates, logger);
     }
 
     private static X509CertificateHolder toCertHolder(String cert) {

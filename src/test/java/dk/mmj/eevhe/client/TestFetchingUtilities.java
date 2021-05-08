@@ -33,6 +33,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
@@ -246,8 +247,11 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
         when(publicInfoTarget.request()).thenReturn(invocationBuilder);
         when(invocationBuilder.get(String.class)).thenReturn(mapper.writeValueAsString(infos));
 
-        List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, bulletinBoard,
-                CertificateHelper.getPublicKeyFromCertificate(electionCert));
+        List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(
+                logger, bulletinBoard,
+                CertificateHelper.getPublicKeyFromCertificate(electionCert),
+                Collections.singletonList(daOneCert)
+                );
 
         assertNotNull("Should have fetched public infos", publicInfos);
         assertEquals("Only one info should be returned", 1, publicInfos.size());
@@ -278,8 +282,10 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
         when(publicInfoTarget.request()).thenReturn(invocationBuilder);
         when(invocationBuilder.get(String.class)).thenReturn(mapper.writeValueAsString(infos).substring(0, 68));
 
-        List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(logger, bulletinBoard,
-                CertificateHelper.getPublicKeyFromCertificate(electionCert));
+        List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(
+                logger, bulletinBoard,
+                CertificateHelper.getPublicKeyFromCertificate(electionCert),
+                Collections.singletonList(daOneCert));
 
         assertNull("Should not be able to fetch infos", publicInfos);
     }
@@ -336,11 +342,20 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
         when(certsPath.request()).thenReturn(request);
         when(request.get(String.class)).thenReturn(certsString);
 
-        List<String> bbPeerCertificates = FetchingUtilities.getBBPeerCertificates(logger,
+        List<X509CertificateHolder> bbPeerCertificates = FetchingUtilities.getBBPeerCertificates(
+                logger,
                 bulletinBoard,
                 CertificateHelper.getPublicKeyFromCertificate(electionCert));
 
 
-        assertEquals("Wrong list of bb certificates", expected, bbPeerCertificates);
+        assertNotNull("No certificates returned",bbPeerCertificates);
+        List<String> asPem = bbPeerCertificates.stream().map(certificateHolder -> {
+            try {
+                return CertificateHelper.certificateToPem(certificateHolder);
+            } catch (IOException exception) {
+                throw new RuntimeException(exception);
+            }
+        }).collect(Collectors.toList());
+        assertEquals("Wrong list of bb certificates", expected, asPem);
     }
 }

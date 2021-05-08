@@ -11,6 +11,7 @@ import dk.mmj.eevhe.entities.SignedEntity;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthorityConfigBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.cert.X509CertificateHolder;
 
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -171,7 +172,7 @@ public class Voter extends Client {
             return false;
         }
 
-        List<String> certs = getCertificates();
+        List<X509CertificateHolder> certs = getBBPeerCertificates();
         int peers = certs.size();
 
         int retries = 0;
