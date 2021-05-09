@@ -268,11 +268,11 @@ public class BulletinBoardPeerResource {
     }
 
     @GET
-    @Path("getPeerCertificates")
+    @Path("peerCertificates")
     @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<List<String>> getPeerCertificates() {
+    public SignedEntity<StringListWrapper> getPeerCertificates() {
         Map<Integer, String> peerCertificates = ServerState.getInstance().get(BulletinBoardPeer.PEER_CERTIFICATES, Map.class);
 
-        return new SignedEntity<>(new ArrayList<>(peerCertificates.values()), getSecretKey());
+        return new SignedEntity<>(new StringListWrapper(new ArrayList<>(peerCertificates.values())), getSecretKey());
     }
 }
