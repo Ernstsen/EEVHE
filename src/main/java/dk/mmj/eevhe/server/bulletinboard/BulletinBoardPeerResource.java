@@ -116,6 +116,7 @@ public class BulletinBoardPeerResource {
         List<PersistedBallot> ballots = getState().getBallots().stream().filter(b -> b.getId().equals(id)).collect(Collectors.toList());
 
         if (ballots.isEmpty()) {
+            logger.warn("Failed to locate vote with id= " + id);
             throw new NotFoundException("Voter with id " + id + " has not cast a vote");
         }
 

@@ -22,6 +22,7 @@ import dk.mmj.eevhe.server.AbstractServer;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -68,6 +69,7 @@ public class DecryptionAuthority extends AbstractServer {
     private boolean timeCorrupt = false;
     private Iterator<DKG.Step> dkgSteps;
     private PartialKeyPair keyPair;
+    private List<X509CertificateHolder> bbCertificates;
 
     public DecryptionAuthority(DecryptionAuthorityConfiguration configuration) {
         logger = LogManager.getLogger(DecryptionAuthority.class + " " + configuration.id + ":");
@@ -167,7 +169,7 @@ public class DecryptionAuthority extends AbstractServer {
                 .stream()
                 .collect(Collectors.toMap(PeerInfo::getId, inf -> new RestDKGPeerCommunicator(configureWebTarget(logger, inf.getAddress()), sk)));
         communicators.remove(id);//We remove ourself, to be able to iterate without
-        CertificateProviderImpl certProvider = new CertificateProviderImpl(this::getCertificates, electionPk);
+        CertificateProviderImpl certProvider = new CertificateProviderImpl(this::getBbCertificates, electionPk);
         final ServerStateDKGIncomingChannel incoming = new ServerStateDKGIncomingChannel(
                 input.getInfos().stream()
                         .map(PeerInfo::getId)
@@ -190,7 +192,7 @@ public class DecryptionAuthority extends AbstractServer {
      *
      * @return list of signed certificates
      */
-    private List<SignedEntity<CertificateDTO>> getCertificates() {
+    private List<SignedEntity<CertificateDTO>> getBbCertificates() {
         try {
             ObjectMapper mapper = new ObjectMapper();
             String certificates = bulletinBoard.path("certificates").request().get(String.class);
@@ -218,7 +220,7 @@ public class DecryptionAuthority extends AbstractServer {
             );
 
             decrypter = new DecrypterImpl(id,
-                    () -> FetchingUtilities.getBallots(logger, bulletinBoard, null),//TODO! getBBCertificates for DA
+                    () -> FetchingUtilities.getBallots(logger, bulletinBoard, getBBPeerCertificates()),
                     b -> VoteProofUtils.verifyBallot(b, keyPair.getPublicKey()),
                     candidates
             );
@@ -274,6 +276,18 @@ public class DecryptionAuthority extends AbstractServer {
             logger.info("Successfully transferred partial decryption to bulletin board");
         }
 
+    }
+
+    /**
+     * Fetches list of BB-peer certificates
+     *
+     * @return list of valid bb-peer certificates
+     */
+    protected List<X509CertificateHolder> getBBPeerCertificates() {
+        if(bbCertificates != null){
+            return bbCertificates;
+        }
+        return bbCertificates = FetchingUtilities.getBBPeerCertificates(logger, bulletinBoard, electionPk);
     }
 
     @Override

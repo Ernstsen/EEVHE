@@ -160,7 +160,7 @@ public class FetchingUtilities {
      * @param electionPk the parent certificate for the election
      * @return list of certificates for bb-peers on .pem format
      */
-    static List<X509CertificateHolder> getBBPeerCertificates(Logger logger, WebTarget edgeTarget, AsymmetricKeyParameter electionPk) {
+    public static List<X509CertificateHolder> getBBPeerCertificates(Logger logger, WebTarget edgeTarget, AsymmetricKeyParameter electionPk) {
         try {
             String responseString = edgeTarget.path("peerCertificates").request().get(String.class);
 
