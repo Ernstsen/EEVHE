@@ -44,7 +44,8 @@ public class TestBulletinBoardEdgeCommunication {
     private String confPath;
     private Thread edgeThread;
     private JerseyWebTarget edgeTarget;
-    private static final List<Integer> bulletinBoardPeerIds = Arrays.asList(1, 2, 3, 4);
+//    private static final List<Integer> bulletinBoardPeerIds = Arrays.asList(1, 2, 3, 4);
+    private static final List<Integer> bulletinBoardPeerIds = Arrays.asList(1);
     private final Map<Integer, BulletinBoardPeer> bulletinBoardPeers = new HashMap<>();
     private final Map<Integer, JerseyWebTarget> peerTargets = new HashMap<>();
     private final int CONSENSUS_WAIT_TIMEOUT = 2000;
@@ -138,7 +139,7 @@ public class TestBulletinBoardEdgeCommunication {
         Thread.sleep(2_000);
     }
 
-    private void testPostAndRetrieveBallot(List<Integer> postTo) throws InterruptedException, JsonProcessingException {
+    private void testPostAndRetrieveBallot() throws InterruptedException, JsonProcessingException {
         PublicKey publicKey = TestUtils.generateKeysFromP2048bitsG2().getPublicKey();
         BallotDTO ballotDTO = SecurityUtils.generateBallot(1, 3, "voter_id", publicKey);
 
@@ -177,6 +178,6 @@ public class TestBulletinBoardEdgeCommunication {
 
     @Test
     public void shouldAgreeOnSingleBallotWhenOnePeerReceivesFromEdge() throws InterruptedException, JsonProcessingException {
-        testPostAndRetrieveBallot(Collections.singletonList(1));
+        testPostAndRetrieveBallot();
     }
 }
