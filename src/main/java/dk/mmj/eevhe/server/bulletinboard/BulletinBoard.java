@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 
+@Deprecated
 public class BulletinBoard extends AbstractServer {
     static final String HAS_VOTED = "hasVoted";
     static final String PUBLIC_INFO = "publicInfo";

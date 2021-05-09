@@ -103,7 +103,7 @@ public class TestBulletinBoardEdgeCommunication {
 
         buildTempFiles();
 
-        BulletinBoardEdge.BulletinBoardEdgeConfiguration config = new BulletinBoardEdge.BulletinBoardEdgeConfiguration(edgePort, confPath, 1);
+        BulletinBoardEdge.BulletinBoardEdgeConfiguration config = new BulletinBoardEdge.BulletinBoardEdgeConfiguration(edgePort, confPath, "1");
         bulletinBoardEdge = new BulletinBoardEdge(config);
 
         edgeThread = new Thread(bulletinBoardEdge);

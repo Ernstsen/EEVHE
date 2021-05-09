@@ -57,7 +57,7 @@ public class TestBulletinBoardEdge {
 
         buildTempFiles();
 
-        BulletinBoardEdge.BulletinBoardEdgeConfiguration config = new BulletinBoardEdge.BulletinBoardEdgeConfiguration(port, confPath, 1);
+        BulletinBoardEdge.BulletinBoardEdgeConfiguration config = new BulletinBoardEdge.BulletinBoardEdgeConfiguration(port, confPath, "1");
         bulletinBoardEdge = new BulletinBoardEdge(config);
 
         thread = new Thread(bulletinBoardEdge);

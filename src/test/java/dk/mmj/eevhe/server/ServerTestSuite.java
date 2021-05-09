@@ -8,15 +8,16 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-        TestServerState.class,
         TestBulletinBoardConfigBuilder.class,
-        TestDecrypterImpl.class,
-        TestDecryptionAuthorityConfigBuilder.class,
-        TestBulletinBoardState.class,
+        TestBulletinBoardEdge.class,
+        TestBulletinBoardEdgeCommunication.class,
         TestBulletinBoardPeer.class,
         TestBulletinBoardPeerCommunication.class,
-        TestBulletinBoardEdge.class,
-        TestBulletinBoardEdgeCommunication.class
+        TestBulletinBoardPeerConfigBuilder.class,
+        TestBulletinBoardState.class,
+        TestDecrypterImpl.class,
+        TestDecryptionAuthorityConfigBuilder.class,
+        TestServerState.class,
 })
 public class ServerTestSuite {
 }

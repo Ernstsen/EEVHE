@@ -22,7 +22,7 @@ public class BulletinBoardEdge extends AbstractServer {
     private static final ObjectMapper mapper = new ObjectMapper();
     private final Logger logger;
     private final int port;
-    private final Integer id;
+    private final String logId;
     private final BulletinBoardEdgeConfiguration configuration;
     private final ServerState state = ServerState.getInstance();
 
@@ -32,10 +32,10 @@ public class BulletinBoardEdge extends AbstractServer {
     public BulletinBoardEdge(BulletinBoardEdgeConfiguration configuration) {
         this.configuration = configuration;
         logger = LogManager.getLogger(BulletinBoardPeer.class + " " + configuration.id + ":");
-        port = configuration.port;
-        id = configuration.id;
+        port = configuration.getPort();
+        logId = configuration.getId();
 
-        Path conf = Paths.get(configuration.confPath);
+        Path conf = Paths.get(configuration.getConfPath());
 
         try {
             BBInput bbInput = mapper.readValue(conf.resolve("BB_input.json").toFile(), BBInput.class);
@@ -61,9 +61,9 @@ public class BulletinBoardEdge extends AbstractServer {
     public static class BulletinBoardEdgeConfiguration extends AbstractInstanceCreatingConfiguration<BulletinBoardEdge> {
         private final int port;
         private final String confPath;
-        private final int id;
+        private final String id;
 
-        BulletinBoardEdgeConfiguration(int port, String confPath, int id) {
+        BulletinBoardEdgeConfiguration(int port, String confPath, String id) {
             super(BulletinBoardEdge.class);
             this.port = port;
             this.confPath = confPath;
@@ -78,7 +78,7 @@ public class BulletinBoardEdge extends AbstractServer {
             return confPath;
         }
 
-        public int getId() {
+        public String getId() {
             return id;
         }
     }

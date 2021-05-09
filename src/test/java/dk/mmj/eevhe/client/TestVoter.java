@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.NoSuchBuilderException;
 import dk.eSoftware.commandLineParser.SingletonCommandLineParser;
 import dk.eSoftware.commandLineParser.WrongFormatException;
+import dk.mmj.eevhe.Main;
 import dk.mmj.eevhe.TestUsingBouncyCastle;
 import dk.mmj.eevhe.crypto.ElGamal;
 import dk.mmj.eevhe.crypto.SecurityUtils;
@@ -13,9 +14,11 @@ import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.server.AbstractServer;
 import dk.mmj.eevhe.server.ServerState;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoard;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoardConfigBuilder;
+import dk.mmj.eevhe.server.bulletinboard.BulletinBoardEdge;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -30,7 +33,9 @@ import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.glassfish.jersey.client.JerseyWebTarget;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
@@ -48,13 +53,16 @@ import static org.junit.Assert.assertTrue;
 public class TestVoter extends TestUsingBouncyCastle {
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final Logger logger = LogManager.getLogger(TestVoter.class);
-    private BigInteger h;
-    private PublicKey pk;
-    private X509CertificateHolder daOneCert;
-    private AsymmetricKeyParameter daOneSk;
+    private static BigInteger h;
+    private static PublicKey pk;
+    private static X509CertificateHolder daOneCert;
+    private static AsymmetricKeyParameter daOneSk;
+    private static List<AbstractServer> servers;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        Main.main(new String[]{"--configuration", "--bb_peer_addresses", "-1_https://localhost:18081"});
+
         KeyGenerationParametersImpl params = new KeyGenerationParametersImpl(4, 50);
         DistKeyGenResult keygen = ElGamal.generateDistributedKeys(params, 2, 3);
 
@@ -81,6 +89,19 @@ public class TestVoter extends TestUsingBouncyCastle {
 
         daOneCert = cb.build(signer);
         daOneSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
+
+        //TODO: CREATE EDGE AND ADD TO servers LIST
+
+    }
+
+    @AfterClass
+    public static void afterClass() throws Exception {
+
+    }
+
+    @Before
+    public void setUp() throws Exception {
+
     }
 
     @Test
