@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.wrappers.BallotWrapper;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -95,23 +96,16 @@ public class BulletinBoardEdgeResource {
      * @param path   REST endpoint
      * @param entity JAX-RS entity containing object of type T to be posted
      * @param <T>    Type of object to be posted
-     * @return List of Response objects
      */
-    private <T> List<Response> postToPeers(String path, Entity<T> entity) {
-        List<Response> result = Collections.synchronizedList(new ArrayList<>());
+    private <T> void postToPeers(String path, Entity<T> entity) {
         List<Thread> threads = new ArrayList<>();
 
         for (JerseyWebTarget target : getTargets()) {
-            Thread thread = new Thread(() -> {
-                Response response = target.path(path).request().post(entity);
-                result.add(response);
-            });
+            Thread thread = new Thread(() -> target.path(path).request().post(entity));
             thread.start();
 
             threads.add(thread);
         }
-
-        return result;
     }
 
     @GET
@@ -158,16 +152,12 @@ public class BulletinBoardEdgeResource {
         postToPeers("result", Entity.entity(partialDecryptions, MediaType.APPLICATION_JSON));
     }
 
-    private void addToList(String key, Object element) {
-        state.putInList(key, element);
-    }
-
     @SuppressWarnings("unchecked")
     @GET
     @Path("getBallots")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<List<PersistedBallot>>> getBallots() {
-        return fetchFromPeers("getBallots", new TypeReference<SignedEntity<List<PersistedBallot>>>() {
+    public List<SignedEntity<BallotWrapper>> getBallots() {
+        return fetchFromPeers("getBallots", new TypeReference<SignedEntity<BallotWrapper>>() {
         });
     }
 

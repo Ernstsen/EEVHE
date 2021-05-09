@@ -227,14 +227,14 @@ public class BulletinBoardPeerResource {
     @POST
     @Path("certificates")
     @Consumes(MediaType.APPLICATION_JSON)
-    public void postCertificate(SignedEntity<CertificateDTO> certificate) {
+    public void postDACertificate(SignedEntity<CertificateDTO> certificate) {
         getConsumer().accept(certificate);
     }
 
     @GET
     @Path("certificates")
     @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<CertificatesWrapper> getCertificate() {
+    public SignedEntity<CertificatesWrapper> getDACertificate() {
         List<SignedEntity<CertificateDTO>> list = getState().getSignedCertificates();
 
         CertificatesWrapper wrapper = new CertificatesWrapper(list != null ? list : new ArrayList<>());
@@ -270,7 +270,7 @@ public class BulletinBoardPeerResource {
     @GET
     @Path("getPeerCertificates")
     @Produces(MediaType.APPLICATION_JSON)
-    public SignedEntity<List<String>> getPeerCertificates() {
+    public SignedEntity<List<String>> getBBPeerCertificates() {
         Map<Integer, String> peerCertificates = ServerState.getInstance().get(BulletinBoardPeer.PEER_CERTIFICATES, Map.class);
 
         return new SignedEntity<>(new ArrayList<>(peerCertificates.values()), getSecretKey());
