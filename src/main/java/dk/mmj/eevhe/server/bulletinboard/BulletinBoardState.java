@@ -23,6 +23,7 @@ public class BulletinBoardState {
      *
      * @return the BBState
      */
+    @Deprecated//TODO! REMOVE
     public static BulletinBoardState getInstance() {
         return instance;
     }

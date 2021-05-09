@@ -9,6 +9,7 @@ import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.signature.SignatureHelper;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.wrappers.BallotWrapper;
 import dk.mmj.eevhe.entities.wrappers.PublicInfoWrapper;
 import dk.mmj.eevhe.entities.wrappers.StringListWrapper;
 import org.apache.logging.log4j.LogManager;
@@ -179,34 +180,20 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
 
         List<PersistedBallot> ballots = Arrays.asList(
                 new PersistedBallot(SecurityUtils.generateBallot(1, 5, "1", keyPair.getPublicKey())),
-                new PersistedBallot(SecurityUtils.generateBallot(2, 5, "1", keyPair.getPublicKey()))
+                new PersistedBallot(SecurityUtils.generateBallot(2, 5, "2", keyPair.getPublicKey()))
         );
-        ObjectMapper mapper = new ObjectMapper();
-
-
-        WebTarget bulletinBoard = mock(WebTarget.class);
-
-        WebTarget ballotsTarget = mock(WebTarget.class);
-        when(bulletinBoard.path("getBallots")).thenReturn(ballotsTarget);
-
-        final Invocation.Builder commitBuilder = mock(Invocation.Builder.class);
-        when(ballotsTarget.request()).thenReturn(commitBuilder);
-        String ballotsString = mapper.writeValueAsString(ballots.toArray(new PersistedBallot[0]));
-        when(commitBuilder.get(String.class)).thenReturn(ballotsString);
-
-//        List<PersistedBallot> fetched = FetchingUtilities.getBallots(logger, bulletinBoard, );
-//
-//        assertEquals("Fetched ballots did not match expected", ballots, fetched);
-        fail("Temporarily disabled");//TODO!
-    }
-
-    @Test
-    public void fetchBallotsWithError() throws JsonProcessingException {
-        KeyPair keyPair = TestUtils.generateKeysFromP2048bitsG2();
-
-        List<PersistedBallot> ballots = Arrays.asList(
+        List<PersistedBallot> ballotsCorrupt = Arrays.asList(
                 new PersistedBallot(SecurityUtils.generateBallot(1, 5, "1", keyPair.getPublicKey())),
-                new PersistedBallot(SecurityUtils.generateBallot(2, 5, "1", keyPair.getPublicKey()))
+                new PersistedBallot(SecurityUtils.generateBallot(2, 5, "2", keyPair.getPublicKey())),
+                new PersistedBallot(SecurityUtils.generateBallot(2, 5, "3", keyPair.getPublicKey())),
+                new PersistedBallot(SecurityUtils.generateBallot(2, 5, "4", keyPair.getPublicKey()))
+        );
+
+        List<SignedEntity<BallotWrapper>> ballotList = Arrays.asList(
+                new SignedEntity<>(new BallotWrapper(ballots), bbOneSk),
+                new SignedEntity<>(new BallotWrapper(ballots), bbTwoSk),
+                new SignedEntity<>(new BallotWrapper(ballotsCorrupt), bbThreeSk),
+                new SignedEntity<>(new BallotWrapper(ballotsCorrupt), bbThreeSk)
         );
 
         ObjectMapper mapper = new ObjectMapper();
@@ -217,12 +204,11 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
 
         final Invocation.Builder invocationBuilder = mock(Invocation.Builder.class);
         when(ballotsTarget.request()).thenReturn(invocationBuilder);
-        when(invocationBuilder.get(String.class)).thenReturn(mapper.writeValueAsString(ballots));
+        when(invocationBuilder.get(String.class)).thenReturn(mapper.writeValueAsString(ballotList.toArray()));
 
-//        List<PersistedBallot> fetched = FetchingUtilities.getBallots(logger, bulletinBoard);
-        //TODO!
-//        assertNull("Should return null", fetched);
-        fail("Temporarily disabled");
+        List<PersistedBallot> fetched = FetchingUtilities.getBallots(logger, bulletinBoard, Arrays.asList(bbOneCert, bbTwoCert, bbThreeCert));
+
+        assertEquals("Fetched ballots did not match expected", ballots, fetched);
     }
 
     @Test

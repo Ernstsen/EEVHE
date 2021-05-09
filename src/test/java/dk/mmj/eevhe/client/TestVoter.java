@@ -1,6 +1,5 @@
 package dk.mmj.eevhe.client;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.NoSuchBuilderException;
 import dk.eSoftware.commandLineParser.SingletonCommandLineParser;
@@ -57,6 +56,7 @@ public class TestVoter extends TestUsingBouncyCastle {
     private static AsymmetricKeyParameter daOneSk;
     private static final List<AbstractServer> servers = new ArrayList<>();
     private static final int edgePort = 4894;
+    private static final JerseyWebTarget edgeTarget = SSLHelper.configureWebTarget(logger, "https://localhost:" + edgePort);
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -96,8 +96,6 @@ public class TestVoter extends TestUsingBouncyCastle {
         servers.add(peer);
         servers.add(edge);
         Thread.sleep(10_000);
-        //TODO: CREATE EDGE AND ADD TO servers LIST
-
     }
 
     @AfterClass
@@ -110,29 +108,27 @@ public class TestVoter extends TestUsingBouncyCastle {
 
     @Before
     public void setUp() throws Exception {
-
+        BulletinBoardState bulletinBoardState = ServerState.getInstance().get("bbState.1", BulletinBoardState.class);
+        if (bulletinBoardState != null) {
+            bulletinBoardState.getBallots().clear();
+        }
     }
 
     @Test
-    public void testSingleVote() throws InterruptedException, NoSuchBuilderException, WrongFormatException, IOException {
+    public void testSingleVote() {
         String id = "id";
         Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, id, 2, null);
         Voter voter = new Voter(conf);
-        JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + edgePort);
-
-        initializeBulletinBoard(target);
 
         voter.run();
 
 
-        List<PersistedBallot> ballots = FetchingUtilities.getBallots(logger, target, voter.getBBPeerCertificates());
+        List<PersistedBallot> ballots = FetchingUtilities.getBallots(logger, edgeTarget, voter.getBBPeerCertificates());
 
         assertNotNull("Failed to fetch list of posted ballots", ballots);
         assertEquals("Did not find exactly one vote!", 1, ballots.size());
         PersistedBallot ballot = ballots.get(0);
         assertTrue("Failed to verify ballot", VoteProofUtils.verifyBallot(ballot, pk));
-
-        ServerState.getInstance().reset();
     }
 
     @Test
@@ -158,11 +154,9 @@ public class TestVoter extends TestUsingBouncyCastle {
         for (PersistedBallot ballot : ballots) {
             assertTrue("Failed to verify ballot", VoteProofUtils.verifyBallot(ballot, pk));
         }
-
-        ServerState.getInstance().reset();
     }
 
-    private void initializeBulletinBoard(JerseyWebTarget target) throws IOException {
+    private static void initializeBulletinBoard(JerseyWebTarget target) throws IOException {
         List<Candidate> candidates = Arrays.asList(
                 new Candidate(0, "name1", "desc1"),
                 new Candidate(1, "name2", "desc3"),
