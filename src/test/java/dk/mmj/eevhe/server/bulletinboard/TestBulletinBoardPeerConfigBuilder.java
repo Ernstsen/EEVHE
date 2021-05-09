@@ -25,7 +25,7 @@ public class TestBulletinBoardPeerConfigBuilder extends AbstractConfigTest {
 
         try {
             BulletinBoardPeer.BulletinBoardPeerConfiguration config =
-                    new SingletonCommandLineParser<>(builder).parse(new String[]{"--port=" + port, "--id=" + id, "--conf=certs/"});
+                    new SingletonCommandLineParser<>(builder).parse(new String[]{"--bulletinBoardPeer","--port=" + port, "--id=" + id, "--conf=certs/"});
 
             assertEquals("Port parameter not respected", port, config.getPort());
             assertEquals("Configuration path not respected", "certs/", config.getConfPath());
@@ -62,6 +62,25 @@ public class TestBulletinBoardPeerConfigBuilder extends AbstractConfigTest {
     }
 
     @Test
+    public void mustSupplyId() {
+
+        Random random = new Random();
+        int port = random.nextInt();
+
+        BulletinBoardPeerConfigBuilder builder = new BulletinBoardPeerConfigBuilder();
+
+        try {
+            BulletinBoardPeer.BulletinBoardPeerConfiguration config =
+                    new SingletonCommandLineParser<>(builder).parse(new String[]{"--port=" + port});
+
+            assertNull("as no id was supplied, configuration should be null", config);
+        } catch (NoSuchBuilderException | WrongFormatException e) {
+            fail("failed to build config: " + e);
+            e.printStackTrace();
+        }
+    }
+
+    @Test
     public void noExceptionOnUnrecognized() {
         BulletinBoardEdgeConfigBuilder builder = new BulletinBoardEdgeConfigBuilder();
 
@@ -75,11 +94,11 @@ public class TestBulletinBoardPeerConfigBuilder extends AbstractConfigTest {
 
     @Override
     protected List<String> getParams() {
-        return new BulletinBoardEdgeConfigBuilder().getParameters();
+        return new BulletinBoardPeerConfigBuilder().getParameters();
     }
 
     @Override
     protected String getHelp() {
-        return new BulletinBoardEdgeConfigBuilder().help();
+        return new BulletinBoardPeerConfigBuilder().help();
     }
 }
