@@ -14,8 +14,12 @@ import org.glassfish.jersey.client.JerseyWebTarget;
 import javax.ws.rs.*;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.math.BigInteger;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
@@ -70,7 +74,12 @@ public class BulletinBoardEdgeResource {
         for (JerseyWebTarget target : getTargets()) {
             Thread thread = new Thread(() -> {
                 try {
-                    String responseString = target.path(path).request().get(String.class);
+                    Response response = target.path(path).request().get();
+                    if(response.getStatus() >= 400){
+                        logger.error("Received non-200 status:" + response.getStatus() + " from target: " + target.path(path));
+                        return;
+                    }
+                    String responseString = response.readEntity(String.class);
                     T responseObject;
                     responseObject = mapper.readValue(responseString, typeReference);
                     result.add(responseObject);
