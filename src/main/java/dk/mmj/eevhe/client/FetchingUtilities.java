@@ -214,7 +214,7 @@ public class FetchingUtilities {
      */
     static <T> T verifyAndDetermineCommon(List<SignedEntity<T>> entityList, Collection<X509CertificateHolder> validCertificates, Logger logger) {
         //We ensure that each sender has only posted ONE message - if more than one has been posted, first is used
-        List<SignedEntity<T>> uniqueEntities = verifySignedAndValidInner(entityList, validCertificates, logger);
+        List<SignedEntity<T>> uniqueEntities = verifySignedAndValid(entityList, validCertificates, logger);
 
 
         //We count how many times each item was posted
@@ -228,21 +228,6 @@ public class FetchingUtilities {
                 .reduce((curr, element) -> curr.getValue() > element.getValue() ? curr : element)
                 .map(Map.Entry::getKey)
                 .orElse(null);
-    }
-
-    /**
-     * Iterates through both signed entities and certificates and returns a list of signed entities that is validly signed
-     * <br>
-     * If one certificate is used in signing multiple entities, only the first entity encountered is included in the result
-     *
-     * @param list         list of signed entities
-     * @param certificates list of all valid certificates on .pem format
-     * @param logger       logger to be used if an error is encountered
-     * @param <T>          type parameter for the entity
-     * @return list of signed entities, each signed by different entities, all with valid signatures
-     */
-    static <T> List<SignedEntity<T>> verifySignedAndValid(List<SignedEntity<T>> list, List<X509CertificateHolder> certificates, Logger logger) {
-        return verifySignedAndValidInner(list, certificates, logger);
     }
 
     private static X509CertificateHolder toCertHolder(String cert) {
@@ -264,7 +249,7 @@ public class FetchingUtilities {
      * @param <T>          type parameter for the entity
      * @return list of signed entities, each signed by different entities, all with valid signatures
      */
-    static <T> List<SignedEntity<T>> verifySignedAndValidInner(List<SignedEntity<T>> list, Collection<X509CertificateHolder> certificates, Logger logger) {
+    static <T> List<SignedEntity<T>> verifySignedAndValid(List<SignedEntity<T>> list, Collection<X509CertificateHolder> certificates, Logger logger) {
         List<SignedEntity<T>> result = new ArrayList<>();
 
         HashSet<X509CertificateHolder> unusedCerts = new HashSet<>(certificates);
