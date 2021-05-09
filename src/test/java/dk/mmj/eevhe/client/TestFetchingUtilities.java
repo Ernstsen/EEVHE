@@ -41,7 +41,6 @@ import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@SuppressWarnings("unchecked")
 public class TestFetchingUtilities extends TestUsingBouncyCastle {
     private static final Logger logger = LogManager.getLogger(TestFetchingUtilities.class);
     private X509CertificateHolder daOneCert;
@@ -195,9 +194,10 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
         String ballotsString = mapper.writeValueAsString(ballots.toArray(new PersistedBallot[0]));
         when(commitBuilder.get(String.class)).thenReturn(ballotsString);
 
-        List<PersistedBallot> fetched = FetchingUtilities.getBallots(logger, bulletinBoard);
-
-        assertEquals("Fetched ballots did not match expected", ballots, fetched);
+//        List<PersistedBallot> fetched = FetchingUtilities.getBallots(logger, bulletinBoard, );
+//
+//        assertEquals("Fetched ballots did not match expected", ballots, fetched);
+        fail("Temporarily disabled");//TODO!
     }
 
     @Test
@@ -219,9 +219,10 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
         when(ballotsTarget.request()).thenReturn(invocationBuilder);
         when(invocationBuilder.get(String.class)).thenReturn(mapper.writeValueAsString(ballots));
 
-        List<PersistedBallot> fetched = FetchingUtilities.getBallots(logger, bulletinBoard);
-
-        assertNull("Should return null", fetched);
+//        List<PersistedBallot> fetched = FetchingUtilities.getBallots(logger, bulletinBoard);
+        //TODO!
+//        assertNull("Should return null", fetched);
+        fail("Temporarily disabled");
     }
 
     @Test

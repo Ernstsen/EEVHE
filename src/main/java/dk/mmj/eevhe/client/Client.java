@@ -72,7 +72,7 @@ public abstract class Client implements Application {
         if(certificates != null){
             return certificates;
         }
-        return certificates = FetchingUtilities.getBBPeerCertificates(logger, target.path("certificates"), cert);
+        return certificates = FetchingUtilities.getBBPeerCertificates(logger, target, cert);
     }
 
     protected PartialPublicInfo fetchPublicInfo() {

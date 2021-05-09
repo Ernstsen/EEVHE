@@ -16,9 +16,7 @@ import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.server.AbstractServer;
 import dk.mmj.eevhe.server.ServerState;
-import dk.mmj.eevhe.server.bulletinboard.BulletinBoard;
-import dk.mmj.eevhe.server.bulletinboard.BulletinBoardConfigBuilder;
-import dk.mmj.eevhe.server.bulletinboard.BulletinBoardEdge;
+import dk.mmj.eevhe.server.bulletinboard.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -43,12 +41,12 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class TestVoter extends TestUsingBouncyCastle {
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -57,7 +55,8 @@ public class TestVoter extends TestUsingBouncyCastle {
     private static PublicKey pk;
     private static X509CertificateHolder daOneCert;
     private static AsymmetricKeyParameter daOneSk;
-    private static List<AbstractServer> servers;
+    private static final List<AbstractServer> servers = new ArrayList<>();
+    private static final int edgePort = 4894;
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -90,13 +89,23 @@ public class TestVoter extends TestUsingBouncyCastle {
         daOneCert = cb.build(signer);
         daOneSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
 
+        BulletinBoardPeer peer = new SingletonCommandLineParser<>(new BulletinBoardPeerConfigBuilder()).parse(new String[]{"--id=1", "--port=18081"}).produceInstance();
+        BulletinBoardEdge edge = new SingletonCommandLineParser<>(new BulletinBoardEdgeConfigBuilder()).parse(new String[]{"--id=edge1", "--port=" + edgePort}).produceInstance();
+        new Thread(peer).start();
+        new Thread(edge).start();
+        servers.add(peer);
+        servers.add(edge);
+        Thread.sleep(10_000);
         //TODO: CREATE EDGE AND ADD TO servers LIST
 
     }
 
     @AfterClass
-    public static void afterClass() throws Exception {
-
+    public static void afterClass() throws InterruptedException {
+        for (AbstractServer server : servers) {
+            server.terminate();
+        }
+        Thread.sleep(5_000);
     }
 
     @Before
@@ -106,70 +115,50 @@ public class TestVoter extends TestUsingBouncyCastle {
 
     @Test
     public void testSingleVote() throws InterruptedException, NoSuchBuilderException, WrongFormatException, IOException {
-        int port = 4894;
-        BulletinBoard.BulletinBoardConfiguration config =
-                new SingletonCommandLineParser<>(new BulletinBoardConfigBuilder()).parse(new String[]{"--port=" + port});
-        BulletinBoard bulletinBoard = new BulletinBoard(config);
-        Thread thread = new Thread(bulletinBoard);
-        thread.start();
-        Thread.sleep(2_000);
-
         String id = "id";
-        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + port, id, 2, null);
+        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, id, 2, null);
         Voter voter = new Voter(conf);
-        JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
+        JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + edgePort);
 
         initializeBulletinBoard(target);
 
         voter.run();
 
-        String ballotsString = target.path("getBallots").request()
-                .get(String.class);
-        List<PersistedBallot> ballots = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {
-        });
 
+        List<PersistedBallot> ballots = FetchingUtilities.getBallots(logger, target, voter.getBBPeerCertificates());
+
+        assertNotNull("Failed to fetch list of posted ballots", ballots);
         assertEquals("Did not find exactly one vote!", 1, ballots.size());
-
         PersistedBallot ballot = ballots.get(0);
         assertTrue("Failed to verify ballot", VoteProofUtils.verifyBallot(ballot, pk));
 
-        //Terminate BB
-        bulletinBoard.terminate();
-        thread.join();
         ServerState.getInstance().reset();
     }
 
     @Test
-    public void testMultiVote() throws InterruptedException, NoSuchBuilderException, WrongFormatException, IOException {
-        int port = 4896;
-        BulletinBoard.BulletinBoardConfiguration config =
-                new SingletonCommandLineParser<>(new BulletinBoardConfigBuilder()).parse(new String[]{"--port=" + port});
-        BulletinBoard bulletinBoard = new BulletinBoard(config);
-        Thread thread = new Thread(bulletinBoard);
-        thread.start();
-        Thread.sleep(2_000);
+    public void testMultiVote() throws  IOException {
 
-        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + port, null, null, 20);
+
+        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, null, null, 20);
         Voter voter = new Voter(conf);
-        JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
+        JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + edgePort);
 
         initializeBulletinBoard(target);
 
         voter.run();
 
-        String ballotsString = target.path("getBallots").request()
-                .get(String.class);
-        List<PersistedBallot> ballots = mapper.readValue(ballotsString, new TypeReference<List<PersistedBallot>>() {
-        });
+        List<PersistedBallot> ballots = FetchingUtilities.getBallots(
+                logger, target,
+                voter.getBBPeerCertificates()
+        );
+
+        assertNotNull("Failed to fetch list of posted ballots", ballots);
         assertEquals("Did not find exactly twenty votes!", 20, ballots.size());
 
         for (PersistedBallot ballot : ballots) {
             assertTrue("Failed to verify ballot", VoteProofUtils.verifyBallot(ballot, pk));
         }
 
-        //Terminate BB
-        bulletinBoard.terminate();
-        thread.join();
         ServerState.getInstance().reset();
     }
 

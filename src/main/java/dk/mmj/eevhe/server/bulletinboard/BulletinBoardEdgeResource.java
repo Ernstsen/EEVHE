@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.entities.wrappers.BallotWrapper;
+import dk.mmj.eevhe.entities.wrappers.*;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,12 +14,10 @@ import org.glassfish.jersey.client.JerseyWebTarget;
 import javax.ws.rs.*;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.math.BigInteger;
 import java.util.*;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
-import static dk.mmj.eevhe.server.bulletinboard.BulletinBoard.*;
 
 @Path("/")
 public class BulletinBoardEdgeResource {
@@ -71,13 +69,15 @@ public class BulletinBoardEdgeResource {
 
         for (JerseyWebTarget target : getTargets()) {
             Thread thread = new Thread(() -> {
-                String responseString = target.path(path).request().get(String.class);
-                T responseObject = null;
                 try {
+                    String responseString = target.path(path).request().get(String.class);
+                    T responseObject;
                     responseObject = mapper.readValue(responseString, typeReference);
                     result.add(responseObject);
                 } catch (JsonProcessingException e) {
-                    throw new RuntimeException("Failed to query " + path + " from bulletin board peer: " + target, e);
+                    logger.error("Failed to query " + path + " from bulletin board peer: " + target, e);
+                } catch (Exception e){
+                    logger.error("Exception occured while attempting to query " + path + " from bulletin board peer", e);
                 }
             });
             thread.start();
@@ -116,19 +116,9 @@ public class BulletinBoardEdgeResource {
         return "<b>ServerType:</b> Bulletin Board Edge";
     }
 
-    @GET
-    @Path("getPublicInfo")
-    @Produces(MediaType.APPLICATION_JSON)
-    @SuppressWarnings("unchecked")
-    public List<SignedEntity<List<SignedEntity<PartialPublicInfo>>>> getPublicInfos() {
-        return fetchFromPeers("getPublicInfo", new TypeReference<SignedEntity<List<SignedEntity<PartialPublicInfo>>>>() {
-        });
-    }
-
     @POST
     @Path("postBallot")
     @Consumes(MediaType.APPLICATION_JSON)
-    @SuppressWarnings("unchecked")
     public void postBallot(BallotDTO ballot) {
         postToPeers("postBallot", Entity.entity(ballot, MediaType.APPLICATION_JSON));
     }
@@ -139,9 +129,8 @@ public class BulletinBoardEdgeResource {
     @GET
     @Path("result")
     @Produces(MediaType.APPLICATION_JSON)
-    @SuppressWarnings("unchecked")
-    public List<SignedEntity<List<SignedEntity<PartialResultList>>>> getResult() {
-        return fetchFromPeers("result", new TypeReference<SignedEntity<List<SignedEntity<PartialResultList>>>>() {
+    public List<SignedEntity<PartialResultWrapper>> getResult() {
+        return fetchFromPeers("result", new TypeReference<SignedEntity<PartialResultWrapper>>() {
         });
     }
 
@@ -152,7 +141,6 @@ public class BulletinBoardEdgeResource {
         postToPeers("result", Entity.entity(partialDecryptions, MediaType.APPLICATION_JSON));
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("getBallots")
     @Produces(MediaType.APPLICATION_JSON)
@@ -176,12 +164,11 @@ public class BulletinBoardEdgeResource {
         postToPeers("commitments", Entity.entity(commitment, MediaType.APPLICATION_JSON));
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("commitments")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<List<SignedEntity<CommitmentDTO>>>> getCommitments() {
-        return fetchFromPeers("commitments", new TypeReference<SignedEntity<List<SignedEntity<CommitmentDTO>>>>() {
+    public List<SignedEntity<CommitmentWrapper>> getCommitments() {
+        return fetchFromPeers("commitments", new TypeReference<SignedEntity<CommitmentWrapper>>() {
         });
     }
 
@@ -199,21 +186,19 @@ public class BulletinBoardEdgeResource {
         postToPeers("feldmanComplain", Entity.entity(complaint, MediaType.APPLICATION_JSON));
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("pedersenComplaints")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<List<SignedEntity<PedersenComplaintDTO>>>> getPedersenComplaints() {
-        return fetchFromPeers("pedersenComplaints", new TypeReference<SignedEntity<List<SignedEntity<PedersenComplaintDTO>>>>() {
+    public List<SignedEntity<PedersenComplaintWrapper>> getPedersenComplaints() {
+        return fetchFromPeers("pedersenComplaints", new TypeReference<SignedEntity<PedersenComplaintWrapper>>() {
         });
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("feldmanComplaints")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<List<SignedEntity<FeldmanComplaintDTO>>>> getFeldmanComplaints() {
-        return fetchFromPeers("feldmanComplaints", new TypeReference<SignedEntity<List<SignedEntity<FeldmanComplaintDTO>>>>() {
+    public List<SignedEntity<FeldmanComplaintWrapper>> getFeldmanComplaints() {
+        return fetchFromPeers("feldmanComplaints", new TypeReference<SignedEntity<FeldmanComplaintWrapper>>() {
         });
     }
 
@@ -224,12 +209,11 @@ public class BulletinBoardEdgeResource {
         postToPeers("resolveComplaint", Entity.entity(resolveDTO, MediaType.APPLICATION_JSON));
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("complaintResolves")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<List<SignedEntity<ComplaintResolveDTO>>>> getComplaintResolves() {
-        return fetchFromPeers("complaintResolves", new TypeReference<SignedEntity<List<SignedEntity<ComplaintResolveDTO>>>>() {
+    public List<SignedEntity<CommitmentWrapper>> getComplaintResolves() {
+        return fetchFromPeers("complaintResolves", new TypeReference<SignedEntity<CommitmentWrapper>>() {
         });
     }
 
@@ -240,12 +224,11 @@ public class BulletinBoardEdgeResource {
         postToPeers("publicInfo", Entity.entity(info, MediaType.APPLICATION_JSON));
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("publicInfo")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<List<SignedEntity<PartialPublicInfo>>>> getPublicInfo() {
-        return fetchFromPeers("publicInfo", new TypeReference<SignedEntity<List<SignedEntity<PartialPublicInfo>>>>() {
+    public List<SignedEntity<PublicInfoWrapper>> getPublicInfo() {
+        return fetchFromPeers("publicInfo", new TypeReference<SignedEntity<PublicInfoWrapper>>() {
         });
     }
 
@@ -256,12 +239,11 @@ public class BulletinBoardEdgeResource {
         postToPeers("certificates", Entity.entity(cert, MediaType.APPLICATION_JSON));
     }
 
-    @SuppressWarnings("unchecked")
     @GET
     @Path("certificates")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<List<SignedEntity<CertificateDTO>>>> getCertificate() {
-        return fetchFromPeers("certificates", new TypeReference<SignedEntity<List<SignedEntity<CertificateDTO>>>>() {
+    public List<SignedEntity<CertificatesWrapper>> getCertificate() {
+        return fetchFromPeers("certificates", new TypeReference<SignedEntity<CertificatesWrapper>>() {
         });
     }
 
@@ -273,10 +255,10 @@ public class BulletinBoardEdgeResource {
     }
 
     @GET
-    @Path("getPeerCertificateList")
-    @Produces(MediaType.TEXT_HTML)
-    public List<SignedEntity<List<String>>> getPeerCertificateList() {
-        return fetchFromPeers("getPeerCertificateList", new TypeReference<SignedEntity<List<String>>>() {
+    @Path("peerCertificates")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<SignedEntity<StringListWrapper>> getPeerCertificateList() {
+        return fetchFromPeers("peerCertificates", new TypeReference<SignedEntity<StringListWrapper>>() {
         });
     }
 }

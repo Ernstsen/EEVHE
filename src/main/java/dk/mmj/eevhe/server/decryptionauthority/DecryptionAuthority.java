@@ -218,7 +218,7 @@ public class DecryptionAuthority extends AbstractServer {
             );
 
             decrypter = new DecrypterImpl(id,
-                    () -> FetchingUtilities.getBallots(logger, bulletinBoard),
+                    () -> FetchingUtilities.getBallots(logger, bulletinBoard, null),//TODO! getBBCertificates for DA
                     b -> VoteProofUtils.verifyBallot(b, keyPair.getPublicKey()),
                     candidates
             );

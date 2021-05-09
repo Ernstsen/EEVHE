@@ -7,6 +7,7 @@ import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.entities.PartialPublicInfo;
 import dk.mmj.eevhe.entities.PersistedBallot;
 import dk.mmj.eevhe.entities.SignedEntity;
+import dk.mmj.eevhe.entities.wrappers.BallotWrapper;
 import dk.mmj.eevhe.entities.wrappers.PublicInfoWrapper;
 import dk.mmj.eevhe.entities.wrappers.StringListWrapper;
 import org.apache.logging.log4j.Logger;
@@ -71,16 +72,14 @@ public class FetchingUtilities {
      * @param bulletinBoard WebTarget pointing at bulletinBoard
      * @return list of ballots from BulletinBoard
      */
-    public static List<PersistedBallot> getBallots(Logger logger, WebTarget bulletinBoard) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            String getVotes = bulletinBoard.path("getBallots").request().get(String.class);
-            return mapper.readValue(getVotes, new TypeReference<List<PersistedBallot>>() {
-            });
-        } catch (IOException e) {
-            logger.error("Failed to read BallotList from JSON string", e);
-            return null;
-        }
+    public static List<PersistedBallot> getBallots(Logger logger, WebTarget bulletinBoard, Collection<X509CertificateHolder> validCertificates) {
+        return fetch(
+                bulletinBoard.path("getBallots"),
+                new TypeReference<BallotWrapper>() {
+                },
+                validCertificates,
+                logger
+        ).getContent();
     }
 
     /**
@@ -162,42 +161,52 @@ public class FetchingUtilities {
      * @return list of certificates for bb-peers on .pem format
      */
     static List<X509CertificateHolder> getBBPeerCertificates(Logger logger, WebTarget edgeTarget, AsymmetricKeyParameter electionPk) {
-        String responseString = edgeTarget.path("peerCertificates").request().get(String.class);
-
-        ContentVerifierProvider verifier;
         try {
-            verifier = new BcRSAContentVerifierProviderBuilder(new DefaultDigestAlgorithmIdentifierFinder())
-                    .build(electionPk);
-        } catch (OperatorCreationException e) {
-            logger.error("Failed to create verifier for election pk");
-            return null;
-        }
+            String responseString = edgeTarget.path("peerCertificates").request().get(String.class);
 
-        List<SignedEntity<StringListWrapper>> certificates;
-        try {
-            certificates = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<StringListWrapper>>>() {
-            });
-        } catch (IOException e) {
-            logger.error("FetchingUtilities: Failed to deserialize certificate list retrieved from bulletin board", e);
-            return null;
-        }
+            ContentVerifierProvider verifier;
+            try {
+                verifier = new BcRSAContentVerifierProviderBuilder(new DefaultDigestAlgorithmIdentifierFinder())
+                        .build(electionPk);
+            } catch (OperatorCreationException e) {
+                logger.error("Failed to create verifier for election pk");
+                return null;
+            }
 
-        //Build map of all valid certificates:
-        Map<String, X509CertificateHolder> validCertificates = new HashMap<>();
-        for (SignedEntity<StringListWrapper> se : certificates) {
-            for (String certString : se.getEntity().getContent()) {
-                try {
-                    X509CertificateHolder certHolder = CertificateHelper.readCertificate(certString.getBytes(StandardCharsets.UTF_8));
-                    if (certHolder.isSignatureValid(verifier) && certHolder.getSubject().toString().contains("BB_PEER")) {
-                        validCertificates.put(certHolder.getSubject().toString(), certHolder);
+            List<SignedEntity<StringListWrapper>> certificates;
+            try {
+                certificates = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<StringListWrapper>>>() {
+                });
+            } catch (IOException e) {
+                logger.error("FetchingUtilities: Failed to deserialize certificate list retrieved from bulletin board", e);
+                return null;
+            }
+
+            //Build map of all valid certificates:
+            Map<String, X509CertificateHolder> validCertificates = new HashMap<>();
+            for (SignedEntity<StringListWrapper> se : certificates) {
+                for (String certString : se.getEntity().getContent()) {
+                    try {
+                        X509CertificateHolder certHolder = CertificateHelper.readCertificate(certString.getBytes(StandardCharsets.UTF_8));
+                        if (certHolder.isSignatureValid(verifier) && certHolder.getSubject().toString().toLowerCase().contains("bb_peer")) {
+                            validCertificates.put(certHolder.getSubject().toString(), certHolder);
+                        }
+                    } catch (IOException | CertException ignored) {
                     }
-                } catch (IOException | CertException ignored) {
                 }
             }
-        }
 
-        StringListWrapper certStrings = verifyAndDetermineCommon(certificates, validCertificates.values(), logger);
-        return certStrings.getContent().stream().map(FetchingUtilities::toCertHolder).collect(Collectors.toList());
+            if(validCertificates.isEmpty()){
+                logger.warn("No valid BB-peer certificates found. ");
+                return new ArrayList<>();
+            }
+
+            StringListWrapper certStrings = verifyAndDetermineCommon(certificates, validCertificates.values(), logger);
+            return certStrings.getContent().stream().map(FetchingUtilities::toCertHolder).collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Failed to fetch BB peer certificates", e);
+            return null;
+        }
     }
 
     /**
