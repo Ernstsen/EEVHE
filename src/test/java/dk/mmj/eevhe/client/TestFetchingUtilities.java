@@ -9,6 +9,8 @@ import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.signature.SignatureHelper;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.wrappers.PublicInfoWrapper;
+import dk.mmj.eevhe.entities.wrappers.StringListWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -237,7 +239,14 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
                 System.currentTimeMillis(), CertificateHelper.certificateToPem(daOneCert)), daOneSk);
         SignedEntity<PartialPublicInfo> invalidInfo = new SignedEntity<>(new PartialPublicInfo(2, keyPair.getPublicKey(), keyPair.getSecretKey(), candidates,
                 System.currentTimeMillis(), CertificateHelper.certificateToPem(daOneCert)), daOneSk);
-        SignedEntity<PartialPublicInfo>[] infos = new SignedEntity[]{validInfo, invalidInfo};
+
+
+        List<SignedEntity<PublicInfoWrapper>> infos = Arrays.asList(
+                new SignedEntity<>(new PublicInfoWrapper(Collections.singletonList(validInfo)), bbOneSk),
+                new SignedEntity<>(new PublicInfoWrapper(Collections.singletonList(validInfo)), bbTwoSk),
+                new SignedEntity<>(new PublicInfoWrapper(Collections.singletonList(invalidInfo)), bbThreeSk),
+                new SignedEntity<>(new PublicInfoWrapper(Collections.singletonList(invalidInfo)), bbThreeSk)
+        );
 
         WebTarget bulletinBoard = mock(WebTarget.class);
         WebTarget publicInfoTarget = mock(WebTarget.class);
@@ -245,12 +254,12 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
         when(bulletinBoard.path("publicInfo")).thenReturn(publicInfoTarget);
         final Invocation.Builder invocationBuilder = mock(Invocation.Builder.class);
         when(publicInfoTarget.request()).thenReturn(invocationBuilder);
-        when(invocationBuilder.get(String.class)).thenReturn(mapper.writeValueAsString(infos));
+        when(invocationBuilder.get(String.class)).thenReturn(mapper.writeValueAsString(infos.toArray()));
 
         List<PartialPublicInfo> publicInfos = FetchingUtilities.getPublicInfos(
                 logger, bulletinBoard,
                 CertificateHelper.getPublicKeyFromCertificate(electionCert),
-                Collections.singletonList(daOneCert)
+                Arrays.asList(bbOneCert, bbTwoCert, bbThreeCert)
         );
 
         assertNotNull("Should have fetched public infos", publicInfos);
@@ -325,20 +334,19 @@ public class TestFetchingUtilities extends TestUsingBouncyCastle {
         ));
 
 
-        SignedEntity<List<String>>[] certList = Arrays.asList(
-                new SignedEntity<>(expected, bbOneSk),
-                new SignedEntity<>(expected, bbTwoSk),
-                new SignedEntity<>(corrupt, bbThreeSk)
-        ).toArray(new SignedEntity[0]);
-        String certsString = new ObjectMapper().writeValueAsString(
-                certList
+        List<SignedEntity<StringListWrapper>> certList = Arrays.asList(
+                new SignedEntity<>(new StringListWrapper(expected), bbOneSk),
+                new SignedEntity<>(new StringListWrapper(expected), bbTwoSk),
+                new SignedEntity<>(new StringListWrapper(corrupt), bbThreeSk)
         );
-        System.out.println(certsString);
+        String certsString = new ObjectMapper().writeValueAsString(
+                certList.toArray()
+        );
 
         WebTarget bulletinBoard = mock(WebTarget.class);
         WebTarget certsPath = mock(WebTarget.class);
         Invocation.Builder request = mock(Invocation.Builder.class);
-        when(bulletinBoard.path("certificates")).thenReturn(certsPath);
+        when(bulletinBoard.path("peerCertificates")).thenReturn(certsPath);
         when(certsPath.request()).thenReturn(request);
         when(request.get(String.class)).thenReturn(certsString);
 

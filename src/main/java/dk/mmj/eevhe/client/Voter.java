@@ -52,6 +52,7 @@ public class Voter extends Client {
      * @param targetUrl url for the Bulletin Board
      * @param id        voter ID
      */
+    @SuppressWarnings("unused")//For GUI impl.
     public Voter(String targetUrl, String id) {
         super(new VoterConfiguration(targetUrl, id, null, null));
         this.id = id;

@@ -7,7 +7,8 @@ import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.entities.PartialPublicInfo;
 import dk.mmj.eevhe.entities.PersistedBallot;
 import dk.mmj.eevhe.entities.SignedEntity;
-import dk.mmj.eevhe.entities.wrappers.CertificatesWrapper;
+import dk.mmj.eevhe.entities.wrappers.PublicInfoWrapper;
+import dk.mmj.eevhe.entities.wrappers.StringListWrapper;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.CertException;
@@ -97,24 +98,29 @@ public class FetchingUtilities {
             WebTarget target,
             AsymmetricKeyParameter electionPk,
             Collection<X509CertificateHolder> validCertificates) {
-        WebTarget queryTarget = target.path("publicInfo");
-        List<SignedEntity<PartialPublicInfo>> publicInfoList = fetch(
-                queryTarget,
-                new TypeReference<List<SignedEntity<PartialPublicInfo>>>() {
-                },
-                validCertificates,
-                logger);
+        try {
+            WebTarget queryTarget = target.path("publicInfo");
+            PublicInfoWrapper publicInfoList = fetch(
+                    queryTarget,
+                    new TypeReference<PublicInfoWrapper>() {
+                    },
+                    validCertificates,
+                    logger);
 
-        return publicInfoList.stream().filter(
-                i -> {
-                    try {
-                        return i.verifySignature(getSignaturePublicKey(i.getEntity(), electionPk, logger));
-                    } catch (Exception e) {
-                        logger.error("Failed to verify signature, due to JSON processing", e);
-                        return false;
+            return publicInfoList.getContent().stream().filter(
+                    i -> {
+                        try {
+                            return i.verifySignature(getSignaturePublicKey(i.getEntity(), electionPk, logger));
+                        } catch (Exception e) {
+                            logger.error("Failed to verify signature, due to JSON processing", e);
+                            return false;
+                        }
                     }
-                }
-        ).map(SignedEntity::getEntity).collect(Collectors.toList());
+            ).map(SignedEntity::getEntity).collect(Collectors.toList());
+        } catch (Exception e) {
+            logger.error("Exception occured while fetching public infos", e);
+            return null;//Avoid propagating error to rest of system
+        }
     }
 
 
@@ -156,7 +162,7 @@ public class FetchingUtilities {
      * @return list of certificates for bb-peers on .pem format
      */
     static List<X509CertificateHolder> getBBPeerCertificates(Logger logger, WebTarget edgeTarget, AsymmetricKeyParameter electionPk) {
-        String responseString = edgeTarget.path("getPeerCertificates").request().get(String.class);
+        String responseString = edgeTarget.path("peerCertificates").request().get(String.class);
 
         ContentVerifierProvider verifier;
         try {
@@ -167,9 +173,9 @@ public class FetchingUtilities {
             return null;
         }
 
-        List<SignedEntity<List<String>>> certificates;
+        List<SignedEntity<StringListWrapper>> certificates;
         try {
-            certificates = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<List<String>>>>() {
+            certificates = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<StringListWrapper>>>() {
             });
         } catch (IOException e) {
             logger.error("FetchingUtilities: Failed to deserialize certificate list retrieved from bulletin board", e);
@@ -178,8 +184,8 @@ public class FetchingUtilities {
 
         //Build map of all valid certificates:
         Map<String, X509CertificateHolder> validCertificates = new HashMap<>();
-        for (SignedEntity<List<String>> se : certificates) {
-            for (String certString : se.getEntity()) {
+        for (SignedEntity<StringListWrapper> se : certificates) {
+            for (String certString : se.getEntity().getContent()) {
                 try {
                     X509CertificateHolder certHolder = CertificateHelper.readCertificate(certString.getBytes(StandardCharsets.UTF_8));
                     if (certHolder.isSignatureValid(verifier) && certHolder.getSubject().toString().contains("BB_PEER")) {
@@ -190,8 +196,8 @@ public class FetchingUtilities {
             }
         }
 
-        List<String> certStrings = verifyAndDetermineCommon(certificates, validCertificates.values(), logger);
-        return certStrings.stream().map(FetchingUtilities::toCertHolder).collect(Collectors.toList());
+        StringListWrapper certStrings = verifyAndDetermineCommon(certificates, validCertificates.values(), logger);
+        return certStrings.getContent().stream().map(FetchingUtilities::toCertHolder).collect(Collectors.toList());
     }
 
     /**
@@ -208,7 +214,7 @@ public class FetchingUtilities {
      */
     static <T> T verifyAndDetermineCommon(List<SignedEntity<T>> entityList, Collection<X509CertificateHolder> validCertificates, Logger logger) {
         //We ensure that each sender has only posted ONE message - if more than one has been posted, first is used
-        List<SignedEntity<T>> uniqueEntities = verifySignedAndValidInner(entityList, validCertificates, logger);
+        List<SignedEntity<T>> uniqueEntities = verifySignedAndValid(entityList, validCertificates, logger);
 
 
         //We count how many times each item was posted
@@ -222,21 +228,6 @@ public class FetchingUtilities {
                 .reduce((curr, element) -> curr.getValue() > element.getValue() ? curr : element)
                 .map(Map.Entry::getKey)
                 .orElse(null);
-    }
-
-    /**
-     * Iterates through both signed entities and certificates and returns a list of signed entities that is validly signed
-     * <br>
-     * If one certificate is used in signing multiple entities, only the first entity encountered is included in the result
-     *
-     * @param list         list of signed entities
-     * @param certificates list of all valid certificates on .pem format
-     * @param logger       logger to be used if an error is encountered
-     * @param <T>          type parameter for the entity
-     * @return list of signed entities, each signed by different entities, all with valid signatures
-     */
-    static <T> List<SignedEntity<T>> verifySignedAndValid(List<SignedEntity<T>> list, List<X509CertificateHolder> certificates, Logger logger) {
-        return verifySignedAndValidInner(list, certificates, logger);
     }
 
     private static X509CertificateHolder toCertHolder(String cert) {
@@ -258,7 +249,7 @@ public class FetchingUtilities {
      * @param <T>          type parameter for the entity
      * @return list of signed entities, each signed by different entities, all with valid signatures
      */
-    static <T> List<SignedEntity<T>> verifySignedAndValidInner(List<SignedEntity<T>> list, Collection<X509CertificateHolder> certificates, Logger logger) {
+    static <T> List<SignedEntity<T>> verifySignedAndValid(List<SignedEntity<T>> list, Collection<X509CertificateHolder> certificates, Logger logger) {
         List<SignedEntity<T>> result = new ArrayList<>();
 
         HashSet<X509CertificateHolder> unusedCerts = new HashSet<>(certificates);
