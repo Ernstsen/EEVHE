@@ -221,8 +221,8 @@ public class BulletinBoardEdgeResource {
     @GET
     @Path("complaintResolves")
     @Produces(MediaType.APPLICATION_JSON)
-    public List<SignedEntity<CommitmentWrapper>> getComplaintResolves() {
-        return fetchFromPeers("complaintResolves", new TypeReference<SignedEntity<CommitmentWrapper>>() {
+    public List<SignedEntity<ComplaintResolveWrapper>> getComplaintResolves() {
+        return fetchFromPeers("complaintResolves", new TypeReference<SignedEntity<ComplaintResolveWrapper>>() {
         });
     }
 

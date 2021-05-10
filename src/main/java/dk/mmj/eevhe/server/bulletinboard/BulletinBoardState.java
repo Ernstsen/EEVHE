@@ -2,34 +2,21 @@ package dk.mmj.eevhe.server.bulletinboard;
 
 import dk.mmj.eevhe.entities.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class BulletinBoardState {
-    private final static BulletinBoardState instance = new BulletinBoardState();
-
-    private final List<PersistedBallot> ballots = new ArrayList<>();
-    private final List<SignedEntity<PartialResultList>> results = new ArrayList<>();
-    private final List<SignedEntity<PartialPublicInfo>> signedPartialPublicInfos = new ArrayList<>();
-    private final List<SignedEntity<CommitmentDTO>> signedCommitments = new ArrayList<>();
-    private final List<SignedEntity<PedersenComplaintDTO>> signedPedersenComplaints = new ArrayList<>();
-    private final List<SignedEntity<FeldmanComplaintDTO>> signedFeldmanComplaints = new ArrayList<>();
-    private final List<SignedEntity<ComplaintResolveDTO>> signedComplaintResolves = new ArrayList<>();
-    private final List<SignedEntity<CertificateDTO>> signedCertificates = new ArrayList<>();
-    private final List<String> hasVoted = new ArrayList<>();
-
-    /**
-     * Getter for singleton instance
-     *
-     * @return the BBState
-     */
-    @Deprecated//TODO! REMOVE
-    public static BulletinBoardState getInstance() {
-        return instance;
-    }
+    private final Set<PersistedBallot> ballots = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final Set<SignedEntity<PartialResultList>> results = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final Set<SignedEntity<PartialPublicInfo>> signedPartialPublicInfos = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final Set<SignedEntity<CommitmentDTO>> signedCommitments = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final Set<SignedEntity<PedersenComplaintDTO>> signedPedersenComplaints = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final Set<SignedEntity<FeldmanComplaintDTO>> signedFeldmanComplaints = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final Set<SignedEntity<ComplaintResolveDTO>> signedComplaintResolves = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final Set<SignedEntity<CertificateDTO>> signedCertificates = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final Set<String> hasVoted = Collections.synchronizedSet(new LinkedHashSet<>());
 
     public List<PersistedBallot> getBallots() {
-        return ballots;
+        return new ArrayList<>(ballots);
     }
 
     public void addBallot(PersistedBallot ballot) {
@@ -42,7 +29,7 @@ public class BulletinBoardState {
     }
 
     public List<SignedEntity<PartialResultList>> getResults() {
-        return results;
+        return new ArrayList<>(results);
     }
 
     public void addResult(SignedEntity<PartialResultList> result) {
@@ -50,7 +37,7 @@ public class BulletinBoardState {
     }
 
     public List<SignedEntity<PartialPublicInfo>> getSignedPartialPublicInfos() {
-        return signedPartialPublicInfos;
+        return new ArrayList<>(signedPartialPublicInfos);
     }
 
     public void addSignedPartialPublicInfo(SignedEntity<PartialPublicInfo> signedPartialPublicInfo) {
@@ -58,7 +45,7 @@ public class BulletinBoardState {
     }
 
     public List<SignedEntity<CommitmentDTO>> getSignedCommitments() {
-        return signedCommitments;
+        return new ArrayList<>(signedCommitments);
     }
 
     public void addSignedCommitment(SignedEntity<CommitmentDTO> signedCommitment) {
@@ -66,7 +53,7 @@ public class BulletinBoardState {
     }
 
     public List<SignedEntity<PedersenComplaintDTO>> getSignedPedersenComplaints() {
-        return signedPedersenComplaints;
+        return new ArrayList<>(signedPedersenComplaints);
     }
 
     public void addSignedPedersenComplaint(SignedEntity<PedersenComplaintDTO> signedPedersenComplaint) {
@@ -74,7 +61,7 @@ public class BulletinBoardState {
     }
 
     public List<SignedEntity<FeldmanComplaintDTO>> getSignedFeldmanComplaints() {
-        return signedFeldmanComplaints;
+        return new ArrayList<>(signedFeldmanComplaints);
     }
 
     public void addSignedFeldmanComplaint(SignedEntity<FeldmanComplaintDTO> signedFeldmanComplaint) {
@@ -82,7 +69,7 @@ public class BulletinBoardState {
     }
 
     public List<SignedEntity<ComplaintResolveDTO>> getSignedComplaintResolves() {
-        return signedComplaintResolves;
+        return new ArrayList<>(signedComplaintResolves);
     }
 
     public void addSignedComplaintResolve(SignedEntity<ComplaintResolveDTO> signedComplaintResolve) {
@@ -90,25 +77,10 @@ public class BulletinBoardState {
     }
 
     public List<SignedEntity<CertificateDTO>> getSignedCertificates() {
-        return signedCertificates;
+        return new ArrayList<>(signedCertificates);
     }
 
     public void addSignedCertificate(SignedEntity<CertificateDTO> signedCertificate) {
         signedCertificates.add(signedCertificate);
-    }
-
-    /**
-     * For tests. Clears state
-     */
-    void clear() {
-        ballots.clear();
-        results.clear();
-        signedPartialPublicInfos.clear();
-        signedCommitments.clear();
-        signedPedersenComplaints.clear();
-        signedFeldmanComplaints.clear();
-        signedComplaintResolves.clear();
-        signedCertificates.clear();
-        hasVoted.clear();
     }
 }

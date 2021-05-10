@@ -48,6 +48,15 @@ public class PersistedBallot extends BallotDTO implements BulletinBoardUpdatable
 
     @Override
     public void update(BulletinBoardState bb) {
-        bb.addBallot(this);
+        boolean exists = bb.getBallots().stream().anyMatch(this::isSameBallot);
+        if(!exists){
+            bb.addBallot(this);
+        }
+    }
+
+    private boolean isSameBallot(BallotDTO that){
+        return Objects.equals(this.getCandidateVotes(), that.getCandidateVotes()) &&
+                Objects.equals(this.getId(), that.getId()) &&
+                Objects.equals(this.getSumIsOneProof(), that.getSumIsOneProof());
     }
 }

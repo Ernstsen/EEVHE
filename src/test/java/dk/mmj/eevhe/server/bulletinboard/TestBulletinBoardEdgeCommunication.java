@@ -47,8 +47,8 @@ public class TestBulletinBoardEdgeCommunication {
     private final ObjectMapper mapper = new ObjectMapper();
     private String confPath;
     private JerseyWebTarget edgeTarget;
-    //    private static final List<Integer> bulletinBoardPeerIds = Arrays.asList(1, 2, 3, 4);
-    private static final List<Integer> bulletinBoardPeerIds = Collections.singletonList(1);
+        private static final List<Integer> bulletinBoardPeerIds = Arrays.asList(1, 2, 3, 4);
+//    private static final List<Integer> bulletinBoardPeerIds = Collections.singletonList(1);
     private final Map<Integer, BulletinBoardPeer> bulletinBoardPeers = new HashMap<>();
     private final Map<Integer, JerseyWebTarget> peerTargets = new HashMap<>();
     private final int CONSENSUS_WAIT_TIMEOUT = 2000;
