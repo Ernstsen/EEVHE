@@ -10,7 +10,6 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 
-@SuppressWarnings("WeakerAccess")
 public abstract class AbstractServer implements Application {
     private final Logger logger = LogManager.getLogger(AbstractServer.class);
     private Server server;

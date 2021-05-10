@@ -12,7 +12,6 @@ import dk.mmj.eevhe.entities.BBInput;
 import dk.mmj.eevhe.entities.BBPeerInfo;
 import dk.mmj.eevhe.initialization.SystemConfigurer;
 import dk.mmj.eevhe.initialization.SystemConfigurerConfigBuilder;
-import dk.mmj.eevhe.server.bulletinboard.BulletinBoard;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoardPeer;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoardPeerConfigBuilder;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority;
@@ -36,7 +35,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * IntegrationTest runs a {@link BulletinBoard}, {@link SystemConfigurer} and a number of
+ * IntegrationTest runs a BulletinBoard, {@link SystemConfigurer} and a number of
  * {@link dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority}s, as honest participants of the system.
  * <p>
  * Using the configuration it is possible to determine which ones should be executed and whether votes should

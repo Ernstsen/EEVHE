@@ -4,7 +4,6 @@ import dk.eSoftware.commandLineParser.*;
 import dk.mmj.eevhe.client.ClientConfigBuilder;
 import dk.mmj.eevhe.initialization.SystemConfigurerConfigBuilder;
 import dk.mmj.eevhe.integrationTest.IntegrationTestConfigBuilder;
-import dk.mmj.eevhe.server.bulletinboard.BulletinBoardConfigBuilder;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoardPeerConfigBuilder;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthorityConfigBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;

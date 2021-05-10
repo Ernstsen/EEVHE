@@ -142,7 +142,7 @@ public class ResultFetcher extends Client {
         private final boolean forceCalculations;
 
         /**
-         * @param targetUrl         url for {@link dk.mmj.eevhe.server.bulletinboard.BulletinBoard} to get data from
+         * @param targetUrl         url for {@link dk.mmj.eevhe.server.bulletinboard.BulletinBoardEdge} to get data from
          * @param forceCalculations whether ciphertext containing sum of votes should be computed locally
          */
         ResultFetcherConfiguration(String targetUrl, boolean forceCalculations) {

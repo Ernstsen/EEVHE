@@ -8,7 +8,6 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-        TestBulletinBoardConfigBuilder.class,
         TestBulletinBoardEdge.class,
         TestBulletinBoardEdgeCommunication.class,
         TestBulletinBoardPeer.class,
