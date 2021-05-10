@@ -51,7 +51,6 @@ public class TestBulletinBoardPeerCommunication {
     private String cert;
     private final int CONSENSUS_WAIT_TIMEOUT = 2000;
     private AsymmetricKeyParameter pk;
-    private boolean setupDone = false;
 
     private <T> T unpack(SignedEntity<? extends Wrapper<T>> entity) throws JsonProcessingException {
         assertTrue("Failed to verify signature", entity.verifySignature(pk));
@@ -94,12 +93,6 @@ public class TestBulletinBoardPeerCommunication {
     @Before
     public void setUp() throws Exception {
         ServerState.getInstance().reset();
-
-        if(setupDone){
-            return;
-        }
-
-        setupDone = true;
 
         String confPath = "temp_conf/";
 
