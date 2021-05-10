@@ -6,6 +6,10 @@ import dk.mmj.eevhe.TestUsingBouncyCastle;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.wrappers.CommitmentWrapper;
+import dk.mmj.eevhe.entities.wrappers.ComplaintResolveWrapper;
+import dk.mmj.eevhe.entities.wrappers.FeldmanComplaintWrapper;
+import dk.mmj.eevhe.entities.wrappers.PedersenComplaintWrapper;
 import dk.mmj.eevhe.protocols.connectors.interfaces.DKGBroadcaster;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
@@ -48,6 +52,8 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
     private DKGBroadcaster broadcaster;
     private X509CertificateHolder daOneCert;
     private AsymmetricKeyParameter daOneSk;
+    private X509CertificateHolder bbOneCert;
+    private AsymmetricKeyParameter bbOneSk;
 
     private static void assertException(Runnable runnable) {
         try {
@@ -60,26 +66,45 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
 
     @Before
     public void setUp() throws NoSuchProviderException, NoSuchAlgorithmException, IOException, OperatorCreationException {
-        AsymmetricKeyParameter sk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
+        AsymmetricKeyParameter electionSk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
         AlgorithmIdentifier sha256WithRSASignature = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256WITHRSA");
         AlgorithmIdentifier digestSha = new DefaultDigestAlgorithmIdentifierFinder().find("SHA-256");
 
-        java.security.KeyPair keyPair = KeyHelper.generateRSAKeyPair();
-        X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
-                new X500Name("CN=EEVHE_TESTSUITE"),
-                BigInteger.valueOf(1),
-                new Date(), new Date(System.currentTimeMillis() + (60 * 1000)),
-                new X500Name("CN=DA" + 1),
-                new SubjectPublicKeyInfo(sha256WithRSASignature, keyPair.getPublic().getEncoded())
-        );
+        {
+            java.security.KeyPair keyPair = KeyHelper.generateRSAKeyPair();
+            X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
+                    new X500Name("CN=EEVHE_TESTSUITE"),
+                    BigInteger.valueOf(1),
+                    new Date(), new Date(System.currentTimeMillis() + (60 * 1000)),
+                    new X500Name("CN=DA" + 1),
+                    new SubjectPublicKeyInfo(sha256WithRSASignature, keyPair.getPublic().getEncoded())
+            );
 
-        ContentSigner signer = new BcRSAContentSignerBuilder(
-                sha256WithRSASignature,
-                digestSha
-        ).build(sk);
+            ContentSigner signer = new BcRSAContentSignerBuilder(
+                    sha256WithRSASignature,
+                    digestSha
+            ).build(electionSk);
 
-        daOneCert = cb.build(signer);
-        daOneSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
+            daOneCert = cb.build(signer);
+            daOneSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
+        }
+        {
+            java.security.KeyPair keyPair = KeyHelper.generateRSAKeyPair();
+            X509v3CertificateBuilder cb = new X509v3CertificateBuilder(
+                    new X500Name("CN=EEVHE_TESTSUITE"),
+                    BigInteger.valueOf(1),
+                    new Date(), new Date(System.currentTimeMillis() + (60 * 1000)),
+                    new X500Name("CN=BB_PEER" + 1),
+                    new SubjectPublicKeyInfo(sha256WithRSASignature, keyPair.getPublic().getEncoded())
+            );
+
+            ContentSigner signer = new BcRSAContentSignerBuilder(
+                    sha256WithRSASignature,
+                    digestSha
+            ).build(electionSk);
+            bbOneCert = cb.build(signer);
+            bbOneSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
+        }
 
         target = mock(WebTarget.class);
 
@@ -105,7 +130,7 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
 
         HashMap<Integer, String> certMap = new HashMap<>();
         certMap.put(1, CertificateHelper.certificateToPem(daOneCert));
-        broadcaster = new BulletinBoardDKGBroadcaster(target, daOneSk, () -> certMap);
+        broadcaster = new BulletinBoardDKGBroadcaster(target, daOneSk, () -> certMap, () -> Collections.singletonList(bbOneCert));
 
     }
 
@@ -154,7 +179,12 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
 
         invalidCommit.getEntity().setProtocol("FOO");
 
-        final String commitsString = new ObjectMapper().writeValueAsString(expected.toArray());
+        List<SignedEntity<CommitmentWrapper>> commitmentReturned = Arrays.asList(
+                new SignedEntity<>(new CommitmentWrapper(expected), bbOneSk),
+                new SignedEntity<>(new CommitmentWrapper(expected), bbOneSk)//Duplicate to ensure proper serialization (for some stupid reason)
+        );
+
+        final String commitsString = new ObjectMapper().writeValueAsString(commitmentReturned.toArray());
 
         final WebTarget webTarget = targets.get("commitments");
         final Invocation.Builder builder = mock(Invocation.Builder.class);
@@ -267,7 +297,12 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
                 includedComplaint,
                 complaintWrongProof);
 
-        final String commitsString = new ObjectMapper().writeValueAsString(expected.toArray());
+        List<SignedEntity<PedersenComplaintWrapper>> bbPeerReturned = Arrays.asList(
+                new SignedEntity<>(new PedersenComplaintWrapper(expected), bbOneSk),
+                new SignedEntity<>(new PedersenComplaintWrapper(expected), bbOneSk)//Duplicate to ensure proper serialization (for some stupid reason)
+        );
+
+        final String commitsString = new ObjectMapper().writeValueAsString(bbPeerReturned.toArray());
 
         final WebTarget webTarget = targets.get("pedersenComplaints");
         final Invocation.Builder builder = mock(Invocation.Builder.class);
@@ -287,7 +322,12 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
         final List<SignedEntity<FeldmanComplaintDTO>> expected = Arrays.asList(valid, invalid);
         invalid.getEntity().setTargetId(67);
 
-        final String commitsString = new ObjectMapper().writeValueAsString(expected.toArray());
+        List<SignedEntity<FeldmanComplaintWrapper>> bbPeerReturned = Arrays.asList(
+                new SignedEntity<>(new FeldmanComplaintWrapper(expected), bbOneSk),
+                new SignedEntity<>(new FeldmanComplaintWrapper(expected), bbOneSk)//Duplicate to ensure proper serialization (for some stupid reason)
+        );
+
+        final String commitsString = new ObjectMapper().writeValueAsString(bbPeerReturned.toArray());
 
         final WebTarget webTarget = targets.get("feldmanComplaints");
         final Invocation.Builder builder = mock(Invocation.Builder.class);
@@ -376,7 +416,11 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
         final List<SignedEntity<ComplaintResolveDTO>> expected = Arrays.asList(valid, invalid);
         invalid.getEntity().getValue().setSender(-2);
 
-        final String commitsString = new ObjectMapper().writeValueAsString(expected.toArray());
+        List<SignedEntity<ComplaintResolveWrapper>> bbPeerReturned = Arrays.asList(
+                new SignedEntity<>(new ComplaintResolveWrapper(expected), bbOneSk),
+                new SignedEntity<>(new ComplaintResolveWrapper(expected), bbOneSk)//Duplicate to ensure proper serialization (for some stupid reason)
+        );
+        final String commitsString = new ObjectMapper().writeValueAsString(bbPeerReturned.toArray());
 
         final WebTarget webTarget = targets.get("complaintResolves");
         final Invocation.Builder builder = mock(Invocation.Builder.class);

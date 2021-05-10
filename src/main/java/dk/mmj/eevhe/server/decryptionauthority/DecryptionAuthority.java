@@ -178,7 +178,7 @@ public class DecryptionAuthority extends AbstractServer {
                 certProvider
         );
 
-        dkg = new GennaroDKG(new BulletinBoardDKGBroadcaster(bulletinBoard, sk, certProvider),
+        dkg = new GennaroDKG(new BulletinBoardDKGBroadcaster(bulletinBoard, sk, certProvider, this::getBBPeerCertificates),
                 incoming, communicators, id, params, "ID:" + id);
         dkgSteps = dkg.getSteps().iterator();
 

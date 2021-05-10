@@ -133,7 +133,7 @@ public class FetchingUtilities {
      * @param <T>               return-type
      * @return the value(s) fetched and agreed upon by the BB-Peers. Null if no agreement is reached
      */
-    private static <T> T fetch(
+    public static <T> T fetch(
             WebTarget target,
             @SuppressWarnings("unused") TypeReference<T> typeReference,
             Collection<X509CertificateHolder> validCertificates,
