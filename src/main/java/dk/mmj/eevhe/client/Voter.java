@@ -104,9 +104,11 @@ public class Voter extends Client {
 
             id = UUID.randomUUID().toString();
             int vote = random.nextInt(size);
-            castVotes[vote]++;
 
-            doVote(vote, publicKey);
+            if(doVote(vote, publicKey)){
+                castVotes[vote]++;
+            }
+
         }
         System.out.println("Dispatched " + multi + " votes with distribution: " + Arrays.toString(castVotes));
     }
