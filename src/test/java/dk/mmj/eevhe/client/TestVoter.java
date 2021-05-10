@@ -1,9 +1,6 @@
 package dk.mmj.eevhe.client;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import dk.eSoftware.commandLineParser.NoSuchBuilderException;
 import dk.eSoftware.commandLineParser.SingletonCommandLineParser;
-import dk.eSoftware.commandLineParser.WrongFormatException;
 import dk.mmj.eevhe.Main;
 import dk.mmj.eevhe.TestUsingBouncyCastle;
 import dk.mmj.eevhe.crypto.ElGamal;
@@ -48,7 +45,6 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class TestVoter extends TestUsingBouncyCastle {
-    private static final ObjectMapper mapper = new ObjectMapper();
     private static final Logger logger = LogManager.getLogger(TestVoter.class);
     private static BigInteger h;
     private static PublicKey pk;
@@ -108,17 +104,16 @@ public class TestVoter extends TestUsingBouncyCastle {
 
     @Before
     public void setUp() throws Exception {
-        BulletinBoardState bulletinBoardState = ServerState.getInstance().get("bbState.1", BulletinBoardState.class);
-        if (bulletinBoardState != null) {
-            bulletinBoardState.getBallots().clear();
-        }
+        ServerState.getInstance().put("bbState.1", new BulletinBoardState());
     }
 
     @Test
-    public void testSingleVote() {
+    public void testSingleVote() throws IOException {
         String id = "id";
         Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, id, 2, null);
         Voter voter = new Voter(conf);
+
+        initializeBulletinBoard(edgeTarget);
 
         voter.run();
 
@@ -135,7 +130,7 @@ public class TestVoter extends TestUsingBouncyCastle {
     public void testMultiVote() throws  IOException {
 
 
-        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, null, null, 20);
+        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, null, null, 5);
         Voter voter = new Voter(conf);
         JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + edgePort);
 
@@ -149,7 +144,7 @@ public class TestVoter extends TestUsingBouncyCastle {
         );
 
         assertNotNull("Failed to fetch list of posted ballots", ballots);
-        assertEquals("Did not find exactly twenty votes!", 20, ballots.size());
+        assertEquals("Did not find exactly twenty votes!", 5, ballots.size());
 
         for (PersistedBallot ballot : ballots) {
             assertTrue("Failed to verify ballot", VoteProofUtils.verifyBallot(ballot, pk));
