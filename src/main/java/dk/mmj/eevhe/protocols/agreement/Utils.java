@@ -15,7 +15,6 @@ public class Utils {
     private static final Logger logger = LogManager.getLogger(Utils.class);
 
     public static boolean validate(SignedEntity<?> se, String senderId) {
-//        TODO: prettify:
         String pkString = (String) ServerState.getInstance().get("peerCertificates", Map.class).get(senderId);
         try {
             AsymmetricKeyParameter pk = CertificateHelper.getPublicKeyFromCertificate(pkString.getBytes(StandardCharsets.UTF_8));
