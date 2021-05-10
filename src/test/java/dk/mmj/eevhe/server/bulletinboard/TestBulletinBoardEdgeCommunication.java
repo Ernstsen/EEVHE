@@ -17,6 +17,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.glassfish.jersey.client.JerseyWebTarget;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -45,10 +46,9 @@ public class TestBulletinBoardEdgeCommunication {
     private BulletinBoardEdge bulletinBoardEdge;
     private final ObjectMapper mapper = new ObjectMapper();
     private String confPath;
-    private Thread edgeThread;
     private JerseyWebTarget edgeTarget;
     //    private static final List<Integer> bulletinBoardPeerIds = Arrays.asList(1, 2, 3, 4);
-    private static final List<Integer> bulletinBoardPeerIds = Arrays.asList(1);
+    private static final List<Integer> bulletinBoardPeerIds = Collections.singletonList(1);
     private final Map<Integer, BulletinBoardPeer> bulletinBoardPeers = new HashMap<>();
     private final Map<Integer, JerseyWebTarget> peerTargets = new HashMap<>();
     private final int CONSENSUS_WAIT_TIMEOUT = 2000;
@@ -56,7 +56,6 @@ public class TestBulletinBoardEdgeCommunication {
     private AsymmetricKeyParameter secretKey;
     private String cert;
     private AsymmetricKeyParameter pk;
-    private boolean setupDone = false;
 
     private <T> T unpack(SignedEntity<? extends Wrapper<T>> entity) throws JsonProcessingException {
         assertTrue("Failed to verify signature", entity.verifySignature(pk));
@@ -100,12 +99,6 @@ public class TestBulletinBoardEdgeCommunication {
     public void setUp() throws Exception {
         ServerState.getInstance().reset();
 
-        if (setupDone) {
-            return;
-        }
-
-        setupDone = true;
-
         confPath = "temp_conf/";
 
         buildTempFiles();
@@ -113,7 +106,7 @@ public class TestBulletinBoardEdgeCommunication {
         BulletinBoardEdge.BulletinBoardEdgeConfiguration config = new BulletinBoardEdge.BulletinBoardEdgeConfiguration(edgePort, confPath, "1");
         bulletinBoardEdge = new BulletinBoardEdge(config);
 
-        edgeThread = new Thread(bulletinBoardEdge);
+        Thread edgeThread = new Thread(bulletinBoardEdge);
         edgeThread.start();
         Thread.sleep(2_000);
 
@@ -145,7 +138,7 @@ public class TestBulletinBoardEdgeCommunication {
         Thread.sleep(2_000);
     }
 
-    private <T extends Wrapper> void assertEdgeReceivedCorrectDataFromPeers(String path, TypeReference<List<SignedEntity<T>>> typeReference) throws JsonProcessingException {
+    private <T extends Wrapper<?>> void assertEdgeReceivedCorrectDataFromPeers(String path, TypeReference<List<SignedEntity<T>>> typeReference) throws JsonProcessingException {
         // Assert that edge retrieves correct data from peers
         String listOfSignedWrapperStrings = edgeTarget.path(path).request().get(String.class);
         List<SignedEntity<T>> listOfSignedWrappers = mapper.readValue(listOfSignedWrapperStrings, typeReference);
@@ -459,5 +452,25 @@ public class TestBulletinBoardEdgeCommunication {
         testPostAndRetrievePublicInfo();
 
         testPostAndRetrieveBallot();
+    }
+
+    @After
+    public void tearDown() throws InterruptedException {
+        for (File file : files) {
+            try {
+                //noinspection ResultOfMethodCallIgnored
+                file.delete();
+            } catch (Exception ignored) {
+            }
+        }
+
+        bulletinBoardEdge.terminate();
+        for (BulletinBoardPeer peer : bulletinBoardPeers.values()) {
+            peer.terminate();
+        }
+
+        for (Thread thread : peerThreads) {
+            thread.join();
+        }
     }
 }
