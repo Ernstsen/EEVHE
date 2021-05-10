@@ -26,15 +26,9 @@ public class TestBulletinBoardState {
         secretKey = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
     }
 
-    @Before
-    public void setUp() throws Exception {
-        BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
-        bulletinBoardState.clear();
-    }
-
     @Test
     public void testBallot() {
-        BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
+        BulletinBoardState bulletinBoardState = new BulletinBoardState();
 
         CipherText c = new CipherText(valueOf(165), valueOf(684983));
         Proof p1 = new Proof(valueOf(64986), valueOf(859483), valueOf(92873452), valueOf(293885671));
@@ -61,7 +55,7 @@ public class TestBulletinBoardState {
 
     @Test
     public void testResult() {
-        BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
+        BulletinBoardState bulletinBoardState = new BulletinBoardState();
 
         CipherText c = new CipherText(valueOf(165), valueOf(684983));
         CipherText c2 = new CipherText(valueOf(1652), valueOf(68498));
@@ -86,7 +80,7 @@ public class TestBulletinBoardState {
 
     @Test
     public void testPublicInfo() {
-        BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
+        BulletinBoardState bulletinBoardState = new BulletinBoardState();
 
         PublicKey publicKey = new PublicKey(BigInteger.valueOf(4), BigInteger.valueOf(2), BigInteger.valueOf(11));
         List<Candidate> candidates = new ArrayList<Candidate>() {{
@@ -106,7 +100,7 @@ public class TestBulletinBoardState {
 
     @Test
     public void testCommitment() {
-        BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
+        BulletinBoardState bulletinBoardState = new BulletinBoardState();
 
         SignedEntity<CommitmentDTO> commitment = new SignedEntity<>(
                 new CommitmentDTO(new BigInteger[]{BigInteger.valueOf(1), BigInteger.valueOf(2), BigInteger.valueOf(3)}, 1, "Some protocol"), secretKey);
@@ -120,7 +114,7 @@ public class TestBulletinBoardState {
 
     @Test
     public void testPedersenComplaint() {
-        BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
+        BulletinBoardState bulletinBoardState = new BulletinBoardState();
 
         SignedEntity<PedersenComplaintDTO> pedersenComplaint = new SignedEntity<>(new PedersenComplaintDTO(1, 2), secretKey);
 
@@ -133,7 +127,7 @@ public class TestBulletinBoardState {
 
     @Test
     public void testFeldmanComplaint() {
-        BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
+        BulletinBoardState bulletinBoardState = new BulletinBoardState();
 
         SignedEntity<FeldmanComplaintDTO> feldmanComplaint = new SignedEntity<>(
                 new FeldmanComplaintDTO(1, 2, BigInteger.valueOf(1), BigInteger.valueOf(2)), secretKey);
@@ -147,7 +141,7 @@ public class TestBulletinBoardState {
 
     @Test
     public void testComplaintResolve() {
-        BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
+        BulletinBoardState bulletinBoardState = new BulletinBoardState();
 
         SignedEntity<ComplaintResolveDTO> complaintResolve = new SignedEntity<>(new ComplaintResolveDTO(1, 2,
                 new PartialSecretMessageDTO(BigInteger.valueOf(1), BigInteger.valueOf(2), 1, 2)), secretKey);
@@ -161,7 +155,7 @@ public class TestBulletinBoardState {
 
     @Test
     public void testCertificates() {
-        BulletinBoardState bulletinBoardState = BulletinBoardState.getInstance();
+        BulletinBoardState bulletinBoardState = new BulletinBoardState();
 
         SignedEntity<CertificateDTO> certificate = new SignedEntity<>(new CertificateDTO("Some random certificate", 1), secretKey);
 
