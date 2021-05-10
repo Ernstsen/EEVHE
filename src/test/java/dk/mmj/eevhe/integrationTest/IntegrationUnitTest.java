@@ -70,10 +70,10 @@ public class IntegrationUnitTest {
                 conf.resolve("DA1.zip"),
                 conf.resolve("DA2.zip"),
                 conf.resolve("DA3.zip"),
-                conf.resolve("BB_Peer1.zip"),
-                conf.resolve("BB_Peer2.zip"),
-                conf.resolve("BB_Peer3.zip"),
-                conf.resolve("BB_Peer4.zip")
+                conf.resolve("BB_peer1.zip"),
+                conf.resolve("BB_peer2.zip"),
+                conf.resolve("BB_peer3.zip"),
+                conf.resolve("BB_peer4.zip")
         );
 
         for (Path path : paths) {

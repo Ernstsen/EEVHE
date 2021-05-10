@@ -39,7 +39,7 @@ public class TestMain {
 
     @After
     public void tearDown() throws Exception {
-        Files.delete(Paths.get("./conf/BB_Peer1.zip"));
+        Files.delete(Paths.get("./conf/BB_peer1.zip"));
         Files.delete(Paths.get("./conf/BB_input.json"));
     }
 }

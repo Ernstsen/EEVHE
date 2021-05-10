@@ -65,7 +65,7 @@ public class TestBulletinBoardPeer {
         mapper.writeValue(common, input);
         files.add(common);
 
-        File zip = new File(file, "BB_Peer1.zip");
+        File zip = new File(file, "BB_peer1.zip");
         try (ZipOutputStream ous = new ZipOutputStream(new FileOutputStream(zip))) {
             ous.putNextEntry(new ZipEntry("sk.pem"));
             IOUtils.copy(Files.newInputStream(Paths.get("certs/test_glob_key.pem")), ous);
