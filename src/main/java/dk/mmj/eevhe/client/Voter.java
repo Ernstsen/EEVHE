@@ -173,12 +173,18 @@ public class Voter extends Client {
             return false;
         }
 
+        return verifyPosted();
+    }
+
+    private boolean verifyPosted() {
         List<X509CertificateHolder> certs = getBBPeerCertificates();
         int peers = certs.size();
 
         int retries = 0;
         do {
             try {
+                Thread.sleep(1_000);
+
                 String fetchedBallot = target.path("getBallot")
                         .path(id)
                         .request().get(String.class);
@@ -194,9 +200,6 @@ public class Voter extends Client {
                 if (validBallotSignatures.size() > threshold) {
                     return true;
                 }
-
-
-                Thread.sleep(1_000);
             } catch (JsonProcessingException | InterruptedException e) {
                 logger.error("Failed to parse fetched ballots", e);
                 return false;
