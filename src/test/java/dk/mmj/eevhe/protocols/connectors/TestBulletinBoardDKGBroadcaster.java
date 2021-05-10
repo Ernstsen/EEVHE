@@ -24,6 +24,7 @@ import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
@@ -50,10 +51,10 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
     private final HashMap<String, WebTarget> targets = new HashMap<>();
     private WebTarget target;
     private DKGBroadcaster broadcaster;
-    private X509CertificateHolder daOneCert;
-    private AsymmetricKeyParameter daOneSk;
-    private X509CertificateHolder bbOneCert;
-    private AsymmetricKeyParameter bbOneSk;
+    private static X509CertificateHolder daOneCert;
+    private static AsymmetricKeyParameter daOneSk;
+    private static X509CertificateHolder bbOneCert;
+    private static AsymmetricKeyParameter bbOneSk;
 
     private static void assertException(Runnable runnable) {
         try {
@@ -64,8 +65,8 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
         }
     }
 
-    @Before
-    public void setUp() throws NoSuchProviderException, NoSuchAlgorithmException, IOException, OperatorCreationException {
+    @BeforeClass
+    public static void beforeClass() throws Exception {
         AsymmetricKeyParameter electionSk = KeyHelper.readKey(Paths.get("certs/test_glob_key.pem"));
         AlgorithmIdentifier sha256WithRSASignature = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA256WITHRSA");
         AlgorithmIdentifier digestSha = new DefaultDigestAlgorithmIdentifierFinder().find("SHA-256");
@@ -105,7 +106,10 @@ public class TestBulletinBoardDKGBroadcaster extends TestUsingBouncyCastle {
             bbOneCert = cb.build(signer);
             bbOneSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
         }
+    }
 
+    @Before
+    public void setUp() throws NoSuchProviderException, NoSuchAlgorithmException, IOException, OperatorCreationException {
         target = mock(WebTarget.class);
 
         //Build map with all webTargets with paths
