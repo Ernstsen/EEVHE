@@ -79,12 +79,10 @@ public class Voter extends Client {
     public void run() {
         assertBulletinBoard();
 
-        PublicKey publicKey = getPublicKey();
         if (multi != null) {
-            doMultiVote(publicKey);
+            doMultiVote(getPublicKey());
         } else {
-            int vote = getVote();
-            doVote(vote, publicKey);
+            vote(getVote());
         }
     }
 
