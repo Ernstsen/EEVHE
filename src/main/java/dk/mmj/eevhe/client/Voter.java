@@ -197,7 +197,7 @@ public class Voter extends Client {
 
                 int threshold = (int) Math.ceil(((float) peers) / 2);
                 System.out.print("Received vote confirmation from " + validBallotSignatures.size() + "/" + threshold + " peers \r");
-                if (validBallotSignatures.size() > threshold) {
+                if (validBallotSignatures.size() >= threshold) {
                     return true;
                 }
             } catch (JsonProcessingException | InterruptedException e) {
