@@ -32,10 +32,6 @@ public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBui
     private boolean decryptionAuthority1 = true;
     private boolean decryptionAuthority2 = true;
     private boolean decryptionAuthority3 = true;
-    private boolean bulletinBoardPeer1 = true;
-    private boolean bulletinBoardPeer2 = true;
-    private boolean bulletinBoardPeer3 = true;
-    private boolean bulletinBoardPeer4 = true;
 
     @Override
     public void applyCommand(CommandLineParser.Command command) {
@@ -106,22 +102,7 @@ public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBui
     }
 
     private List<Integer> getBulletinBoardPeers() {
-        ArrayList<Integer> bulletinBoardPeers = new ArrayList<>();
-
-        if (bulletinBoardPeer1){
-            bulletinBoardPeers.add(1);
-        }
-        if (bulletinBoardPeer2){
-            bulletinBoardPeers.add(2);
-        }
-        if (bulletinBoardPeer3){
-            bulletinBoardPeers.add(3);
-        }
-        if (bulletinBoardPeer4){
-            bulletinBoardPeers.add(4);
-        }
-
-        return bulletinBoardPeers;
+        return Arrays.asList(1, 2, 3, 4);
     }
 
     private List<Integer> getVoteDelays() {

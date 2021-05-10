@@ -6,6 +6,7 @@ import dk.eSoftware.commandLineParser.WrongFormatException;
 import dk.mmj.eevhe.client.ResultFetcher;
 import dk.mmj.eevhe.client.Voter;
 import dk.mmj.eevhe.client.results.ElectionResult;
+import dk.mmj.eevhe.server.bulletinboard.BulletinBoardEdge;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoardPeer;
 import dk.mmj.eevhe.server.bulletinboard.TestBulletinBoardPeerCommunication;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority;
@@ -86,6 +87,7 @@ public class IntegrationUnitTest {
         private final List<DecryptionAuthority> authorities = new ArrayList<>();
         private final List<Voter> multiVoters = new ArrayList<>();
         private final List<BulletinBoardPeer> bulletinBoardPeers = new ArrayList<>();
+        private final List<BulletinBoardEdge> bulletinBoardEdges = new ArrayList<>();
         private ResultFetcher resultFetcher;
         private List<String> errors;
         private boolean finalized = false;
@@ -106,6 +108,11 @@ public class IntegrationUnitTest {
         @Override
         public void registerBulletinBoardPeer(BulletinBoardPeer bulletinBoardPeer) {
             bulletinBoardPeers.add(bulletinBoardPeer);
+        }
+
+        @Override
+        public void registerBulletinBoardEdge(BulletinBoardEdge bulletinBoardEdge) {
+            bulletinBoardEdges.add(bulletinBoardEdge);
         }
 
         @Override
@@ -165,6 +172,10 @@ public class IntegrationUnitTest {
 
             for (BulletinBoardPeer bulletinBoardPeer : bulletinBoardPeers) {
                 bulletinBoardPeer.terminate();
+            }
+
+            for (BulletinBoardEdge bulletinBoardEdge : bulletinBoardEdges) {
+                bulletinBoardEdge.terminate();
             }
         }
     }

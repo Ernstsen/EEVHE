@@ -1,6 +1,5 @@
 package dk.mmj.eevhe.server.decryptionauthority;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
@@ -11,6 +10,7 @@ import dk.mmj.eevhe.crypto.signature.CertificateProviderImpl;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.wrappers.CertificatesWrapper;
 import dk.mmj.eevhe.interfaces.Decrypter;
 import dk.mmj.eevhe.protocols.GennaroDKG;
 import dk.mmj.eevhe.protocols.connectors.BulletinBoardDKGBroadcaster;
@@ -149,7 +149,7 @@ public class DecryptionAuthority extends AbstractServer {
 
     @Override
     protected void afterStart() {
-        logger.info("Posting ");
+        logger.info("Posting cetificates ");
         Entity<SignedEntity<CertificateDTO>> entity = Entity.entity(
                 new SignedEntity<>(new CertificateDTO(certString, id), sk),
                 MediaType.APPLICATION_JSON);
@@ -169,7 +169,7 @@ public class DecryptionAuthority extends AbstractServer {
                 .stream()
                 .collect(Collectors.toMap(PeerInfo::getId, inf -> new RestDKGPeerCommunicator(configureWebTarget(logger, inf.getAddress()), sk)));
         communicators.remove(id);//We remove ourself, to be able to iterate without
-        CertificateProviderImpl certProvider = new CertificateProviderImpl(this::getBbCertificates, electionPk);
+        CertificateProviderImpl certProvider = new CertificateProviderImpl(this::getDaCertificates, electionPk);
         final ServerStateDKGIncomingChannel incoming = new ServerStateDKGIncomingChannel(
                 input.getInfos().stream()
                         .map(PeerInfo::getId)
@@ -192,15 +192,14 @@ public class DecryptionAuthority extends AbstractServer {
      *
      * @return list of signed certificates
      */
-    private List<SignedEntity<CertificateDTO>> getBbCertificates() {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String certificates = bulletinBoard.path("certificates").request().get(String.class);
-            return mapper.readValue(certificates, new TypeReference<List<SignedEntity<CertificateDTO>>>() {
-            });
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to fetch certificates", e);
-        }
+    private List<SignedEntity<CertificateDTO>> getDaCertificates() {
+        return FetchingUtilities.fetch(
+                bulletinBoard.path("certificates"),
+                new TypeReference<CertificatesWrapper>() {
+                },
+                getBBPeerCertificates(),
+                logger
+        ).getContent();
     }
 
     /**

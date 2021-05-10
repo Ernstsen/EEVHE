@@ -178,7 +178,7 @@ public class FetchingUtilities {
                 certificates = new ObjectMapper().readValue(responseString, new TypeReference<List<SignedEntity<StringListWrapper>>>() {
                 });
             } catch (IOException e) {
-                logger.error("FetchingUtilities: Failed to deserialize certificate list retrieved from bulletin board", e);
+                logger.error("FetchingUtilities: Failed to deserialize certificate list retrieved from bulletin board. Target: " + edgeTarget, e);
                 return null;
             }
 

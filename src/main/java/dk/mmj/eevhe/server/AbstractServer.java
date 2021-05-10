@@ -11,7 +11,7 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 
 public abstract class AbstractServer implements Application {
-    private final Logger logger = LogManager.getLogger(AbstractServer.class);
+    private final Logger logger = LogManager.getLogger(getClass());
     private Server server;
 
     public void run() {

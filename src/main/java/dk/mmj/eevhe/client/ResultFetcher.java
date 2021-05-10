@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.results.ElectionResult;
 import dk.mmj.eevhe.client.results.ResultCombinerImpl;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.wrappers.PartialResultWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -54,15 +55,13 @@ public class ResultFetcher extends Client {
         }
 
         logger.info("Fetching partial results");
-
-        String resultsString = target.path("result").request().get(String.class);
-        List<SignedEntity<PartialResultList>> signedResults = null;
-        try {
-            signedResults = mapper.readValue(resultsString, new TypeReference<List<SignedEntity<PartialResultList>>>() {
-            });
-        } catch (JsonProcessingException e) {
-            logger.error("Failed to read list of partial results", e);
-        }
+        List<SignedEntity<PartialResultList>> signedResults = FetchingUtilities.fetch(
+                target.path("result"),
+                new TypeReference<PartialResultWrapper>() {
+                },
+                getBBPeerCertificates(),
+                logger
+        ).getContent();
 
         if (signedResults == null || signedResults.isEmpty()) {
             logger.info("Did not fetch any results. Probable cause is unfinished decryption. Try again later");
