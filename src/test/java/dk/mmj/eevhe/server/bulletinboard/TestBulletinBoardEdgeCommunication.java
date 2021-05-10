@@ -83,7 +83,7 @@ public class TestBulletinBoardEdgeCommunication {
         files.add(common);
 
         for (int id : bulletinBoardPeerIds) {
-            File zip = new File(folder, "BB_Peer" + id + ".zip");
+            File zip = new File(folder, "BB_peer" + id + ".zip");
             try (ZipOutputStream ous = new ZipOutputStream(new FileOutputStream(zip))) {
                 ous.putNextEntry(new ZipEntry("sk.pem"));
                 IOUtils.copy(Files.newInputStream(Paths.get("certs/test_glob_key.pem")), ous);

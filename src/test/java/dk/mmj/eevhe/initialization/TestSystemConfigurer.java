@@ -129,9 +129,9 @@ public class TestSystemConfigurer extends TestUsingBouncyCastle {
             assertEquals("Wrong address for BB Peer id=" + 2, bbPeerAddresses.get(2), "https://localhost:18082");
             assertEquals("Wrong address for BB Peer id=" + 3, bbPeerAddresses.get(3), "https://localhost:18083");
 
-            assertTrue("Should have created zip for BB_Peer1", Files.exists(dirPath.resolve("BB_Peer1.zip")));
-            assertTrue("Should have created zip for BB_Peer2", Files.exists(dirPath.resolve("BB_Peer2.zip")));
-            assertTrue("Should have created zip for BB_Peer3", Files.exists(dirPath.resolve("BB_Peer3.zip")));
+            assertTrue("Should have created zip for BB_Peer1", Files.exists(dirPath.resolve("BB_peer1.zip")));
+            assertTrue("Should have created zip for BB_Peer2", Files.exists(dirPath.resolve("BB_peer2.zip")));
+            assertTrue("Should have created zip for BB_Peer3", Files.exists(dirPath.resolve("BB_peer3.zip")));
 
             Path bbPeer1zip = dirPath.resolve("BB_Peer1.zip");
             try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(bbPeer1zip))) {
