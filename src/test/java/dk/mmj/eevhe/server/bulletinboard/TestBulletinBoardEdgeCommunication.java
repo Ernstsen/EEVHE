@@ -177,7 +177,10 @@ public class TestBulletinBoardEdgeCommunication {
             List<PersistedBallot> fetchedBallotList = unpack(signedBallotList);
 
             if (!lastSeenBallotList.isEmpty()) {
-                assertEquals("Bulletin Board Peers do not agree on ballot lists", lastSeenBallotList, fetchedBallotList);
+                assertEquals("BB peers does not agree on ballot list length",lastSeenBallotList.size(), fetchedBallotList.size());
+                for (int i = 0; i < lastSeenBallotList.size(); i++) {
+                    assertTrue("BBPeers disagreed on ballot in position " + i, lastSeenBallotList.get(i).isSameBallot(fetchedBallotList.get(i)));
+                }
             }
 
             assertEquals("Ballot list should be of size 1", 1, fetchedBallotList.size());

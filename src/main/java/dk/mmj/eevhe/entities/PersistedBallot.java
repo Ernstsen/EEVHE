@@ -54,7 +54,7 @@ public class PersistedBallot extends BallotDTO implements BulletinBoardUpdatable
         }
     }
 
-    private boolean isSameBallot(BallotDTO that){
+    public boolean isSameBallot(BallotDTO that){
         return Objects.equals(this.getCandidateVotes(), that.getCandidateVotes()) &&
                 Objects.equals(this.getId(), that.getId()) &&
                 Objects.equals(this.getSumIsOneProof(), that.getSumIsOneProof());

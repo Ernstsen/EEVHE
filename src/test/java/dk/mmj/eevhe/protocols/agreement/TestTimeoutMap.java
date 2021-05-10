@@ -24,6 +24,12 @@ public class TestTimeoutMap {
         timeout.putAll(orig);
         Thread.sleep(25);
         timeout.get(key1);
+        Thread.sleep(25);
+        timeout.get(key1);
+        Thread.sleep(25);
+        timeout.get(key1);
+        Thread.sleep(25);
+        timeout.get(key1);
         Thread.sleep(40);
 
         String get1 = timeout.get(key1);
