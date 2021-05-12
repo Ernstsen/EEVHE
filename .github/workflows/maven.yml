@@ -22,3 +22,12 @@ jobs:
         java-version: 1.8
     - name: Build with Maven
       run: mvn install
+   - uses: codecov/codecov-action@v1
+     with:
+       files: ./target/jacoco-report/jacoco.xml
+       directory: ./coverage/reports/
+       flags: unittests # optional
+       name: codecov-umbrella # optional
+       path_to_write_report: ./coverage/codecov_report.txt
+       verbose: true # optional (default = false)
+
