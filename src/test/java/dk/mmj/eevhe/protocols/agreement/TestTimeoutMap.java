@@ -3,6 +3,7 @@ package dk.mmj.eevhe.protocols.agreement;
 import org.junit.Test;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
@@ -76,9 +77,12 @@ public class TestTimeoutMap {
             assertEquals("ContainsValue differed from hashmap impl", orig.containsValue(val), timeout.containsValue(val));
         }
 
-        assertArrayEquals("Keyset differed from hashmap impl", orig.keySet().toArray(), timeout.keySet().toArray());
-        assertArrayEquals("ValueSet differed from hashmap impl", orig.values().toArray(), timeout.values().toArray());
-        assertArrayEquals("EntrySet differed from hashmap impl", orig.entrySet().toArray(), timeout.entrySet().toArray());
+        assertArrayEquals("Keyset differed from hashmap impl", orig.keySet().stream().sorted().toArray(), timeout.keySet().stream().sorted().toArray());
+        assertArrayEquals("ValueSet differed from hashmap impl", orig.values().stream().sorted().toArray(), timeout.values().stream().sorted().toArray());
+        assertArrayEquals(
+                "EntrySet differed from hashmap impl",
+                orig.entrySet().stream().sorted(Map.Entry.comparingByKey()).toArray(),
+                timeout.entrySet().stream().sorted(Map.Entry.comparingByKey()).toArray());
     }
 
 }

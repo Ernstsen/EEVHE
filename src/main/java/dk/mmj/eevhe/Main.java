@@ -4,6 +4,7 @@ import dk.eSoftware.commandLineParser.*;
 import dk.mmj.eevhe.client.ClientConfigBuilder;
 import dk.mmj.eevhe.initialization.SystemConfigurerConfigBuilder;
 import dk.mmj.eevhe.integrationTest.IntegrationTestConfigBuilder;
+import dk.mmj.eevhe.server.bulletinboard.BulletinBoardEdgeConfigBuilder;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoardPeerConfigBuilder;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthorityConfigBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -48,6 +49,7 @@ public class Main {
         mapping.put("--client", new ClientConfigBuilder());
         mapping.put("--authority", new DecryptionAuthorityConfigBuilder());
         mapping.put("--bulletinBoardPeer", new BulletinBoardPeerConfigBuilder());
+        mapping.put("--bulletinBoardEdge", new BulletinBoardEdgeConfigBuilder());
         mapping.put("--configuration", new SystemConfigurerConfigBuilder());
         mapping.put("--integrationTest", new IntegrationTestConfigBuilder());
         return new MultiParser<>(mapping);

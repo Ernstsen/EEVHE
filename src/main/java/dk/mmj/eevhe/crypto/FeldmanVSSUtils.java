@@ -2,6 +2,9 @@ package dk.mmj.eevhe.crypto;
 
 import java.math.BigInteger;
 
+/**
+ * Utility class for functionality regarding the Feldman VSS protocol
+ */
 public class FeldmanVSSUtils {
     /**
      * @param g          The generator

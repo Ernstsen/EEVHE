@@ -13,7 +13,7 @@ import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
 import java.io.IOException;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +21,14 @@ import java.util.Map;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
+/**
+ * Client is the parent class for all instances which communicates with the server instances in the system, without
+ * being one.
+ * <ul>
+ *     <li>{@link Voter}</li>
+ *     <li>{@link ResultFetcher}</li>
+ * </ul>
+ */
 public abstract class Client implements Application {
     private static final Logger logger = LogManager.getLogger(Client.class);
     protected final AsymmetricKeyParameter cert;
@@ -33,7 +41,7 @@ public abstract class Client implements Application {
     public Client(ClientConfiguration<?> configuration) {
         target = configureWebTarget(logger, configuration.targetUrl);
         try {
-            cert = CertificateHelper.getPublicKeyFromCertificate(Paths.get("certs/test_glob.pem"));
+            cert = CertificateHelper.getPublicKeyFromCertificate(configuration.electionCertPath);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load election certificate");
         }
@@ -69,7 +77,7 @@ public abstract class Client implements Application {
      * @return list of valid bb-peer certificates
      */
     protected List<X509CertificateHolder> getBBPeerCertificates() {
-        if(certificates != null){
+        if (certificates != null) {
             return certificates;
         }
         return certificates = FetchingUtilities.getBBPeerCertificates(logger, target, cert);
@@ -129,14 +137,20 @@ public abstract class Client implements Application {
 
     static abstract class ClientConfiguration<T extends Client> extends AbstractInstanceCreatingConfiguration<T> {
         private final String targetUrl;
+        private final Path electionCertPath;
 
-        ClientConfiguration(Class<T> clazz, String targetUrl) {
+        ClientConfiguration(Class<T> clazz, String targetUrl, Path electionCertPath) {
             super(clazz);
             this.targetUrl = targetUrl;
+            this.electionCertPath = electionCertPath;
         }
 
         public String getTargetUrl() {
             return targetUrl;
+        }
+
+        public Path getElectionCertPath() {
+            return electionCertPath;
         }
     }
 }

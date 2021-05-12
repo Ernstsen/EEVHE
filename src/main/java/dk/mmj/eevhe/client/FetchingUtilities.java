@@ -68,8 +68,9 @@ public class FetchingUtilities {
     /**
      * Retrieves cast ballots from BulletinBoard
      *
-     * @param logger        logger to be used in giving feedback
-     * @param bulletinBoard WebTarget pointing at bulletinBoard
+     * @param logger            logger to be used in giving feedback
+     * @param bulletinBoard     WebTarget pointing at bulletinBoard
+     * @param validCertificates collection of valid BB-peer certificates
      * @return list of ballots from BulletinBoard
      */
     public static List<PersistedBallot> getBallots(Logger logger, WebTarget bulletinBoard, Collection<X509CertificateHolder> validCertificates) {
@@ -87,9 +88,10 @@ public class FetchingUtilities {
      * <br>
      * Only those with a valid signature by the sender is included in the list
      *
-     * @param logger     logger used in error reporting
-     * @param target     the webTarget to be used in fetching the information entities
-     * @param electionPk the parent certificate for the election
+     * @param logger            logger used in error reporting
+     * @param target            the webTarget to be used in fetching the information entities
+     * @param electionPk        the parent certificate for the election
+     * @param validCertificates collection of valid BB-peer certificates
      * @return list of PartialPublicInformation entities, which was properly signed by their senders
      */
     public static List<PartialPublicInfo> getPublicInfos(
@@ -117,7 +119,7 @@ public class FetchingUtilities {
                     }
             ).map(SignedEntity::getEntity).collect(Collectors.toList());
         } catch (Exception e) {
-            logger.error("Exception occured while fetching public infos", e);
+            logger.error("Exception occurred while fetching public infos", e);
             return null;//Avoid propagating error to rest of system
         }
     }
@@ -196,7 +198,7 @@ public class FetchingUtilities {
                 }
             }
 
-            if(validCertificates.isEmpty()){
+            if (validCertificates.isEmpty()) {
                 logger.warn("No valid BB-peer certificates found. ");
                 return new ArrayList<>();
             }

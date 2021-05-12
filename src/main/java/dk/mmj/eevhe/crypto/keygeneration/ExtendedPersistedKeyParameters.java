@@ -4,7 +4,7 @@ import dk.mmj.eevhe.crypto.PedersenVSSUtils;
 
 import java.math.BigInteger;
 
-public class ExtendedPersistedKeyParameters extends PersistedKeyParameters implements ExtendedKeyGenerationParameters{
+public class ExtendedPersistedKeyParameters extends PersistedKeyParameters implements ExtendedKeyGenerationParameters {
     private final BigInteger e;
 
     /**

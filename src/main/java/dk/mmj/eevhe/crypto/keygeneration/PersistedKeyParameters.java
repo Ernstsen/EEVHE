@@ -7,6 +7,9 @@ import java.math.BigInteger;
 
 import static java.math.BigInteger.ONE;
 
+/**
+ * KeyGeneration parameter implementation using pre-defined values
+ */
 public class PersistedKeyParameters implements KeyGenerationParameters {
     private final PrimePair primePair;
     private final BigInteger g;

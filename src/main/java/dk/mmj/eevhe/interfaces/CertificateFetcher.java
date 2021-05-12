@@ -12,6 +12,7 @@ public interface CertificateFetcher {
      * Fetches certificates
      *
      * @return list of certificates on .pem form
+     * @throws IOException if certificate parsing/deserialization fails
      */
     List<SignedEntity<CertificateDTO>> getCertificates() throws IOException;
 }

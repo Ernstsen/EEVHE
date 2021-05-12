@@ -1,11 +1,16 @@
-# EEVHE [![Testsuite](https://github.com/Ernstsen/EEVHE/workflows/Test-suite/badge.svg)](https://github.com/Ernstsen/EEVHE/actions)
+[![Testsuite](https://github.com/Ernstsen/EEVHE/workflows/Test-suite/badge.svg)](https://github.com/Ernstsen/EEVHE/actions)
+[![codecov](https://codecov.io/gh/Ernstsen/EEVHE/branch/master/graph/badge.svg?token=8FqAu2HjNz)](https://codecov.io/gh/Ernstsen/EEVHE) 
+[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/Ernstsen/EEVHE.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Ernstsen/EEVHE/context:java)
+![GitHub](https://img.shields.io/github/license/Ernstsen/EEVHE)
+
+# EEVHE
 
 This is a repository for a masters thesis concerning Electronic Voting using Homomorphic Encryption
 
 ## Description
 
-This project builds upon [EVHE](https://github.com/Ernstsen/EVHE), and aims to extend it to improve
-both security and usability
+This project builds upon [EVHE](https://github.com/Ernstsen/EVHE), and aims to extend it to improve both security and
+usability
 
 ## Usage
 

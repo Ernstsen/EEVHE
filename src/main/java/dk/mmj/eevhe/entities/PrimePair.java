@@ -7,6 +7,7 @@ import java.util.Objects;
  * Class containing primes p and q
  * where p is a so-called safe prime due to its construction: p = 2q + 1
  */
+@SuppressWarnings("unused")
 public class PrimePair {
     private BigInteger p;
     private BigInteger q;

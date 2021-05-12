@@ -4,7 +4,7 @@ import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
 
 
 /**
- * Enables sending messages to a single peer, in a DKG protocol
+ * Enables sending messages to a single peer, in a Distributed Key Generation protocol
  */
 public interface DKGPeerCommunicator {
 

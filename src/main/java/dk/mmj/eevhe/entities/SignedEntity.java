@@ -1,6 +1,5 @@
 package dk.mmj.eevhe.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,8 +10,12 @@ import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import java.util.Collections;
 import java.util.Objects;
 
+/**
+ * Class representing some object that is signed
+ * <br>
+ * Any serializable object can be given as parameter along with a secret-key to sign the object.
+ */
 @SuppressWarnings("unused")
-//@JsonIgnoreProperties(ignoreUnknown = true)
 public class SignedEntity<T> implements BulletinBoardUpdatable {
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, property = "entityClass")
@@ -84,8 +87,9 @@ public class SignedEntity<T> implements BulletinBoardUpdatable {
         return SignatureHelper.verifySignature(pk, Collections.singletonList(mapper.writeValueAsBytes(entity)), signature);
     }
 
+    @SuppressWarnings("unchecked")//Unchecked are in fact checked due to rules of generics.
     @Override
-    public void update(BulletinBoardState bb) {//TODO: This can be done in a cleaner fashion!
+    public void update(BulletinBoardState bb) {
         if (entity instanceof PartialResultList) {
             bb.addResult((SignedEntity<PartialResultList>) this);
         } else if (entity instanceof PartialPublicInfo) {

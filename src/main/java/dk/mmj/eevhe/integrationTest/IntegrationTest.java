@@ -25,11 +25,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * IntegrationTest runs a BulletinBoard, {@link SystemConfigurer} and a number of
- * {@link dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority}s, as honest participants of the system.
+ * IntegrationTest runs a BulletinBoard(Single {@link BulletinBoardEdge} and 4 {@link BulletinBoardPeer}),
+ * a {@link SystemConfigurer} and a number of {@link dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority}s,
+ * as honest participants of the system.
  * <p>
- * Using the configuration it is possible to determine which ones should be executed and whether votes should
- * be case at the beginning, and whether they should be cast 30 secs. before planned termination
+ * Using the configuration it is possible to determine which DAs should be executed and whether Voters should
+ * cast votes at the beginning, and whether they should be cast 30 secs. before planned termination
  */
 public class IntegrationTest implements Application {
     private static final Logger logger = LogManager.getLogger(IntegrationTest.class);
@@ -160,7 +161,7 @@ public class IntegrationTest implements Application {
      * @param duration duration of vote
      */
     private void runSystemConfiguration(int duration) {
-        String params = "--addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 --outputFolder=conf --time -min=" + duration
+        String params = "--da_addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 --outputFolder=conf --time -min=" + duration
                 + " --bb_peer_addresses -1_https://localhost:18081 -2_https://localhost:18082 -3_https://localhost:18083 -4_https://localhost:18084";
         CommandLineParser<SystemConfigurer.SystemConfiguration> parser = new SingletonCommandLineParser<>(new SystemConfigurerConfigBuilder());
 
@@ -217,7 +218,7 @@ public class IntegrationTest implements Application {
     }
 
     private void launchBulletinBoardEdge() {
-        String params = "--bulletinBoardEdge --conf=conf/ --port=28081"+ " --id=1";
+        String params = "--bulletinBoardEdge --conf=conf/ --port=28081" + " --id=1";
         SingletonCommandLineParser<BulletinBoardEdge.BulletinBoardEdgeConfiguration> parser =
                 new SingletonCommandLineParser<>(new BulletinBoardEdgeConfigBuilder());
 

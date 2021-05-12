@@ -2,6 +2,9 @@ package dk.mmj.eevhe.interfaces;
 
 import java.util.Map;
 
+/**
+ * Functional interface for producing a certificate map
+ */
 public interface CertificateProvider {
 
     /**

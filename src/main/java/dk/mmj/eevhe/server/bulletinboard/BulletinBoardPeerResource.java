@@ -3,6 +3,7 @@ package dk.mmj.eevhe.server.bulletinboard;
 
 import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.entities.wrappers.*;
+import dk.mmj.eevhe.interfaces.BrachaConsumer;
 import dk.mmj.eevhe.protocols.agreement.mvba.Communicator;
 import dk.mmj.eevhe.server.ServerState;
 import org.apache.logging.log4j.LogManager;
@@ -14,11 +15,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.function.BiConsumer;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -263,11 +260,11 @@ public class BulletinBoardPeerResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public void postBroadcastMessage(SignedEntity<String> message, @PathParam("id") String identifier) {
         ServerState serverState = ServerState.getInstance();
-        BiConsumer<SignedEntity<String>, String> brachaConsumer
-                = (BiConsumer<SignedEntity<String>, String>) serverState.get("bracha.consumer." + getId(), BiConsumer.class);
+        BrachaConsumer brachaConsumer = serverState.get("bracha.consumer." + getId(), BrachaConsumer.class);
         brachaConsumer.accept(message, identifier);
     }
 
+    @SuppressWarnings("unchecked")
     @GET
     @Path("peerCertificates")
     @Produces(MediaType.APPLICATION_JSON)

@@ -3,6 +3,9 @@ package dk.mmj.eevhe.entities;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Class representing the comon input all DAs get
+ */
 @SuppressWarnings("unused")
 public class DecryptionAuthorityInput {
     private String pHex;

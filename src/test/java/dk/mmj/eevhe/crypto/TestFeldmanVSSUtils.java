@@ -1,10 +1,8 @@
 package dk.mmj.eevhe.crypto;
 
-import dk.mmj.eevhe.entities.PartialKeyPair;
 import org.junit.Test;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 
 import static java.math.BigInteger.valueOf;
 import static org.junit.Assert.*;

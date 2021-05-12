@@ -130,7 +130,7 @@ public class TestBrachaBroadcastManager {
 
 
         DummyConsumer spy = new DummyConsumer();
-        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers,  0);
+        BrachaBroadcastManager manager = new BrachaBroadcastManager(peers, 0);
         manager.registerOnReceived(spy);
 
         peers.put(2, s -> sendWrap(manager, goToNextMessage(s), 2, true, false));
@@ -292,7 +292,7 @@ public class TestBrachaBroadcastManager {
         });
 
         String broadcastId = "BID";
-        BrachaBroadcastManager.Message echo = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO,  broadcastId, message);
+        BrachaBroadcastManager.Message echo = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.ECHO, broadcastId, message);
         BrachaBroadcastManager.Message ready = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, broadcastId, message);
 
         manager.broadcast(broadcastId, message);
@@ -311,7 +311,7 @@ public class TestBrachaBroadcastManager {
     public void shouldHandleReceivedBroadcastSuccessfully() throws JsonProcessingException {
         String message = "This is the message that is broadcasted";
         BrachaBroadcastManager.Message broadcast = new BrachaBroadcastManager.Message(
-                BrachaBroadcastManager.Type.SEND,  "BID", message);
+                BrachaBroadcastManager.Type.SEND, "BID", message);
 
         Map<Integer, Consumer<String>> peers = new HashMap<>();
 
@@ -330,7 +330,7 @@ public class TestBrachaBroadcastManager {
 
     @Test
     public void testMessageEqualsAndSerialization() throws JsonProcessingException {
-        BrachaBroadcastManager.Message msg = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY,  "weuigfwnjefw", "!iowuuengfwefg");
+        BrachaBroadcastManager.Message msg = new BrachaBroadcastManager.Message(BrachaBroadcastManager.Type.READY, "weuigfwnjefw", "!iowuuengfwefg");
 
         BrachaBroadcastManager.Message deserialized = mapper.readValue(mapper.writeValueAsString(msg), BrachaBroadcastManager.Message.class);
 

@@ -1,6 +1,5 @@
 package dk.mmj.eevhe.entities;
 
-import java.math.BigInteger;
 import java.util.Objects;
 
 /**

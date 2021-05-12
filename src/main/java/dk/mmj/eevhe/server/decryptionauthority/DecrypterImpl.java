@@ -52,7 +52,7 @@ public class DecrypterImpl implements Decrypter {
                 .filter(v -> v.getTs().getTime() < endTime)
                 .filter(ballotVerifier::verifyBallot).collect(Collectors.toList());
 
-        if(ballots.isEmpty()){
+        if (ballots.isEmpty()) {
             logger.error("No votes - returning null");
             return null;
         }

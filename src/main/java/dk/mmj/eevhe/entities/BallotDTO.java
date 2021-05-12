@@ -3,6 +3,10 @@ package dk.mmj.eevhe.entities;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Class representing a ballot
+ */
+@SuppressWarnings("unused")
 public class BallotDTO {
     private List<CandidateVoteDTO> candidateVotes;
     private String id;

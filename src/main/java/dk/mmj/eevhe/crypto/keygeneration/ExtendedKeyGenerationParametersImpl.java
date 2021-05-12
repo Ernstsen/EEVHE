@@ -4,6 +4,9 @@ import dk.mmj.eevhe.crypto.PedersenVSSUtils;
 
 import java.math.BigInteger;
 
+/**
+ * Simple KeyGenerationParameters implementation which simply generates random, valid, values from the parameters given
+ */
 public class ExtendedKeyGenerationParametersImpl extends KeyGenerationParametersImpl implements ExtendedKeyGenerationParameters {
     private final BigInteger e;
 

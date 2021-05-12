@@ -9,6 +9,11 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+/**
+ * BroadcastManager implementing Bracha Broadcast
+ * <br>
+ * Note that conversations expire after ten minutes
+ */
 public class BrachaBroadcastManager implements BroadcastManager {
     private static final int TIMEOUT_MINUTES = 10;
 
@@ -17,7 +22,6 @@ public class BrachaBroadcastManager implements BroadcastManager {
     private final Map<Integer, Consumer<String>> peerMap;
     private final Map<String, Integer> totalReceived = Collections.synchronizedMap(new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES));
     private final Map<String, Map<String, Set<Type>>> recordedParticipants = Collections.synchronizedMap(new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES));
-//    private final Map<String, Object> locks = Collections.synchronizedMap(new TimeoutMap<>(TIMEOUT_MINUTES, TimeUnit.MINUTES));
     private final List<Consumer<String>> listeners = new ArrayList<>();
     private final int t;
 
@@ -54,6 +58,7 @@ public class BrachaBroadcastManager implements BroadcastManager {
      * Receives a message, and handles it according to its type.
      *
      * @param incoming message to be received.
+     * @throws JsonProcessingException if the {@link ObjectMapper} fails to deserialize the incoming message
      */
     public void receive(Incoming<String> incoming) throws JsonProcessingException {
         if (!incoming.isValid()) {
@@ -63,8 +68,6 @@ public class BrachaBroadcastManager implements BroadcastManager {
         String msg = incoming.getContent();
         Message received = mapper.readValue(msg, Message.class);
         String broadcastId = received.getBroadcastId();
-
-//        Object lock = locks.computeIfAbsent(received.getBroadcastId(), s -> new Object());
 
         Map<String, Set<Type>> convParticipants = recordedParticipants.computeIfAbsent(broadcastId, k -> new HashMap<>());
         Set<Type> types = convParticipants.computeIfAbsent(incoming.getIdentifier(), k -> new HashSet<>());

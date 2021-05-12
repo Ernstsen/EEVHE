@@ -3,6 +3,9 @@ package dk.mmj.eevhe.crypto;
 import java.math.BigInteger;
 import java.security.SecureRandom;
 
+/**
+ * Utility class for functionality regarding the Pedersen VSS protocol
+ */
 public class PedersenVSSUtils {
     private static final SecureRandom random = new SecureRandom();
 

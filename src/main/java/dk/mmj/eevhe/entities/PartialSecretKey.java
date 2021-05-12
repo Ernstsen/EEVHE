@@ -6,6 +6,7 @@ import java.util.Objects;
 /**
  * Entity containing a partial secret key, kept by a {@link dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority}
  */
+@SuppressWarnings("unused")
 public class PartialSecretKey {
     private BigInteger secretValue;
     private BigInteger p;
@@ -14,8 +15,8 @@ public class PartialSecretKey {
     }
 
     /**
-     * @param secretValue     secret value, output of the DKG protocol
-     * @param p               prime p
+     * @param secretValue secret value, output of the DKG protocol
+     * @param p           prime p
      */
     public PartialSecretKey(BigInteger secretValue, BigInteger p) {
         this.secretValue = secretValue;

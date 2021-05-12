@@ -4,14 +4,29 @@ import dk.eSoftware.commandLineParser.NoSuchBuilderException;
 import dk.eSoftware.commandLineParser.SingletonCommandLineParser;
 import dk.eSoftware.commandLineParser.WrongFormatException;
 import dk.mmj.eevhe.AbstractConfigTest;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
 @SuppressWarnings("ConstantConditions")
 public class TestClientConfigBuilder extends AbstractConfigTest {
+    private static final String certPath = "certs/test_glob_2.pem";
+
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        Files.copy(Paths.get("certs/test_glob.pem"), Paths.get(certPath));
+    }
+
+    @AfterClass
+    public static void afterClass() throws Exception {
+        Files.delete(Paths.get(certPath));
+    }
 
     @Test
     public void parametersAreRespectedFetcher() {
@@ -21,7 +36,7 @@ public class TestClientConfigBuilder extends AbstractConfigTest {
         ClientConfigBuilder builder = new ClientConfigBuilder();
 
         try {
-            String args = "--read=" + read + " --forceCalculations=" + force + " --server=" + serverString;
+            String args = "--read=" + read + " --forceCalculations=" + force + " --server=" + serverString + " --electionCertificate=" + certPath;
             Client.ClientConfiguration<?> config =
                     new SingletonCommandLineParser<>(builder).parse(args.split(" "));
 
@@ -29,8 +44,9 @@ public class TestClientConfigBuilder extends AbstractConfigTest {
 
             ResultFetcher.ResultFetcherConfiguration fetchConfig = (ResultFetcher.ResultFetcherConfiguration) config;
 
-            assertEquals("force parameter not respected", force, fetchConfig.isForceCalculations());
+            assertEquals("Force parameter not respected", force, fetchConfig.isForceCalculations());
             assertEquals("Server parameter not respected", serverString, config.getTargetUrl());
+            assertEquals("Election cert parameter not respected", Paths.get(certPath), config.getElectionCertPath());
 
             ResultFetcher resultFetcher = fetchConfig.produceInstance();
             assertNotNull("Failed to produce resultFetcher", resultFetcher);

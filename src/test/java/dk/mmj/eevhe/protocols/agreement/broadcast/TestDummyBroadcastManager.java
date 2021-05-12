@@ -4,12 +4,12 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class TestDummyBroadcastManager {
 
     @Test
-    public void testCallsRegisteredHandler(){
+    public void testCallsRegisteredHandler() {
         DummyBroadcastManager manager = new DummyBroadcastManager();
 
         ArrayList<String> strings = new ArrayList<>();
@@ -18,7 +18,7 @@ public class TestDummyBroadcastManager {
 
         manager.broadcast("", "message");
 
-        assertEquals("Should have called onReceived once",1,strings.size());
+        assertEquals("Should have called onReceived once", 1, strings.size());
         assertEquals("Unexpected message in list", "message", strings.get(0));
 
 

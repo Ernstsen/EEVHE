@@ -3,6 +3,7 @@ package dk.mmj.eevhe.entities;
 import java.math.BigInteger;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class PartialKeyPair {
     private PartialSecretKey partialSecretKey;
     private BigInteger partialPublicKey;

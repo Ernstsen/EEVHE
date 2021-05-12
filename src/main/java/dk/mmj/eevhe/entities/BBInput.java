@@ -3,6 +3,10 @@ package dk.mmj.eevhe.entities;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Class representing the common input given to all BB instances
+ */
+@SuppressWarnings("unused")
 public class BBInput {
     private List<BBPeerInfo> peers;
     private List<PeerInfo> edges;
@@ -12,7 +16,8 @@ public class BBInput {
         this.edges = edges;
     }
 
-    public BBInput(){}
+    public BBInput() {
+    }
 
     public List<BBPeerInfo> getPeers() {
         return peers;

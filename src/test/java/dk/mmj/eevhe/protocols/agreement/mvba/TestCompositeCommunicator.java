@@ -36,8 +36,8 @@ public class TestCompositeCommunicator {
         communicator.registerOnReceivedString(strings2::add);
         communicator.registerOnReceivedBoolean(bools2::add);
 
-        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(id, strVal2), "id" , true));
-        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, boolVal2), "id" , true));
+        communicator.receiveString(new IncomingTestImpl<>(new Communicator.Message<>(id, strVal2), "id", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, boolVal2), "id", true));
 
         assertEquals("String was not sent properly", strVal, strings.get(id));
         assertEquals("Bool was not sent properly", boolVal, bools.get(id));

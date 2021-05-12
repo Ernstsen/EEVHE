@@ -20,29 +20,26 @@ import java.util.stream.Collectors;
 
 public class BulletinBoardEdge extends AbstractServer {
     private static final ObjectMapper mapper = new ObjectMapper();
-    private final Logger logger;
     private final int port;
-    private final String logId;
-    private final BulletinBoardEdgeConfiguration configuration;
-    private final ServerState state = ServerState.getInstance();
 
     // Server state keys
     static final String PEER_ADDRESSES = "peerAddresses";
 
     public BulletinBoardEdge(BulletinBoardEdgeConfiguration configuration) {
-        this.configuration = configuration;
-        logger = LogManager.getLogger(BulletinBoardPeer.class + " " + configuration.id + ":");
+        Logger logger = LogManager.getLogger(BulletinBoardPeer.class + " " + configuration.getId() + ":");
         port = configuration.getPort();
-        logId = configuration.getId();
 
         Path conf = Paths.get(configuration.getConfPath());
 
         try {
             BBInput bbInput = mapper.readValue(conf.resolve("BB_input.json").toFile(), BBInput.class);
             List<String> peerAddresses = bbInput.getPeers().stream().map(BBPeerInfo::getAddress).collect(Collectors.toList());
+            ServerState state = ServerState.getInstance();
             state.put(PEER_ADDRESSES, peerAddresses);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read BB input file", e);
+            final RuntimeException rte = new RuntimeException("Failed to read BB input file", e);
+            logger.error("Failed to start Bulletin Board Edge instance", e);
+            throw rte;
         }
     }
 
@@ -55,7 +52,7 @@ public class BulletinBoardEdge extends AbstractServer {
 
     @Override
     protected int getPort() {
-        return configuration.port;
+        return port;
     }
 
     public static class BulletinBoardEdgeConfiguration extends AbstractInstanceCreatingConfiguration<BulletinBoardEdge> {

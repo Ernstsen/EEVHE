@@ -51,6 +51,9 @@ import java.util.zip.ZipFile;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
+/**
+ * Decryption Authority Implementation
+ */
 public class DecryptionAuthority extends AbstractServer {
     private final Logger logger;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
@@ -283,7 +286,7 @@ public class DecryptionAuthority extends AbstractServer {
      * @return list of valid bb-peer certificates
      */
     protected List<X509CertificateHolder> getBBPeerCertificates() {
-        if(bbCertificates != null){
+        if (bbCertificates != null) {
             return bbCertificates;
         }
         return bbCertificates = FetchingUtilities.getBBPeerCertificates(logger, bulletinBoard, electionPk);

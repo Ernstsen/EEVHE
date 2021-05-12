@@ -5,6 +5,7 @@ import java.util.Objects;
 /**
  * DTO for a candidate in the election
  */
+@SuppressWarnings("unused")
 public class Candidate {
     private int idx;
     private String name;

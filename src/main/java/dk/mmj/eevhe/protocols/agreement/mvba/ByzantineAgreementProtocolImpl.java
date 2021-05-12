@@ -57,7 +57,6 @@ public class ByzantineAgreementProtocolImpl implements ByzantineAgreementCommuni
             conversation.put(sender, msg);
         }
 
-
         if (conversation.size() >= peers - t) {
             received.remove(id);
             int[] cnt = {0, 0};

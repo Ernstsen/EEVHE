@@ -17,14 +17,14 @@ public class TestByzantineAgreementProtocolImpl {
     public void setupCommunicator() {
         bools = new HashMap<>();
 
-        communicator = new CompositeCommunicator (
+        communicator = new CompositeCommunicator(
                 new HashMap<>()::put,
                 bools::put
         );
     }
 
     @Test
-    public void shouldReachAgreementNoCorrupt(){
+    public void shouldReachAgreementNoCorrupt() {
         Boolean testBool = true;
 
         ByzantineAgreementProtocolImpl baProtocol = new ByzantineAgreementProtocolImpl(communicator, 3, 0, "p1");
@@ -34,8 +34,8 @@ public class TestByzantineAgreementProtocolImpl {
 
         String id = bools.keySet().toArray(new String[0])[0];
 
-        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, testBool), "p2", true ));
-        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, testBool), "p3", true ));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, testBool), "p2", true));
+        communicator.receiveBool(new IncomingTestImpl<>(new Communicator.Message<>(id, testBool), "p3", true));
 
         assertNotNull("BA Agreement was null, not yet terminated.", baAgreement.getAgreement());
         assertTrue("Majority >= t did not agree on all values sent.", baAgreement.getAgreement());

@@ -8,11 +8,9 @@ import dk.mmj.eevhe.client.Voter;
 import dk.mmj.eevhe.client.results.ElectionResult;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoardEdge;
 import dk.mmj.eevhe.server.bulletinboard.BulletinBoardPeer;
-import dk.mmj.eevhe.server.bulletinboard.TestBulletinBoardPeerCommunication;
 import dk.mmj.eevhe.server.decryptionauthority.DecryptionAuthority;
 import joptsimple.internal.Strings;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.file.Files;

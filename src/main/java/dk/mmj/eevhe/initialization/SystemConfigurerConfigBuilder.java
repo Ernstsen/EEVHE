@@ -17,16 +17,17 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
     private static final String OUTPUT_FOLDER_PATH = "outputFolder=";
     private static final String CERT_KEY_PATH = "certKey=";
     private static final String CERT_PATH = "cert=";
-    private static final String DA_ADDRESSES = "addresses"; // TODO: da_addresses??
+    private static final String DA_ADDRESSES = "da_addresses";
     private static final String BB_PEER_ADDRESSES = "bb_peer_addresses";
     private static final String TIME = "time";
     private static final String TIME_DAY = "day=";
     private static final String TIME_HR = "hour=";
     private static final String TIME_MIN = "min=";
-    private final Map<Integer, String> daAddresses = new HashMap<>();
-    private final Map<Integer, String> bbPeerAddresses = new HashMap<>();
+
     //state
     private Path outputFolderPath = Paths.get("./conf/");
+    private final Map<Integer, String> daAddresses = new HashMap<>();
+    private final Map<Integer, String> bbPeerAddresses = new HashMap<>();
     private Path skFilePath = Paths.get("./certs/test_glob_key.pem");
     private Path certFilePath = Paths.get("./certs/test_glob.pem");
     private long time = 10_000 * 60;
@@ -99,7 +100,7 @@ public class SystemConfigurerConfigBuilder implements CommandLineParser.ConfigBu
         return Arrays.asList(
                 OUTPUT_FOLDER_PATH,
                 CERT_KEY_PATH,
-                DA_ADDRESSES,
+                CERT_PATH,
                 TIME,
                 TIME_DAY,
                 TIME_HR,

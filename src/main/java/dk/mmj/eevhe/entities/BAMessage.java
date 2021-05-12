@@ -12,6 +12,9 @@ import java.util.function.BiConsumer;
 
 import static dk.mmj.eevhe.protocols.agreement.Utils.validate;
 
+/**
+ * Class representing a message used in a Byzantine Agreement Protocol
+ */
 @SuppressWarnings("unused")
 public class BAMessage implements SenderIdentityHaving {
     private static final Logger logger = LogManager.getLogger(BAMessage.class);

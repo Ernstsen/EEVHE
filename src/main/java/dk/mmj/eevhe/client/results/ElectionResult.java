@@ -3,6 +3,7 @@ package dk.mmj.eevhe.client.results;
 import java.util.List;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class ElectionResult {
 
     private List<Integer> candidateVotes;
