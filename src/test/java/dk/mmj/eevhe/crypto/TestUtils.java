@@ -79,7 +79,7 @@ public class TestUtils {
         ArrayList<Thread> threads = new ArrayList<>();
         for (List<String> partition : partitions) {
             Thread thread = new Thread(() -> {
-                for (int i = 0; i < ids.size(); i++) {
+                for (int i = 0; i < partition.size(); i++) {
                     res.add(SecurityUtils.generateVote(i%2, partition.get(i), publicKey));
                 }
             });
