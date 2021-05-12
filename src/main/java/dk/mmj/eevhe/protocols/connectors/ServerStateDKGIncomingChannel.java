@@ -21,7 +21,8 @@ public class ServerStateDKGIncomingChannel implements DKGIncomingChannel {
     private final CertificateProvider certProvider;
 
     /**
-     * @param ids list of ids that the messages might be saved under
+     * @param ids          list of ids that the messages might be saved under
+     * @param certProvider provider for certificates used in verifying incoming messages
      */
     public ServerStateDKGIncomingChannel(List<String> ids, CertificateProvider certProvider) {
         this.ids = ids;

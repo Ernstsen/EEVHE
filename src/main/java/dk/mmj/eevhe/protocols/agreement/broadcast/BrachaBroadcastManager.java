@@ -58,6 +58,7 @@ public class BrachaBroadcastManager implements BroadcastManager {
      * Receives a message, and handles it according to its type.
      *
      * @param incoming message to be received.
+     * @throws JsonProcessingException if the {@link ObjectMapper} fails to deserialize the incoming message
      */
     public void receive(Incoming<String> incoming) throws JsonProcessingException {
         if (!incoming.isValid()) {

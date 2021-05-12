@@ -64,7 +64,9 @@ public class ElGamal {
      *
      * @param keyPair    key pair consisting of public and private key
      * @param cipherText cipher text consisting of c and d
+     * @param max        max value for the decryption value to be
      * @return the original number which were encrypted
+     * @throws UnableToDecryptException if no valid decryption value is found between 0 and max
      */
     public static int homomorphicDecryption(KeyPair keyPair, CipherText cipherText, int max) throws UnableToDecryptException {
         BigInteger p = keyPair.getPublicKey().getQ().multiply(BigInteger.valueOf(2)).add(BigInteger.ONE);

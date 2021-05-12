@@ -9,12 +9,12 @@ import java.util.concurrent.TimeUnit;
  * Map implementation which removes items after them being inactive for some time.
  * <b>
  * NOTE: The following methods does NOT act as activity, thus any value access through these will still be removed
- *     <ul>
- *         <li>keySet</li>
- *         <li>values</li>
- *         <li>entrySet</li>
- *     </ul>
  * </b>
+ * <ul>
+ *     <li>keySet</li>
+ *     <li>values</li>
+ *     <li>entrySet</li>
+ * </ul>
  *
  * @param <K> key type
  * @param <V> value type
