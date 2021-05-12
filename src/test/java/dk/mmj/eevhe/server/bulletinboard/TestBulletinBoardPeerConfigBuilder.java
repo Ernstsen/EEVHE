@@ -25,7 +25,7 @@ public class TestBulletinBoardPeerConfigBuilder extends AbstractConfigTest {
 
         try {
             BulletinBoardPeer.BulletinBoardPeerConfiguration config =
-                    new SingletonCommandLineParser<>(builder).parse(new String[]{"--bulletinBoardPeer","--port=" + port, "--id=" + id, "--conf=certs/"});
+                    new SingletonCommandLineParser<>(builder).parse(new String[]{"--bulletinBoardPeer", "--port=" + port, "--id=" + id, "--conf=certs/"});
 
             assertEquals("Port parameter not respected", port, config.getPort());
             assertEquals("Configuration path not respected", "certs/", config.getConfPath());

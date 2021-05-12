@@ -7,12 +7,12 @@ import org.junit.After;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
-
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestMain {
     private static final Logger logger = LogManager.getLogger(TestMain.class);

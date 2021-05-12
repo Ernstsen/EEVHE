@@ -1,13 +1,24 @@
 package dk.mmj.eevhe.protocols.agreement;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Map implementation which removes items after them being inactive for some time.
+ * <b>
+ * NOTE: The following methods does NOT act as activity, thus any value access through these will still be removed
+ *     <ul>
+ *         <li>keySet</li>
+ *         <li>values</li>
+ *         <li>entrySet</li>
+ *     </ul>
+ * </b>
+ *
+ * @param <K> key type
+ * @param <V> value type
+ */
 @SuppressWarnings("unchecked")
 public class TimeoutMap<K, V> implements Map<K, V> {
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2);
@@ -16,6 +27,10 @@ public class TimeoutMap<K, V> implements Map<K, V> {
     private final long cleanupMs;
 
 
+    /**
+     * @param timeoutTime the amount of time to retain inactive entries in map
+     * @param unit        the unit of time
+     */
     public TimeoutMap(int timeoutTime, TimeUnit unit) {
         inner = new HashMap<>();
         tsMap = new HashMap<>();
@@ -90,16 +105,16 @@ public class TimeoutMap<K, V> implements Map<K, V> {
 
     @Override
     public Set<K> keySet() {
-        return inner.keySet();//TODO: TimeoutSet??
+        return new HashSet<>(inner.keySet());
     }
 
     @Override
     public Collection<V> values() {
-        return inner.values();//TODO: TimeoutSet??
+        return new HashSet<>(inner.values());
     }
 
     @Override
     public Set<Entry<K, V>> entrySet() {
-        return inner.entrySet();//TODO: TimeoutSet??
+        return new HashSet<>(inner.entrySet());
     }
 }

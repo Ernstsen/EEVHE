@@ -18,7 +18,7 @@ public class TestSystemConfigurerConfigBuilder extends AbstractConfigTest {
     @Test
     public void parametersAreRespected() {
         int duration = 4;
-        String params = "--addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 "
+        String params = "--da_addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 "
                 + "--bb_peer_addresses -1_https://localhost:18081 -2_https://localhost:18082 -3_https://localhost:18083 "
                 + "--outputFolder=conf --time -min=" + duration + " -hour=" + duration + " -day=" + duration
                 + " --outputFolder=conqweff/ --certKey=certs/test_glob_key.pem --cert=certs/test_glob.pem";
@@ -66,7 +66,7 @@ public class TestSystemConfigurerConfigBuilder extends AbstractConfigTest {
     @Test
     public void noCrashOnUnknown() {
         String params = "--addreesses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 "
-                        + "--bb_peer_addreesses -1_https://localhost:18081 -2_https://localhost:18082 -3_https://localhost:18083 ";
+                + "--bb_peer_addreesses -1_https://localhost:18081 -2_https://localhost:18082 -3_https://localhost:18083 ";
 
         SystemConfigurerConfigBuilder builder = new SystemConfigurerConfigBuilder();
 

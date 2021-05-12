@@ -75,7 +75,7 @@ public class BulletinBoardEdgeResource {
             Thread thread = new Thread(() -> {
                 try {
                     Response response = target.path(path).request().get();
-                    if(response.getStatus() >= 400){
+                    if (response.getStatus() >= 400) {
                         logger.error("Received non-200 status:" + response.getStatus() + " from target: " + target.path(path));
                         return;
                     }
@@ -85,7 +85,7 @@ public class BulletinBoardEdgeResource {
                     result.add(responseObject);
                 } catch (JsonProcessingException e) {
                     logger.error("Failed to query " + path + " from bulletin board peer: " + target, e);
-                } catch (Exception e){
+                } catch (Exception e) {
                     logger.error("Exception occured while attempting to query " + path + " from bulletin board peer", e);
                 }
             });
@@ -107,13 +107,8 @@ public class BulletinBoardEdgeResource {
      * @param <T>    Type of object to be posted
      */
     private <T> void postToPeers(String path, Entity<T> entity) {
-        List<Thread> threads = new ArrayList<>();
-
         for (JerseyWebTarget target : getTargets()) {
-            Thread thread = new Thread(() -> target.path(path).request().post(entity));
-            thread.start();
-
-            threads.add(thread);
+            new Thread(() -> target.path(path).request().post(entity)).start();
         }
     }
 

@@ -3,6 +3,9 @@ package dk.mmj.eevhe.entities;
 import java.math.BigInteger;
 import java.util.Objects;
 
+/**
+ * DTO for a complaint in the {@link dk.mmj.eevhe.protocols.GennaroFeldmanVSS} protocol
+ */
 @SuppressWarnings("unused")
 public class FeldmanComplaintDTO {
     private int senderId;

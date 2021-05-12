@@ -1,7 +1,6 @@
 package dk.mmj.eevhe.client;
 
 import dk.eSoftware.commandLineParser.CommandLineParser;
-import dk.eSoftware.commandLineParser.Configuration;
 import dk.mmj.eevhe.TestableConfigurationBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,7 +54,7 @@ public class ClientConfigBuilder implements CommandLineParser.ConfigBuilder<Clie
             read = Boolean.parseBoolean(cmd.substring(READ.length()));
         } else if (cmd.startsWith(FORCE_CALCULATIONS)) {
             forceCalculations = Boolean.parseBoolean(cmd.substring(FORCE_CALCULATIONS.length()));
-        }else if (cmd.startsWith(ELECTION_CERT_PATH)) {
+        } else if (cmd.startsWith(ELECTION_CERT_PATH)) {
             electionCertPath = Paths.get(cmd.substring(ELECTION_CERT_PATH.length()));
         } else if (!cmd.equals(SELF)) {
             logger.warn("Did not recognize command " + command.getCommand());

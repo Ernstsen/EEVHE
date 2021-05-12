@@ -5,6 +5,7 @@ import dk.mmj.eevhe.entities.PersistedBallot;
 import java.util.List;
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class BallotWrapper implements Wrapper<List<PersistedBallot>> {
     private List<PersistedBallot> content;
 

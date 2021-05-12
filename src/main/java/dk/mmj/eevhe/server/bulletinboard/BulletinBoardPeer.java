@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.interfaces.BrachaConsumer;
 import dk.mmj.eevhe.protocols.agreement.AgreementHelper;
 import dk.mmj.eevhe.protocols.agreement.Utils;
 import dk.mmj.eevhe.protocols.agreement.broadcast.BrachaBroadcastManager;
@@ -48,7 +49,6 @@ public class BulletinBoardPeer extends AbstractServer {
     private final Map<Integer, RestBBPeerCommunicator> communicators;
     private final AgreementHelper agreementHelper;
     private final List<Consumer<Incoming<String>>> broadcastListeners;
-    private final Map<String, String> peerCertificates;
 
     // Server state keys
     static final String PEER_CERTIFICATES = "peerCertificates";
@@ -71,7 +71,7 @@ public class BulletinBoardPeer extends AbstractServer {
         BBInput bbInput;
         try {
             bbInput = mapper.readValue(conf.resolve("BB_input.json").toFile(), BBInput.class);
-            peerCertificates = bbInput.getPeers().stream()
+            Map<String, String> peerCertificates = bbInput.getPeers().stream()
                     .collect(Collectors.toMap(i -> Integer.toString(i.getId()), BBPeerInfo::getCertificate));
             ServerState.getInstance().put(PEER_CERTIFICATES, peerCertificates);
         } catch (IOException e) {
@@ -106,7 +106,7 @@ public class BulletinBoardPeer extends AbstractServer {
 
         agreementHelper = new AgreementHelper(
                 getBroadcastManager(peerMap),
-                new MultiValuedByzantineAgreementProtocolImpl(compositeCommunicator, peerMap.size(), peerMap.size() / 5, id.toString()),//TODO
+                new MultiValuedByzantineAgreementProtocolImpl(compositeCommunicator, peerMap.size(), peerMap.size() / 5, id.toString()),
                 this::updateState
         );
 
@@ -115,7 +115,7 @@ public class BulletinBoardPeer extends AbstractServer {
         Consumer<BulletinBoardUpdatable> consensus = this::executeConsensusProtocol;
         ServerState.getInstance().put("executeConsensusProtocol." + id, consensus);
 
-        BiConsumer<SignedEntity<String>, String> receiveBroadcast = this::receiveBroadcast;
+        BrachaConsumer receiveBroadcast = this::receiveBroadcast;
         ServerState.getInstance().put("bracha.consumer." + id, receiveBroadcast);
 
         ServerState.getInstance().put(SECRET_KEY + "." + id, sk);
@@ -161,7 +161,6 @@ public class BulletinBoardPeer extends AbstractServer {
     }
 
     public void executeConsensusProtocol(BulletinBoardUpdatable entity) {
-        //TODO: VERIFY!
         try {
             String s = mapper.writeValueAsString(entity);
             agreementHelper.agree(s);

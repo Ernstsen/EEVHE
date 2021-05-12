@@ -1,7 +1,6 @@
 package dk.mmj.eevhe.protocols.connectors;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.FetchingUtilities;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.entities.*;
@@ -21,7 +20,6 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;

@@ -8,8 +8,8 @@ import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.signature.SignatureHelper;
 import dk.mmj.eevhe.entities.BBInput;
 import dk.mmj.eevhe.entities.BBPeerInfo;
-import dk.mmj.eevhe.entities.PeerInfo;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
+import dk.mmj.eevhe.entities.PeerInfo;
 import org.apache.commons.compress.utils.IOUtils;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.CertException;
@@ -53,7 +53,7 @@ public class TestSystemConfigurer extends TestUsingBouncyCastle {
     @Test
     public void testMeaningfulOutput() {
         int duration = 4;
-        String params = "--addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 "
+        String params = "--da_addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 "
                 + "--bb_peer_addresses -1_https://localhost:18081 -2_https://localhost:18082 -3_https://localhost:18083 "
                 + "--outputFolder=" + conf + " --time -min=" + duration;
 
@@ -144,7 +144,7 @@ public class TestSystemConfigurer extends TestUsingBouncyCastle {
                 assertNotNull(sk);
             }
 
-            for (BBPeerInfo bbPeer: bbOutput.getPeers()) {
+            for (BBPeerInfo bbPeer : bbOutput.getPeers()) {
                 X509CertificateHolder certificate = CertificateHelper.readCertificate(bbPeer.getCertificate().getBytes(StandardCharsets.UTF_8));
                 assertTrue("certificate should be valid until after endTime", certificate.isValidOn(new Date(configEndTime + 500)));
                 assertEquals("Unexpected issuer", new X500Name("CN=EEVHE_Configurer"), certificate.getIssuer());

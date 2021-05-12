@@ -2,6 +2,9 @@ package dk.mmj.eevhe.entities;
 
 import java.util.Objects;
 
+/**
+ * DTO object for responding to a complaint in the {@link dk.mmj.eevhe.protocols.PedersenVSS} protocol
+ */
 @SuppressWarnings("unused")
 public class ComplaintResolveDTO {
     private int complaintSenderId;

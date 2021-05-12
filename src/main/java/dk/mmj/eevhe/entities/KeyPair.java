@@ -6,6 +6,7 @@ import java.util.Objects;
 /**
  * "dumb" object for keeping a keypair
  */
+@SuppressWarnings("unused")
 public class KeyPair {
     private BigInteger secretKey;
     private PublicKey publicKey;

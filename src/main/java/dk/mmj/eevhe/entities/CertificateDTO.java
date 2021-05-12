@@ -2,6 +2,9 @@ package dk.mmj.eevhe.entities;
 
 import java.util.Objects;
 
+/**
+ * Simple DTO representing a certificate used in the election
+ */
 @SuppressWarnings("unused")
 public class CertificateDTO {
     private String cert;

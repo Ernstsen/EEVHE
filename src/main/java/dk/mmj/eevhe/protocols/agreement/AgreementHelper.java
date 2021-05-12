@@ -6,6 +6,10 @@ import dk.mmj.eevhe.protocols.agreement.mvba.ByzantineAgreementCommunicator;
 
 import java.util.function.Consumer;
 
+/**
+ * Helper class for reaching agreement between a number of peers, and executing some functionality only when this is the
+ * case
+ */
 public class AgreementHelper {
     private final BroadcastManager broadcastManager;
     private final ByzantineAgreementCommunicator<String> mvba;

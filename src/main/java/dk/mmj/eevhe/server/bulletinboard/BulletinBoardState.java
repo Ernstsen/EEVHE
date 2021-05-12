@@ -4,6 +4,9 @@ import dk.mmj.eevhe.entities.*;
 
 import java.util.*;
 
+/**
+ * State wrapper for the Bulletin Board
+ */
 public class BulletinBoardState {
     private final Set<PersistedBallot> ballots = Collections.synchronizedSet(new LinkedHashSet<>());
     private final Set<SignedEntity<PartialResultList>> results = Collections.synchronizedSet(new LinkedHashSet<>());

@@ -35,7 +35,9 @@ public class SSLHelper {
         HttpsURLConnection.setDefaultHostnameVerifier((hostname, sslSession) -> hostname.equals("localhost") || hostname.equalsIgnoreCase("127.0.0.1"));
 
         KeyStore keyStore = KeyStore.getInstance("jceks");
-        keyStore.load(new FileInputStream(CERTIFICATE_PATH), CERTIFICATE_PASSWORD.toCharArray());
+        try (FileInputStream is = new FileInputStream(CERTIFICATE_PATH)) {
+            keyStore.load(is, CERTIFICATE_PASSWORD.toCharArray());
+        }
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         tmf.init(keyStore);
 

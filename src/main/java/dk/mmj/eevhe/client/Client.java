@@ -14,7 +14,6 @@ import org.glassfish.jersey.client.JerseyWebTarget;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +21,14 @@ import java.util.Map;
 
 import static dk.mmj.eevhe.client.SSLHelper.configureWebTarget;
 
+/**
+ * Client is the parent class for all instances which communicates with the server instances in the system, without
+ * being one.
+ * <ul>
+ *     <li>{@link Voter}</li>
+ *     <li>{@link ResultFetcher}</li>
+ * </ul>
+ */
 public abstract class Client implements Application {
     private static final Logger logger = LogManager.getLogger(Client.class);
     protected final AsymmetricKeyParameter cert;
@@ -70,7 +77,7 @@ public abstract class Client implements Application {
      * @return list of valid bb-peer certificates
      */
     protected List<X509CertificateHolder> getBBPeerCertificates() {
-        if(certificates != null){
+        if (certificates != null) {
             return certificates;
         }
         return certificates = FetchingUtilities.getBBPeerCertificates(logger, target, cert);

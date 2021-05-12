@@ -157,7 +157,7 @@ public class Voter extends Client {
         }
 
         String responseEntity = publicServerResp.readEntity(String.class);
-        return responseEntity.contains("Bulletin Board");
+        return responseEntity.contains("Bulletin Board Edge");
     }
 
     /**

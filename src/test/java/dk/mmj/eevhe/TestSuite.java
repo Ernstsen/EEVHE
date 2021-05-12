@@ -3,7 +3,6 @@ package dk.mmj.eevhe;
 import dk.mmj.eevhe.client.ClientTestSuite;
 import dk.mmj.eevhe.crypto.CryptoTestSuite;
 import dk.mmj.eevhe.entities.EntityTestSuite;
-import dk.mmj.eevhe.entities.TestSerialization;
 import dk.mmj.eevhe.initialization.InitializationTestSuite;
 import dk.mmj.eevhe.integrationTest.IntegrationTestSuite;
 import dk.mmj.eevhe.protocols.ProtocolTestSuite;

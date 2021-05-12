@@ -46,7 +46,6 @@ public class ServerState {
      * @param <T>         Generic type of class
      * @return the object identified by the key, cast to the class. Null if class is wrong or object not found
      */
-    @SuppressWarnings("unchecked")
     public <T> T get(String key, Class<T> objectClass) {
         Object object = state.get(key);
         if (object == null) {
@@ -57,6 +56,7 @@ public class ServerState {
             logger.warn("Retrieved object from state where did not match expected. Class=" + object.getClass() + ", expected=" + objectClass);
             return null;
         }
+        //noinspection unchecked
         return (T) object;
     }
 
@@ -68,6 +68,7 @@ public class ServerState {
      * @param <T>      Generic type of class
      * @return The object either computed or found
      */
+    @SuppressWarnings("unchecked")
     public <T> T computeIfAbsent(String key, Function<String, T> function) {
         return (T) state.computeIfAbsent(key, function);
     }

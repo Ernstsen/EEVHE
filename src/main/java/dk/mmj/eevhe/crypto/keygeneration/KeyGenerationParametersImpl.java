@@ -8,6 +8,9 @@ import java.util.Random;
 
 import static dk.mmj.eevhe.crypto.SecurityUtils.getRandomNumModN;
 
+/**
+ * Simple KeyGenerationParameters implementation which simply generates random, valid, values from the parameters given
+ */
 public class KeyGenerationParametersImpl implements KeyGenerationParameters {
     private final BigInteger g;
     private final PrimePair primePair;

@@ -10,6 +10,7 @@ public class CommitmentWrapper implements Wrapper<List<SignedEntity<CommitmentDT
 
     private List<SignedEntity<CommitmentDTO>> content;
 
+    @SuppressWarnings("unused")
     public CommitmentWrapper() {
     }
 

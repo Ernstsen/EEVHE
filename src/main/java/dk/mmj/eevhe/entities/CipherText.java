@@ -3,6 +3,9 @@ package dk.mmj.eevhe.entities;
 import java.math.BigInteger;
 import java.util.Objects;
 
+/**
+ * DTO for ciphertext
+ */
 @SuppressWarnings("JavaDocs, unused")
 public class CipherText {
     private BigInteger c;

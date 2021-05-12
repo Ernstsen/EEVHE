@@ -2,6 +2,10 @@ package dk.mmj.eevhe.entities;
 
 import java.util.Objects;
 
+/**
+ * Class representing information about a peer, either DA or BB-peer depending on context
+ */
+@SuppressWarnings("unused")
 public class PeerInfo {
     private int id;
     private String address;

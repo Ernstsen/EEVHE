@@ -78,8 +78,9 @@ public class TestHelper {
 
     /**
      * Computes partial decryptions of a number of ballots
-     *<br>
+     * <br>
      * ONLY works if {@link TestDecrypterImpl} passes
+     *
      * @param ballotFetcher ballotFetcher for ballots
      * @param candidates    list of candidates in the election
      * @param dkgRes        output from a DKG protocol run - for instance {@link #runDKG()}

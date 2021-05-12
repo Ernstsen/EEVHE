@@ -80,7 +80,7 @@ public class TestUtils {
         for (List<String> partition : partitions) {
             Thread thread = new Thread(() -> {
                 for (int i = 0; i < partition.size(); i++) {
-                    res.add(SecurityUtils.generateVote(i%2, partition.get(i), publicKey));
+                    res.add(SecurityUtils.generateVote(i % 2, partition.get(i), publicKey));
                 }
             });
             threads.add(thread);
@@ -102,8 +102,8 @@ public class TestUtils {
     /**
      * Concurrently generates a big number of votes, with different ID's
      *
-     * @param amount    number of votes
-     * @param publicKey public key to use in vote encryption and proofs
+     * @param amount     number of votes
+     * @param publicKey  public key to use in vote encryption and proofs
      * @param candidates number of candidates in election
      * @return list of ballots
      */

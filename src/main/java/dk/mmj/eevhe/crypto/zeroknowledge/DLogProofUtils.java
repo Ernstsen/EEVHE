@@ -10,6 +10,9 @@ import java.util.Objects;
 import static dk.mmj.eevhe.crypto.SecurityUtils.computePartial;
 import static dk.mmj.eevhe.crypto.SecurityUtils.getRandomNumModN;
 
+/**
+ * Utility class for all functionality relating to proofs of discrete logarithm proofs
+ */
 public class DLogProofUtils {
 
     /**

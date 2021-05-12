@@ -4,6 +4,10 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * DTO object used in committing to polynomials in both {@link dk.mmj.eevhe.protocols.PedersenVSS} and
+ * {@link dk.mmj.eevhe.protocols.GennaroFeldmanVSS}
+ */
 @SuppressWarnings("unused")
 public class CommitmentDTO {
     private BigInteger[] commitment;

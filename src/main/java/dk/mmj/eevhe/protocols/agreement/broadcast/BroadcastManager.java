@@ -2,6 +2,9 @@ package dk.mmj.eevhe.protocols.agreement.broadcast;
 
 import java.util.function.Consumer;
 
+/**
+ * Interface representing the responsibility of sending/receiving broadcasts between peers
+ */
 public interface BroadcastManager {
     /**
      * Broadcasts a given message for a given broadcast specified by its unique id.

@@ -2,6 +2,7 @@ package dk.mmj.eevhe.entities;
 
 import java.util.Objects;
 
+@SuppressWarnings("unused")
 public class BBPeerInfo extends PeerInfo {
     private String certificate;
 
@@ -10,7 +11,8 @@ public class BBPeerInfo extends PeerInfo {
         this.certificate = certificate;
     }
 
-    public BBPeerInfo() {}
+    public BBPeerInfo() {
+    }
 
     public String getCertificate() {
         return certificate;

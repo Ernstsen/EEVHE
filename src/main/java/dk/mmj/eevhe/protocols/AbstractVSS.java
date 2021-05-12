@@ -12,6 +12,9 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Parent class for VSS protocols, containing some necessary state, to avoid duplicate boilerplate code
+ */
 public class AbstractVSS {
     protected final DKGBroadcaster broadcaster;
     protected final DKGIncomingChannel incoming;

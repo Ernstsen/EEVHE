@@ -1,7 +1,7 @@
 package dk.mmj.eevhe.protocols.agreement;
 
 /**
- * Item used to wait for agreement
+ * Item used to wait for some job to terminate
  */
 public class NotifyItem {
     private boolean complete = false;

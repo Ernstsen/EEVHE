@@ -18,6 +18,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Implementation of CertificateProvider generating an overview of certificates, from a {@link CertificateFetcher},
+ * and the election public key
+ */
 public class CertificateProviderImpl implements CertificateProvider {
     private static final Logger logger = LogManager.getLogger(CertificateProviderImpl.class);
     private final CertificateFetcher fetcher;

@@ -10,7 +10,7 @@ import java.math.BigInteger;
 public interface KeyGenerationParameters {
 
     /**
-     * Getter for the pair q,p used in ElGamal key-generation
+     * Getter for the pair q,p used in El-Gamal key-generation
      *
      * @return a {@link PrimePair} with (p,q)
      */

@@ -13,7 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
- * Rest implementation of PeerCommunicator
+ * Rest implementation of PeerCommunicator for distributed key-generation
  */
 public class RestDKGPeerCommunicator implements DKGPeerCommunicator {
     private final Logger logger = LogManager.getLogger(RestDKGPeerCommunicator.class);

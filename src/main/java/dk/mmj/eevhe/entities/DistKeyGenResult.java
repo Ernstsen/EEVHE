@@ -1,11 +1,13 @@
 package dk.mmj.eevhe.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Class representing the result of a distributed key-generation
+ */
+@SuppressWarnings("unused")
 public class DistKeyGenResult {
     private BigInteger g;
     private BigInteger q;
@@ -16,7 +18,6 @@ public class DistKeyGenResult {
     /**
      * Unused object mapper constructor
      */
-    @SuppressWarnings("unused")
     private DistKeyGenResult() {
     }
 

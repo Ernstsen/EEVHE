@@ -117,7 +117,7 @@ public class FetchingUtilities {
                     }
             ).map(SignedEntity::getEntity).collect(Collectors.toList());
         } catch (Exception e) {
-            logger.error("Exception occured while fetching public infos", e);
+            logger.error("Exception occurred while fetching public infos", e);
             return null;//Avoid propagating error to rest of system
         }
     }
@@ -196,7 +196,7 @@ public class FetchingUtilities {
                 }
             }
 
-            if(validCertificates.isEmpty()){
+            if (validCertificates.isEmpty()) {
                 logger.warn("No valid BB-peer certificates found. ");
                 return new ArrayList<>();
             }

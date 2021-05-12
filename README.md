@@ -4,8 +4,8 @@ This is a repository for a masters thesis concerning Electronic Voting using Hom
 
 ## Description
 
-This project builds upon [EVHE](https://github.com/Ernstsen/EVHE), and aims to extend it to improve
-both security and usability
+This project builds upon [EVHE](https://github.com/Ernstsen/EVHE), and aims to extend it to improve both security and
+usability
 
 ## Usage
 
