@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="bulletinBoardPeer 1" type="Application" factoryName="Application" folderName="Bulletin Board">
+    <option name="INCLUDE_PROVIDED_SCOPE" value="true" />
+    <option name="MAIN_CLASS_NAME" value="dk.mmj.eevhe.Main" />
+    <module name="eevhe" />
+    <option name="PROGRAM_PARAMETERS" value="--bulletinBoardPeer --port=18081 --id=1 --conf=conf/" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

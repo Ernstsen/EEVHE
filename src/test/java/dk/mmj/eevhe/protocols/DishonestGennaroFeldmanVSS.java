@@ -4,9 +4,9 @@ import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.entities.CommitmentDTO;
 import dk.mmj.eevhe.entities.FeldmanComplaintDTO;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
-import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
-import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGIncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -25,8 +25,8 @@ public class DishonestGennaroFeldmanVSS extends GennaroFeldmanVSS {
     private final boolean noCommitment;
     private final boolean complainAgainstHonestParty;
 
-    public DishonestGennaroFeldmanVSS(Broadcaster broadcaster, IncomingChannel incoming,
-                                      Map<Integer, PeerCommunicator> peerCommunicatorMap,
+    public DishonestGennaroFeldmanVSS(DKGBroadcaster broadcaster, DKGIncomingChannel incoming,
+                                      Map<Integer, DKGPeerCommunicator> peerCommunicatorMap,
                                       int id, ExtendedKeyGenerationParameters params, String logPrefix,
                                       BigInteger[] polynomial, Map<Integer, PartialSecretMessageDTO> secrets,
                                       boolean wrongCommitment, boolean noCommitment, boolean complainAgainstHonestParty) {

@@ -9,9 +9,9 @@ import dk.mmj.eevhe.entities.PartialResultList;
 import dk.mmj.eevhe.entities.PublicKey;
 import dk.mmj.eevhe.interfaces.BallotFetcher;
 import dk.mmj.eevhe.protocols.GennaroDKG;
-import dk.mmj.eevhe.protocols.connectors.PrivateCommunicationChannel;
-import dk.mmj.eevhe.protocols.connectors.TestBroadcaster;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.PrivateCommunicationChannelDKG;
+import dk.mmj.eevhe.protocols.connectors.TestDKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.DKG;
 import dk.mmj.eevhe.server.decryptionauthority.DecrypterImpl;
 import dk.mmj.eevhe.server.decryptionauthority.TestDecrypterImpl;
@@ -36,14 +36,14 @@ public class TestHelper {
                 "2"
         );
 
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final PrivateCommunicationChannelDKG channel1 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel2 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel3 = new PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);

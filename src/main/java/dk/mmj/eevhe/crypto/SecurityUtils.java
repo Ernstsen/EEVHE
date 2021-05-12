@@ -40,7 +40,7 @@ public class SecurityUtils {
      * @param payloads is an array of byte-arrays, containing values to be hashed.
      * @return SHA256 hash of the given payloads.
      */
-    public static byte[] hash(byte[][] payloads) {
+    public static byte[] hash(byte[]... payloads) {
         SHA256Digest sha256Digest = new SHA256Digest();
 
         for (byte[] payload : payloads) {

@@ -1,0 +1,34 @@
+{
+  "peers": [
+    {
+      "id": 1,
+      "address": "https://localhost:18081"
+    },
+    {
+      "id": 2,
+      "address": "https://localhost:18082"
+    },
+    {
+      "id": 3,
+      "address": "https://localhost:18083"
+    },
+    {
+      "id": 4,
+      "address": "https://localhost:18084"
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "address": "https://localhost:28081"
+    },
+    {
+      "id": 2,
+      "address": "https://localhost:28082"
+    },
+    {
+      "id": 3,
+      "address": "https://localhost:28083"
+    }
+  ]
+}

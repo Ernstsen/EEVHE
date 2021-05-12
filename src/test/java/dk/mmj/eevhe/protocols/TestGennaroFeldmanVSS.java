@@ -6,8 +6,8 @@ import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.exceptions.UnableToDecryptException;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedPersistedKeyParameters;
 import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.VSS;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,14 +47,14 @@ public class TestGennaroFeldmanVSS {
     @Test
     public void testProtocolRunNoCorruption() {
         //Modelling communications channels
-        final TestPedersenVSS.TestBroadcaster testBroadcaster = new TestPedersenVSS.TestBroadcaster();
-        final TestPedersenVSS.PrivateCommunicationChannel channel1 = new TestPedersenVSS.PrivateCommunicationChannel();
-        final TestPedersenVSS.PrivateCommunicationChannel channel2 = new TestPedersenVSS.PrivateCommunicationChannel();
-        final TestPedersenVSS.PrivateCommunicationChannel channel3 = new TestPedersenVSS.PrivateCommunicationChannel();
+        final TestPedersenVSS.TestDKGBroadcaster testBroadcaster = new TestPedersenVSS.TestDKGBroadcaster();
+        final TestPedersenVSS.PrivateCommunicationChannelDKG channel1 = new TestPedersenVSS.PrivateCommunicationChannelDKG();
+        final TestPedersenVSS.PrivateCommunicationChannelDKG channel2 = new TestPedersenVSS.PrivateCommunicationChannelDKG();
+        final TestPedersenVSS.PrivateCommunicationChannelDKG channel3 = new TestPedersenVSS.PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);
@@ -137,13 +137,13 @@ public class TestGennaroFeldmanVSS {
     @Test
     public void testProtocolWithOneNonParticipant() {
         //Modelling communications channels
-        final TestPedersenVSS.TestBroadcaster testBroadcaster = new TestPedersenVSS.TestBroadcaster();
-        final TestPedersenVSS.PrivateCommunicationChannel channel1 = new TestPedersenVSS.PrivateCommunicationChannel();
-        final TestPedersenVSS.PrivateCommunicationChannel channel2 = new TestPedersenVSS.PrivateCommunicationChannel();
-        final TestPedersenVSS.PrivateCommunicationChannel channel3 = new TestPedersenVSS.PrivateCommunicationChannel();
+        final TestPedersenVSS.TestDKGBroadcaster testBroadcaster = new TestPedersenVSS.TestDKGBroadcaster();
+        final TestPedersenVSS.PrivateCommunicationChannelDKG channel1 = new TestPedersenVSS.PrivateCommunicationChannelDKG();
+        final TestPedersenVSS.PrivateCommunicationChannelDKG channel2 = new TestPedersenVSS.PrivateCommunicationChannelDKG();
+        final TestPedersenVSS.PrivateCommunicationChannelDKG channel3 = new TestPedersenVSS.PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);
@@ -211,14 +211,14 @@ public class TestGennaroFeldmanVSS {
     @Test
     public void testProtocolWithComplaintsAboutOneParty() {
         //Modelling communications channels
-        final TestPedersenVSS.TestBroadcaster testBroadcaster = new TestPedersenVSS.TestBroadcaster();
-        final TestPedersenVSS.PrivateCommunicationChannel channel1 = new TestPedersenVSS.PrivateCommunicationChannel();
-        final TestPedersenVSS.PrivateCommunicationChannel channel2 = new TestPedersenVSS.PrivateCommunicationChannel();
-        final TestPedersenVSS.PrivateCommunicationChannel channel3 = new TestPedersenVSS.PrivateCommunicationChannel();
+        final TestPedersenVSS.TestDKGBroadcaster testBroadcaster = new TestPedersenVSS.TestDKGBroadcaster();
+        final TestPedersenVSS.PrivateCommunicationChannelDKG channel1 = new TestPedersenVSS.PrivateCommunicationChannelDKG();
+        final TestPedersenVSS.PrivateCommunicationChannelDKG channel2 = new TestPedersenVSS.PrivateCommunicationChannelDKG();
+        final TestPedersenVSS.PrivateCommunicationChannelDKG channel3 = new TestPedersenVSS.PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);
@@ -310,7 +310,7 @@ public class TestGennaroFeldmanVSS {
         return secrets;
     }
 
-    private PartialKeyPair computeKeyPair(Broadcaster broadcaster, Set<Integer> honestParties, GennaroFeldmanVSS feldmanVSS) {
+    private PartialKeyPair computeKeyPair(DKGBroadcaster broadcaster, Set<Integer> honestParties, GennaroFeldmanVSS feldmanVSS) {
         BigInteger partialSecretKey = feldmanVSS.output();
         BigInteger partialPublicKey = g.modPow(partialSecretKey, p);
 

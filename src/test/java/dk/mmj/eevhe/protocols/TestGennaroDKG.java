@@ -9,9 +9,9 @@ import dk.mmj.eevhe.entities.CipherText;
 import dk.mmj.eevhe.entities.PartialKeyPair;
 import dk.mmj.eevhe.entities.PartialSecretKey;
 import dk.mmj.eevhe.entities.PublicKey;
-import dk.mmj.eevhe.protocols.connectors.PrivateCommunicationChannel;
-import dk.mmj.eevhe.protocols.connectors.TestBroadcaster;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.PrivateCommunicationChannelDKG;
+import dk.mmj.eevhe.protocols.connectors.TestDKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.DKG;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,14 +42,14 @@ public class TestGennaroDKG {
     @Test
     public void testProtocolRunNoCorruption() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final PrivateCommunicationChannelDKG channel1 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel2 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel3 = new PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);
@@ -145,9 +145,9 @@ public class TestGennaroDKG {
 
     @Test
     public void testSteps() {
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel = new PrivateCommunicationChannel();
-        final HashMap<Integer, PeerCommunicator> commMap = new HashMap<>();
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final PrivateCommunicationChannelDKG channel = new PrivateCommunicationChannelDKG();
+        final HashMap<Integer, DKGPeerCommunicator> commMap = new HashMap<>();
 
         GennaroDKG gennaroDKG = new GennaroDKG(testBroadcaster, channel, commMap, 0, params, "");
 
@@ -163,14 +163,14 @@ public class TestGennaroDKG {
     @Test
     public void testProtocolRunOneCorrupt() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final PrivateCommunicationChannelDKG channel1 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel2 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel3 = new PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);
@@ -271,14 +271,14 @@ public class TestGennaroDKG {
     @Test
     public void testProtocolOneCommitmentIsNull() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final PrivateCommunicationChannelDKG channel1 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel2 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel3 = new PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);
@@ -378,14 +378,14 @@ public class TestGennaroDKG {
     @Test
     public void testProtocolComplainAboutHonestParty() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final PrivateCommunicationChannelDKG channel1 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel2 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel3 = new PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);

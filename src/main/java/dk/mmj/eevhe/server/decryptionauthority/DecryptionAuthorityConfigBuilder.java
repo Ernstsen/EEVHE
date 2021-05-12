@@ -68,7 +68,7 @@ public class DecryptionAuthorityConfigBuilder implements CommandLineParser.Confi
                 "\t  --" + PORT + "int\t\tSpecifies port to be used. Standard=8081\n" +
                 "\t  --" + BULLETIN_BOARD_2 + "/" + BULLETIN_BOARD_1 + "ip:port location bulletin board to be used\n" +
                 "\t  --" + CORRUPT + "int\t\tInteger specifying with what offset a timeCorrupt DA tries to decrypt with." +
-                "\t  --" + CONF + "Path\t\tRelative path to config folder containgin; zip file with certificate and private key named DA{id}.zip," +
+                "\t  --" + CONF + "Path\t\tRelative path to config folder containing; zip file with certificate and private key named DA{id}.zip," +
                 " a file denoted 'common_input.json' containing common input to all DAs and list of candidates 'candidates.json'.\n";
 
     }

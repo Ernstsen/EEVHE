@@ -45,13 +45,7 @@ public class DLogProofUtils {
         BigInteger a = c.modPow(y, p);
         BigInteger b = partialPublicKey.getG().modPow(y, p);
         BigInteger e = new BigInteger(
-                SecurityUtils.hash(new byte[][]{
-                        a.toByteArray(),
-                        b.toByteArray(),
-                        computePartial(c, secretValue, p).toByteArray(),
-                        partialPublicKey.getH().toByteArray(),
-                        BigInteger.valueOf(id).toByteArray()
-                })).mod(q);
+                SecurityUtils.hash(a.toByteArray(), b.toByteArray(), computePartial(c, secretValue, p).toByteArray(), partialPublicKey.getH().toByteArray(), BigInteger.valueOf(id).toByteArray())).mod(q);
         BigInteger z = y.add(secretValue.multiply(e)).mod(q);
 
         return new Proof(e, z);
@@ -75,13 +69,7 @@ public class DLogProofUtils {
                 .multiply(partialPublicKey.getH().modPow(proof.getE(), p).modInverse(p)).mod(p);
 
         BigInteger s = new BigInteger(
-                SecurityUtils.hash(new byte[][]{
-                        a.toByteArray(),
-                        b.toByteArray(),
-                        partialDecryption.getC().toByteArray(),
-                        partialPublicKey.getH().toByteArray(),
-                        BigInteger.valueOf(id).toByteArray()
-                })).mod(partialPublicKey.getQ());
+                SecurityUtils.hash(a.toByteArray(), b.toByteArray(), partialDecryption.getC().toByteArray(), partialPublicKey.getH().toByteArray(), BigInteger.valueOf(id).toByteArray())).mod(partialPublicKey.getQ());
 
         return proof.getE().equals(s);
     }

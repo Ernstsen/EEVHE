@@ -5,9 +5,9 @@ import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.entities.CommitmentDTO;
 import dk.mmj.eevhe.entities.FeldmanComplaintDTO;
 import dk.mmj.eevhe.entities.PartialSecretMessageDTO;
-import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
-import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGIncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.VSS;
 
 import java.math.BigInteger;
@@ -26,8 +26,8 @@ public class GennaroFeldmanVSS extends AbstractVSS implements VSS {
     protected final Set<Integer> honestParties = new HashSet<>();
 
 
-    public GennaroFeldmanVSS(Broadcaster broadcaster, IncomingChannel incoming,
-                             Map<Integer, PeerCommunicator> peerCommunicatorMap,
+    public GennaroFeldmanVSS(DKGBroadcaster broadcaster, DKGIncomingChannel incoming,
+                             Map<Integer, DKGPeerCommunicator> peerCommunicatorMap,
                              int id, ExtendedKeyGenerationParameters params, String logPrefix,
                              BigInteger[] polynomial, Map<Integer, PartialSecretMessageDTO> secrets) {
         super(broadcaster, incoming, peerCommunicatorMap, id, params, logPrefix);

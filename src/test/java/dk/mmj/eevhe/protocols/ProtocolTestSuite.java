@@ -1,8 +1,9 @@
 package dk.mmj.eevhe.protocols;
 
-import dk.mmj.eevhe.protocols.connectors.TestBulletinBoardBroadcaster;
-import dk.mmj.eevhe.protocols.connectors.TestRestPeerCommunicator;
-import dk.mmj.eevhe.protocols.connectors.TestServerStateIncomingChannel;
+import dk.mmj.eevhe.protocols.agreement.AgreementTestSuite;
+import dk.mmj.eevhe.protocols.connectors.TestBulletinBoardDKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.TestRestDKGPeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.TestServerStateDKGIncomingChannel;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
@@ -12,9 +13,10 @@ import org.junit.runners.Suite;
         TestGennaroFeldmanVSS.class,
         TestGennaroDKG.class,
         TestPedersenVSS.class,
-        TestBulletinBoardBroadcaster.class,
-        TestRestPeerCommunicator.class,
-        TestServerStateIncomingChannel.class
+        TestBulletinBoardDKGBroadcaster.class,
+        TestRestDKGPeerCommunicator.class,
+        TestServerStateDKGIncomingChannel.class,
+        AgreementTestSuite.class
 })
 public class ProtocolTestSuite {
 }

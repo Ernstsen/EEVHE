@@ -7,7 +7,7 @@ import org.junit.runners.Suite;
 
 @Suite.SuiteClasses({
         TestSerialization.class,
-        TestSignedEntity.class
+        TestSignedEntity.class,
 })
 public class EntityTestSuite {
 }

@@ -6,7 +6,9 @@ import dk.mmj.eevhe.TestUsingBouncyCastle;
 import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.signature.SignatureHelper;
-import dk.mmj.eevhe.entities.DecryptionAuthorityInfo;
+import dk.mmj.eevhe.entities.BBInput;
+import dk.mmj.eevhe.entities.BBPeerInfo;
+import dk.mmj.eevhe.entities.PeerInfo;
 import dk.mmj.eevhe.entities.DecryptionAuthorityInput;
 import org.apache.commons.compress.utils.IOUtils;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -52,6 +54,7 @@ public class TestSystemConfigurer extends TestUsingBouncyCastle {
     public void testMeaningfulOutput() {
         int duration = 4;
         String params = "--addresses -1_https://localhost:8081 -2_https://localhost:8082 -3_https://localhost:8083 "
+                + "--bb_peer_addresses -1_https://localhost:18081 -2_https://localhost:18082 -3_https://localhost:18083 "
                 + "--outputFolder=" + conf + " --time -min=" + duration;
 
         SystemConfigurerConfigBuilder builder = new SystemConfigurerConfigBuilder();
@@ -74,13 +77,13 @@ public class TestSystemConfigurer extends TestUsingBouncyCastle {
             DecryptionAuthorityInput output = new ObjectMapper()
                     .readValue(dirPath.resolve("common_input.json").toFile(), DecryptionAuthorityInput.class);
 
-            List<DecryptionAuthorityInfo> infos = output.getInfos();
-            Map<Integer, String> addresses = infos.stream()
-                    .collect(Collectors.toMap(DecryptionAuthorityInfo::getId, DecryptionAuthorityInfo::getAddress));
+            List<PeerInfo> daInfos = output.getInfos();
+            Map<Integer, String> daAddresses = daInfos.stream()
+                    .collect(Collectors.toMap(PeerInfo::getId, PeerInfo::getAddress));
 
-            assertEquals("Wrong address for id=" + 1, addresses.get(1), "https://localhost:8081");
-            assertEquals("Wrong address for id=" + 2, addresses.get(2), "https://localhost:8082");
-            assertEquals("Wrong address for id=" + 3, addresses.get(3), "https://localhost:8083");
+            assertEquals("Wrong address for id=" + 1, daAddresses.get(1), "https://localhost:8081");
+            assertEquals("Wrong address for id=" + 2, daAddresses.get(2), "https://localhost:8082");
+            assertEquals("Wrong address for id=" + 3, daAddresses.get(3), "https://localhost:8083");
 
             assertEquals("Wrong endTime", configEndTime, output.getEndTime());
 
@@ -90,12 +93,11 @@ public class TestSystemConfigurer extends TestUsingBouncyCastle {
             new BigInteger(Hex.decode(output.getgHex()));
             new BigInteger(Hex.decode(output.geteHex()));
 
-            Path da1zip = dirPath.resolve("DA1.zip");
-
             assertTrue("Should have created zip for DA1", Files.exists(dirPath.resolve("DA1.zip")));
             assertTrue("Should have created zip for DA2", Files.exists(dirPath.resolve("DA2.zip")));
             assertTrue("Should have created zip for DA3", Files.exists(dirPath.resolve("DA3.zip")));
 
+            Path da1zip = dirPath.resolve("DA1.zip");
             try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(da1zip))) {
                 ZipEntry nextEntry = zis.getNextEntry();
                 assertNotNull("Should contain two entries", nextEntry);
@@ -116,6 +118,38 @@ public class TestSystemConfigurer extends TestUsingBouncyCastle {
 
                 assertIsSigned(cert);
                 assertSignAndVerify(sk, certBytes);
+            }
+
+            BBInput bbOutput = new ObjectMapper().readValue(dirPath.resolve("BB_input.json").toFile(), BBInput.class);
+            List<BBPeerInfo> peers = bbOutput.getPeers();
+            Map<Integer, String> bbPeerAddresses = peers.stream()
+                    .collect(Collectors.toMap(BBPeerInfo::getId, BBPeerInfo::getAddress));
+
+            assertEquals("Wrong address for BB Peer id=" + 1, bbPeerAddresses.get(1), "https://localhost:18081");
+            assertEquals("Wrong address for BB Peer id=" + 2, bbPeerAddresses.get(2), "https://localhost:18082");
+            assertEquals("Wrong address for BB Peer id=" + 3, bbPeerAddresses.get(3), "https://localhost:18083");
+
+            assertTrue("Should have created zip for BB_peer1", Files.exists(dirPath.resolve("BB_peer1.zip")));
+            assertTrue("Should have created zip for BB_peer2", Files.exists(dirPath.resolve("BB_peer2.zip")));
+            assertTrue("Should have created zip for BB_peer3", Files.exists(dirPath.resolve("BB_peer3.zip")));
+
+            Path bbPeer1zip = dirPath.resolve("BB_peer1.zip");
+            try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(bbPeer1zip))) {
+                ZipEntry nextEntry = zis.getNextEntry();
+                assertNotNull("Should contain one entry", nextEntry);
+                assertEquals("Entry should be secret key", nextEntry.getName(), "sk.pem");
+
+                byte[] skBytes = IOUtils.toByteArray(zis);
+                AsymmetricKeyParameter sk = KeyHelper.readKey(skBytes);
+                assertNotNull(sk);
+            }
+
+            for (BBPeerInfo bbPeer: bbOutput.getPeers()) {
+                X509CertificateHolder certificate = CertificateHelper.readCertificate(bbPeer.getCertificate().getBytes(StandardCharsets.UTF_8));
+                assertTrue("certificate should be valid until after endTime", certificate.isValidOn(new Date(configEndTime + 500)));
+                assertEquals("Unexpected issuer", new X500Name("CN=EEVHE_Configurer"), certificate.getIssuer());
+
+                assertIsSigned(certificate);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -146,9 +180,13 @@ public class TestSystemConfigurer extends TestUsingBouncyCastle {
         Path path = Paths.get(conf);
         if (Files.exists(path)) {
             Files.delete(path.resolve("common_input.json"));
+            Files.delete(path.resolve("BB_input.json"));
             Files.delete(path.resolve("DA1.zip"));
             Files.delete(path.resolve("DA2.zip"));
             Files.delete(path.resolve("DA3.zip"));
+            Files.delete(path.resolve("BB_peer1.zip"));
+            Files.delete(path.resolve("BB_peer2.zip"));
+            Files.delete(path.resolve("BB_peer3.zip"));
             Files.delete(path);
         }
     }

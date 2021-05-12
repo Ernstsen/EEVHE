@@ -3,9 +3,9 @@ package dk.mmj.eevhe.protocols;
 import dk.mmj.eevhe.crypto.SecurityUtils;
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedKeyGenerationParameters;
 import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
-import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGIncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.DKG;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,9 +17,9 @@ import java.util.stream.Collectors;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class GennaroDKG implements DKG<PartialKeyPair> {
-    protected final Broadcaster broadcaster;
-    protected final IncomingChannel incoming;
-    protected final Map<Integer, PeerCommunicator> peerMap;
+    protected final DKGBroadcaster broadcaster;
+    protected final DKGIncomingChannel incoming;
+    protected final Map<Integer, DKGPeerCommunicator> peerMap;
     protected final Logger logger;
     protected final int id;
     protected final ExtendedKeyGenerationParameters params;
@@ -44,8 +44,8 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
      * @param params              Key Generation Parameters: (g, p, q)
      * @param logPrefix           Prefix used for logging
      */
-    public GennaroDKG(Broadcaster broadcaster, IncomingChannel incoming,
-                      Map<Integer, PeerCommunicator> peerCommunicatorMap,
+    public GennaroDKG(DKGBroadcaster broadcaster, DKGIncomingChannel incoming,
+                      Map<Integer, DKGPeerCommunicator> peerCommunicatorMap,
                       int id, ExtendedKeyGenerationParameters params, String logPrefix) {
         this.broadcaster = broadcaster;
         this.incoming = incoming;
@@ -109,7 +109,7 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
     List<Step> extractionPhase() {
         honestPartiesPedersen = pedersenVSS.getHonestParties();
         honestPartiesFeldman = new HashSet<>();
-        final Map<Integer, PeerCommunicator> honestPeers = new HashMap<>();
+        final Map<Integer, DKGPeerCommunicator> honestPeers = new HashMap<>();
         final Map<Integer, PartialSecretMessageDTO> secretsPedersen = pedersenVSS.getSecrets();
 
         GennaroFeldmanVSS feldmanVSS = new GennaroFeldmanVSS(broadcaster, incoming,
@@ -130,7 +130,7 @@ public class GennaroDKG implements DKG<PartialKeyPair> {
         );
     }
 
-    PartialKeyPair computeKeyPair(Broadcaster broadcaster, Set<Integer> honestParties, GennaroFeldmanVSS feldmanVSS) {
+    PartialKeyPair computeKeyPair(DKGBroadcaster broadcaster, Set<Integer> honestParties, GennaroFeldmanVSS feldmanVSS) {
         logger.info("Computing PartialKeyPair");
         BigInteger partialSecretKey = feldmanVSS.output();
         BigInteger partialPublicKey = g.modPow(partialSecretKey, p);

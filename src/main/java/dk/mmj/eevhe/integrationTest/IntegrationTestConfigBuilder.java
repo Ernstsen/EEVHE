@@ -80,9 +80,10 @@ public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBui
     @Override
     public IntegrationTest.IntegrationTestConfiguration build() {
         List<Integer> decryptionAuthorities = getDecryptionAuthorities();
+        List<Integer> bulletinBoardPeers = getBulletinBoardPeers();
         List<Integer> voteDelays = getVoteDelays();
 
-        return new IntegrationTest.IntegrationTestConfiguration(decryptionAuthorities, duration, voteDelays);
+        return new IntegrationTest.IntegrationTestConfiguration(decryptionAuthorities, bulletinBoardPeers, duration, voteDelays);
     }
 
     private List<Integer> getDecryptionAuthorities() {
@@ -98,6 +99,10 @@ public class IntegrationTestConfigBuilder implements CommandLineParser.ConfigBui
         }
 
         return decryptionAuthorities;
+    }
+
+    private List<Integer> getBulletinBoardPeers() {
+        return Arrays.asList(1, 2, 3, 4);
     }
 
     private List<Integer> getVoteDelays() {

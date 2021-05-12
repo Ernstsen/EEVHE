@@ -2,9 +2,9 @@ package dk.mmj.eevhe.protocols;
 
 import dk.mmj.eevhe.crypto.keygeneration.ExtendedPersistedKeyParameters;
 import dk.mmj.eevhe.entities.*;
-import dk.mmj.eevhe.protocols.connectors.interfaces.Broadcaster;
-import dk.mmj.eevhe.protocols.connectors.interfaces.IncomingChannel;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGIncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.VSS;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,14 +36,14 @@ public class TestPedersenVSS {
     @Test
     public void testProtocolRunNoCorruption() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final PrivateCommunicationChannelDKG channel1 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel2 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel3 = new PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);
@@ -89,13 +89,13 @@ public class TestPedersenVSS {
     @Test
     public void testProtocolWithOneNonParticipant() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final PrivateCommunicationChannelDKG channel1 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel2 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel3 = new PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);
@@ -141,8 +141,8 @@ public class TestPedersenVSS {
     @Test
     public void testProtocolWithComplaints() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PeerCommunicator brokenChannel = (m) -> {
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final DKGPeerCommunicator brokenChannel = (m) -> {
         };
 
         List<PartialSecretMessageDTO> receivedPeer1 = Arrays.asList(
@@ -155,13 +155,13 @@ public class TestPedersenVSS {
                 new PartialSecretMessageDTO(BigInteger.ONE, BigInteger.ONE, 3, 1),
                 new PartialSecretMessageDTO(BigInteger.ONE, BigInteger.ONE, 3, 2));
 
-        final IncomingChannel brokenIncoming1 = () -> receivedPeer1;
-        final IncomingChannel brokenIncoming2 = () -> receivedPeer2;
-        final IncomingChannel brokenIncoming3 = () -> receivedPeer3;
+        final DKGIncomingChannel brokenIncoming1 = () -> receivedPeer1;
+        final DKGIncomingChannel brokenIncoming2 = () -> receivedPeer2;
+        final DKGIncomingChannel brokenIncoming3 = () -> receivedPeer3;
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, brokenChannel);
         commMap1.put(3, brokenChannel);
@@ -207,14 +207,14 @@ public class TestPedersenVSS {
     @Test
     public void testProtocolOneCorrupt() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final PrivateCommunicationChannelDKG channel1 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel2 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel3 = new PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, (msg) -> channel2.sendSecret(
                 new PartialSecretMessageDTO(msg.getPartialSecret1().add(valueOf(5)), msg.getPartialSecret2(), 2, 1)));
@@ -265,14 +265,14 @@ public class TestPedersenVSS {
     @Test
     public void testProtocolOnePartyBecomesInactive() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final PrivateCommunicationChannelDKG channel1 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel2 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel3 = new PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, (msg) -> channel2.sendSecret(
                 new PartialSecretMessageDTO(msg.getPartialSecret1().add(valueOf(5)), msg.getPartialSecret2(), 2, 1)));
@@ -322,14 +322,14 @@ public class TestPedersenVSS {
     @Test
     public void testProtocolWithOnePartySendingNullCommitment() {
         //Modelling communications channels
-        final TestBroadcaster testBroadcaster = new TestBroadcaster();
-        final PrivateCommunicationChannel channel1 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel2 = new PrivateCommunicationChannel();
-        final PrivateCommunicationChannel channel3 = new PrivateCommunicationChannel();
+        final TestDKGBroadcaster testBroadcaster = new TestDKGBroadcaster();
+        final PrivateCommunicationChannelDKG channel1 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel2 = new PrivateCommunicationChannelDKG();
+        final PrivateCommunicationChannelDKG channel3 = new PrivateCommunicationChannelDKG();
 
-        final HashMap<Integer, PeerCommunicator> commMap1 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap2 = new HashMap<>();
-        final HashMap<Integer, PeerCommunicator> commMap3 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap1 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap2 = new HashMap<>();
+        final HashMap<Integer, DKGPeerCommunicator> commMap3 = new HashMap<>();
 
         commMap1.put(2, channel2);
         commMap1.put(3, channel3);
@@ -374,7 +374,7 @@ public class TestPedersenVSS {
         assertNotNull("Partial secret 3 was null", partialSecret3);
     }
 
-    static class TestBroadcaster implements Broadcaster {
+    static class TestDKGBroadcaster implements DKGBroadcaster {
         final List<CommitmentDTO> commitments = new ArrayList<>();
         final List<PedersenComplaintDTO> pedersenComplaints = new ArrayList<>();
         final List<FeldmanComplaintDTO> feldmanComplaints = new ArrayList<>();
@@ -422,7 +422,7 @@ public class TestPedersenVSS {
         }
     }
 
-    static class PrivateCommunicationChannel implements IncomingChannel, PeerCommunicator {
+    static class PrivateCommunicationChannelDKG implements DKGIncomingChannel, DKGPeerCommunicator {
         private final List<PartialSecretMessageDTO> messages = new ArrayList<>();
 
         @Override

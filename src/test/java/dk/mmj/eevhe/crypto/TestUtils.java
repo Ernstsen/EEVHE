@@ -99,9 +99,9 @@ public class TestUtils {
     }
 
     private static class VoteCreator implements Runnable {
-        private List<String> ids;
-        private Collection<PersistedVote> votes;
-        private PublicKey publicKey;
+        private final List<String> ids;
+        private final Collection<PersistedVote> votes;
+        private final PublicKey publicKey;
 
         private VoteCreator(List<String> ids, Collection<PersistedVote> votes, PublicKey publicKey) {
             this.ids = ids;

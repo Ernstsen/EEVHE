@@ -4,6 +4,8 @@ import dk.mmj.eevhe.entities.CertificateDTO;
 import dk.mmj.eevhe.entities.SignedEntity;
 import dk.mmj.eevhe.interfaces.CertificateFetcher;
 import dk.mmj.eevhe.interfaces.CertificateProvider;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
@@ -17,7 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CertificateProviderImpl implements CertificateProvider {
-
+    private static final Logger logger = LogManager.getLogger(CertificateProviderImpl.class);
     private final CertificateFetcher fetcher;
     private final AsymmetricKeyParameter electionPk;
     private Map<Integer, String> cache;
@@ -68,6 +70,7 @@ public class CertificateProviderImpl implements CertificateProvider {
             boolean notImposter = certificate.getSubject().equals(new X500Name("CN=DA" + e.getEntity().getId()));
             return selfSigned && signedByCA && notImposter;
         } catch (Exception exception) {
+            logger.error("verifyCert failed. ", exception);
             return false;
         }
     }

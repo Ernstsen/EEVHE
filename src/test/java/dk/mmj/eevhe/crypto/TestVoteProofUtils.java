@@ -1,7 +1,7 @@
 package dk.mmj.eevhe.crypto;
 
-import dk.mmj.eevhe.entities.*;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
+import dk.mmj.eevhe.entities.*;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -11,7 +11,7 @@ import static dk.mmj.eevhe.crypto.TestUtils.generateKeysFromP2048bitsG2;
 import static org.junit.Assert.assertFalse;
 
 public class TestVoteProofUtils {
-    private static String id = "testid42";
+    private static final String id = "testid42";
 
     private boolean createCiphertextAndProof(int vote, String cipherTextId, String proofId) {
         KeyPair keyPair = generateKeysFromP2048bitsG2();

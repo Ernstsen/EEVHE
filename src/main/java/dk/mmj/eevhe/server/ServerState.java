@@ -3,10 +3,9 @@ package dk.mmj.eevhe.server;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * Singleton state for a server. Acts like a map
@@ -36,18 +35,6 @@ public class ServerState {
         state.put(key, object);
     }
 
-    public synchronized <T> void putInList(String key, T object) {
-        //noinspection unchecked
-        List<T> list = (List<T>) state.get(key);
-
-        if (list == null) {
-            list = new ArrayList<>();
-            state.put(key, list);
-        }
-
-        list.add(object);
-    }
-
     /**
      * Getter for a stored object.
      * <br>
@@ -71,6 +58,18 @@ public class ServerState {
             return null;
         }
         return (T) object;
+    }
+
+    /**
+     * Compute if absent, similar to the one from the {@link Map} interface
+     *
+     * @param key      identifier of the object to be retrieved
+     * @param function function to compute if key is absent
+     * @param <T>      Generic type of class
+     * @return The object either computed or found
+     */
+    public <T> T computeIfAbsent(String key, Function<String, T> function) {
+        return (T) state.computeIfAbsent(key, function);
     }
 
     /**

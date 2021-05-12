@@ -1,8 +1,7 @@
 package dk.mmj.eevhe.client;
 
-import dk.eSoftware.commandLineParser.NoSuchBuilderException;
 import dk.eSoftware.commandLineParser.SingletonCommandLineParser;
-import dk.eSoftware.commandLineParser.WrongFormatException;
+import dk.mmj.eevhe.Main;
 import dk.mmj.eevhe.TestUsingBouncyCastle;
 import dk.mmj.eevhe.crypto.ElGamal;
 import dk.mmj.eevhe.crypto.SecurityUtils;
@@ -11,9 +10,9 @@ import dk.mmj.eevhe.crypto.signature.CertificateHelper;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.server.AbstractServer;
 import dk.mmj.eevhe.server.ServerState;
-import dk.mmj.eevhe.server.bulletinboard.BulletinBoard;
-import dk.mmj.eevhe.server.bulletinboard.BulletinBoardConfigBuilder;
+import dk.mmj.eevhe.server.bulletinboard.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -28,31 +27,37 @@ import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 import org.glassfish.jersey.client.JerseyWebTarget;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
-import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class TestVoter extends TestUsingBouncyCastle {
     private static final Logger logger = LogManager.getLogger(TestVoter.class);
-    private BigInteger h;
-    private PublicKey pk;
-    private X509CertificateHolder daOneCert;
-    private AsymmetricKeyParameter daOneSk;
+    private static BigInteger h;
+    private static PublicKey pk;
+    private static X509CertificateHolder daOneCert;
+    private static AsymmetricKeyParameter daOneSk;
+    private static final List<AbstractServer> servers = new ArrayList<>();
+    private static final int edgePort = 4894;
+    private static final JerseyWebTarget edgeTarget = SSLHelper.configureWebTarget(logger, "https://localhost:" + edgePort);
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        Main.main(new String[]{"--configuration", "--bb_peer_addresses", "-1_https://localhost:18081"});
+
         KeyGenerationParametersImpl params = new KeyGenerationParametersImpl(4, 50);
         DistKeyGenResult keygen = ElGamal.generateDistributedKeys(params, 2, 3);
 
@@ -79,77 +84,74 @@ public class TestVoter extends TestUsingBouncyCastle {
 
         daOneCert = cb.build(signer);
         daOneSk = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
+
+        BulletinBoardPeer peer = new SingletonCommandLineParser<>(new BulletinBoardPeerConfigBuilder()).parse(new String[]{"--id=1", "--port=18081"}).produceInstance();
+        BulletinBoardEdge edge = new SingletonCommandLineParser<>(new BulletinBoardEdgeConfigBuilder()).parse(new String[]{"--id=edge1", "--port=" + edgePort}).produceInstance();
+        new Thread(peer).start();
+        new Thread(edge).start();
+        servers.add(peer);
+        servers.add(edge);
+        Thread.sleep(10_000);
+    }
+
+    @AfterClass
+    public static void afterClass() throws InterruptedException {
+        for (AbstractServer server : servers) {
+            server.terminate();
+        }
+        Thread.sleep(5_000);
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        ServerState.getInstance().put("bbState.1", new BulletinBoardState());
     }
 
     @Test
-    public void testSingleVote() throws InterruptedException, NoSuchBuilderException, WrongFormatException, IOException {
-        int port = 4894;
-        BulletinBoard.BulletinBoardConfiguration config =
-                new SingletonCommandLineParser<>(new BulletinBoardConfigBuilder()).parse(new String[]{"--port=" + port});
-        BulletinBoard bulletinBoard = new BulletinBoard(config);
-        Thread thread = new Thread(bulletinBoard);
-        thread.start();
-        Thread.sleep(2_000);
-
+    public void testSingleVote() throws IOException {
         String id = "id";
-        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + port, id, 2, null);
+        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, id, 2, null);
         Voter voter = new Voter(conf);
-        JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
 
-        initializeBulletinBoard(target);
+        initializeBulletinBoard(edgeTarget);
 
         voter.run();
 
-        BallotList fetchedBallotList = target.path("getBallots").request()
-                .get(BallotList.class);
 
-        List<PersistedBallot> ballots = fetchedBallotList.getBallots();
+        List<PersistedBallot> ballots = FetchingUtilities.getBallots(logger, edgeTarget, voter.getBBPeerCertificates());
+
+        assertNotNull("Failed to fetch list of posted ballots", ballots);
         assertEquals("Did not find exactly one vote!", 1, ballots.size());
-
         PersistedBallot ballot = ballots.get(0);
         assertTrue("Failed to verify ballot", VoteProofUtils.verifyBallot(ballot, pk));
-
-        //Terminate BB
-        bulletinBoard.terminate();
-        thread.join();
-        ServerState.getInstance().reset();
     }
 
     @Test
-    public void testMultiVote() throws InterruptedException, NoSuchBuilderException, WrongFormatException, IOException {
-        int port = 4896;
-        BulletinBoard.BulletinBoardConfiguration config =
-                new SingletonCommandLineParser<>(new BulletinBoardConfigBuilder()).parse(new String[]{"--port=" + port});
-        BulletinBoard bulletinBoard = new BulletinBoard(config);
-        Thread thread = new Thread(bulletinBoard);
-        thread.start();
-        Thread.sleep(2_000);
+    public void testMultiVote() throws  IOException {
 
-        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + port, null, null, 20);
+
+        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, null, null, 5);
         Voter voter = new Voter(conf);
-        JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + port);
+        JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + edgePort);
 
         initializeBulletinBoard(target);
 
         voter.run();
 
-        BallotList fetchedBallotList = target.path("getBallots").request()
-                .get(new GenericType<>(BallotList.class));
+        List<PersistedBallot> ballots = FetchingUtilities.getBallots(
+                logger, target,
+                voter.getBBPeerCertificates()
+        );
 
-        List<PersistedBallot> ballots = fetchedBallotList.getBallots();
-        assertEquals("Did not find exactly twenty votes!", 20, ballots.size());
+        assertNotNull("Failed to fetch list of posted ballots", ballots);
+        assertEquals("Did not find exactly twenty votes!", 5, ballots.size());
 
         for (PersistedBallot ballot : ballots) {
             assertTrue("Failed to verify ballot", VoteProofUtils.verifyBallot(ballot, pk));
         }
-
-        //Terminate BB
-        bulletinBoard.terminate();
-        thread.join();
-        ServerState.getInstance().reset();
     }
 
-    private void initializeBulletinBoard(JerseyWebTarget target) throws IOException {
+    private static void initializeBulletinBoard(JerseyWebTarget target) throws IOException {
         List<Candidate> candidates = Arrays.asList(
                 new Candidate(0, "name1", "desc1"),
                 new Candidate(1, "name2", "desc3"),

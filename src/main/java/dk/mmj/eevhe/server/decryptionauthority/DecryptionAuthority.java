@@ -1,6 +1,5 @@
 package dk.mmj.eevhe.server.decryptionauthority;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.eSoftware.commandLineParser.AbstractInstanceCreatingConfiguration;
@@ -11,17 +10,19 @@ import dk.mmj.eevhe.crypto.signature.CertificateProviderImpl;
 import dk.mmj.eevhe.crypto.signature.KeyHelper;
 import dk.mmj.eevhe.crypto.zeroknowledge.VoteProofUtils;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.wrappers.CertificatesWrapper;
 import dk.mmj.eevhe.interfaces.Decrypter;
 import dk.mmj.eevhe.protocols.GennaroDKG;
-import dk.mmj.eevhe.protocols.connectors.BulletinBoardBroadcaster;
-import dk.mmj.eevhe.protocols.connectors.RestPeerCommunicator;
-import dk.mmj.eevhe.protocols.connectors.ServerStateIncomingChannel;
-import dk.mmj.eevhe.protocols.connectors.interfaces.PeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.BulletinBoardDKGBroadcaster;
+import dk.mmj.eevhe.protocols.connectors.RestDKGPeerCommunicator;
+import dk.mmj.eevhe.protocols.connectors.ServerStateDKGIncomingChannel;
+import dk.mmj.eevhe.protocols.connectors.interfaces.DKGPeerCommunicator;
 import dk.mmj.eevhe.protocols.interfaces.DKG;
 import dk.mmj.eevhe.server.AbstractServer;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -68,6 +69,7 @@ public class DecryptionAuthority extends AbstractServer {
     private boolean timeCorrupt = false;
     private Iterator<DKG.Step> dkgSteps;
     private PartialKeyPair keyPair;
+    private List<X509CertificateHolder> bbCertificates;
 
     public DecryptionAuthority(DecryptionAuthorityConfiguration configuration) {
         logger = LogManager.getLogger(DecryptionAuthority.class + " " + configuration.id + ":");
@@ -147,7 +149,7 @@ public class DecryptionAuthority extends AbstractServer {
 
     @Override
     protected void afterStart() {
-        logger.info("Posting ");
+        logger.info("Posting cetificates ");
         Entity<SignedEntity<CertificateDTO>> entity = Entity.entity(
                 new SignedEntity<>(new CertificateDTO(certString, id), sk),
                 MediaType.APPLICATION_JSON);
@@ -163,20 +165,20 @@ public class DecryptionAuthority extends AbstractServer {
      */
     private void scheduleDKG() {
         logger.info("Started keygen protocol for DA with id=" + id);
-        Map<Integer, PeerCommunicator> communicators = input.getInfos()
+        Map<Integer, DKGPeerCommunicator> communicators = input.getInfos()
                 .stream()
-                .collect(Collectors.toMap(DecryptionAuthorityInfo::getId, inf -> new RestPeerCommunicator(configureWebTarget(logger, inf.getAddress()), sk)));
+                .collect(Collectors.toMap(PeerInfo::getId, inf -> new RestDKGPeerCommunicator(configureWebTarget(logger, inf.getAddress()), sk)));
         communicators.remove(id);//We remove ourself, to be able to iterate without
-        CertificateProviderImpl certProvider = new CertificateProviderImpl(this::getCertificates, electionPk);
-        final ServerStateIncomingChannel incoming = new ServerStateIncomingChannel(
+        CertificateProviderImpl certProvider = new CertificateProviderImpl(this::getDaCertificates, electionPk);
+        final ServerStateDKGIncomingChannel incoming = new ServerStateDKGIncomingChannel(
                 input.getInfos().stream()
-                        .map(DecryptionAuthorityInfo::getId)
+                        .map(PeerInfo::getId)
                         .map(this::partialSecretKey)
                         .collect(Collectors.toList()),
                 certProvider
         );
 
-        dkg = new GennaroDKG(new BulletinBoardBroadcaster(bulletinBoard, sk, certProvider),
+        dkg = new GennaroDKG(new BulletinBoardDKGBroadcaster(bulletinBoard, sk, certProvider, this::getBBPeerCertificates),
                 incoming, communicators, id, params, "ID:" + id);
         dkgSteps = dkg.getSteps().iterator();
 
@@ -190,15 +192,14 @@ public class DecryptionAuthority extends AbstractServer {
      *
      * @return list of signed certificates
      */
-    private List<SignedEntity<CertificateDTO>> getCertificates() {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String certificates = bulletinBoard.path("certificates").request().get(String.class);
-            return mapper.readValue(certificates, new TypeReference<List<SignedEntity<CertificateDTO>>>() {
-            });
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to fetch certificates", e);
-        }
+    private List<SignedEntity<CertificateDTO>> getDaCertificates() {
+        return FetchingUtilities.fetch(
+                bulletinBoard.path("certificates"),
+                new TypeReference<CertificatesWrapper>() {
+                },
+                getBBPeerCertificates(),
+                logger
+        ).getContent();
     }
 
     /**
@@ -218,7 +219,7 @@ public class DecryptionAuthority extends AbstractServer {
             );
 
             decrypter = new DecrypterImpl(id,
-                    () -> FetchingUtilities.getBallots(logger, bulletinBoard),
+                    () -> FetchingUtilities.getBallots(logger, bulletinBoard, getBBPeerCertificates()),
                     b -> VoteProofUtils.verifyBallot(b, keyPair.getPublicKey()),
                     candidates
             );
@@ -274,6 +275,18 @@ public class DecryptionAuthority extends AbstractServer {
             logger.info("Successfully transferred partial decryption to bulletin board");
         }
 
+    }
+
+    /**
+     * Fetches list of BB-peer certificates
+     *
+     * @return list of valid bb-peer certificates
+     */
+    protected List<X509CertificateHolder> getBBPeerCertificates() {
+        if(bbCertificates != null){
+            return bbCertificates;
+        }
+        return bbCertificates = FetchingUtilities.getBBPeerCertificates(logger, bulletinBoard, electionPk);
     }
 
     @Override

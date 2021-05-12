@@ -1,9 +1,12 @@
 package dk.mmj.eevhe.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.results.ElectionResult;
 import dk.mmj.eevhe.client.results.ResultCombinerImpl;
 import dk.mmj.eevhe.entities.*;
+import dk.mmj.eevhe.entities.wrappers.PartialResultWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -16,6 +19,7 @@ import java.util.stream.Collectors;
  * Class for retrieving vote results
  */
 public class ResultFetcher extends Client {
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final Logger logger = LogManager.getLogger(ResultFetcher.class);
     private final boolean forceCalculation;
     private ElectionResult electionResult;
@@ -51,8 +55,14 @@ public class ResultFetcher extends Client {
         }
 
         logger.info("Fetching partial results");
-        ResultList fetchedResultList = target.path("result").request().get(ResultList.class);
-        List<SignedEntity<PartialResultList>> signedResults = fetchedResultList.getResults();
+        List<SignedEntity<PartialResultList>> signedResults = FetchingUtilities.fetch(
+                target.path("result"),
+                new TypeReference<PartialResultWrapper>() {
+                },
+                getBBPeerCertificates(),
+                logger
+        ).getContent();
+
         if (signedResults == null || signedResults.isEmpty()) {
             logger.info("Did not fetch any results. Probable cause is unfinished decryption. Try again later");
             return;
@@ -72,8 +82,8 @@ public class ResultFetcher extends Client {
 
         ResultCombinerImpl combiner = new ResultCombinerImpl(
                 forceCalculation, publicKey, candidates,
-                () -> FetchingUtilities.getPublicInfos(logger, target, cert),
-                () -> FetchingUtilities.getBallots(logger, target),
+                () -> FetchingUtilities.getPublicInfos(logger, target, cert, getBBPeerCertificates()),
+                () -> FetchingUtilities.getBallots(logger, target, getBBPeerCertificates()),
                 endTime);
 
 
@@ -131,7 +141,7 @@ public class ResultFetcher extends Client {
         private final boolean forceCalculations;
 
         /**
-         * @param targetUrl         url for {@link dk.mmj.eevhe.server.bulletinboard.BulletinBoard} to get data from
+         * @param targetUrl         url for {@link dk.mmj.eevhe.server.bulletinboard.BulletinBoardEdge} to get data from
          * @param forceCalculations whether ciphertext containing sum of votes should be computed locally
          */
         ResultFetcherConfiguration(String targetUrl, boolean forceCalculations) {

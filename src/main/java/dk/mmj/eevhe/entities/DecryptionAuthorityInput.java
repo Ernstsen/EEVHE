@@ -9,10 +9,10 @@ public class DecryptionAuthorityInput {
     private String gHex;
     private String eHex;
     private long endTime;
-    private List<DecryptionAuthorityInfo> infos;
+    private List<PeerInfo> infos;
     private String encodedElectionCertificate;
 
-    public DecryptionAuthorityInput(String pHex, String gHex, String eHex, long endTime, List<DecryptionAuthorityInfo> infos, String encodedElectionCertificate) {
+    public DecryptionAuthorityInput(String pHex, String gHex, String eHex, long endTime, List<PeerInfo> infos, String encodedElectionCertificate) {
         this.pHex = pHex;
         this.gHex = gHex;
         this.eHex = eHex;
@@ -56,11 +56,11 @@ public class DecryptionAuthorityInput {
         this.endTime = endTime;
     }
 
-    public List<DecryptionAuthorityInfo> getInfos() {
+    public List<PeerInfo> getInfos() {
         return infos;
     }
 
-    public void setInfos(List<DecryptionAuthorityInfo> infos) {
+    public void setInfos(List<PeerInfo> infos) {
         this.infos = infos;
     }
 
