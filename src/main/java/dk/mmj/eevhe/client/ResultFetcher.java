@@ -2,7 +2,6 @@ package dk.mmj.eevhe.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import dk.mmj.eevhe.client.results.ElectionResult;
 import dk.mmj.eevhe.client.results.ResultCombinerImpl;
 import dk.mmj.eevhe.entities.*;
@@ -10,6 +9,8 @@ import dk.mmj.eevhe.entities.wrappers.PartialResultWrapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -19,18 +20,19 @@ import java.util.stream.Collectors;
  * Class for retrieving vote results
  */
 public class ResultFetcher extends Client {
-    private static final ObjectMapper mapper = new ObjectMapper();
     private static final Logger logger = LogManager.getLogger(ResultFetcher.class);
     private final boolean forceCalculation;
     private ElectionResult electionResult;
 
+    @SuppressWarnings("unused")//Used through reflection
     public ResultFetcher(ResultFetcherConfiguration configuration) {
         super(configuration);
         this.forceCalculation = configuration.forceCalculations;
     }
 
+    @SuppressWarnings("unused")//For gui impl
     public ResultFetcher(String address, boolean forceCalculation) {
-        super(new ResultFetcherConfiguration(address, forceCalculation));
+        super(new ResultFetcherConfiguration(address, forceCalculation, Paths.get("certs/test_glob.pem")));
         this.forceCalculation = forceCalculation;
     }
 
@@ -143,9 +145,10 @@ public class ResultFetcher extends Client {
         /**
          * @param targetUrl         url for {@link dk.mmj.eevhe.server.bulletinboard.BulletinBoardEdge} to get data from
          * @param forceCalculations whether ciphertext containing sum of votes should be computed locally
+         * @param electionCertPath  path to global election certificate
          */
-        ResultFetcherConfiguration(String targetUrl, boolean forceCalculations) {
-            super(ResultFetcher.class, targetUrl);
+        ResultFetcherConfiguration(String targetUrl, boolean forceCalculations, Path electionCertPath) {
+            super(ResultFetcher.class, targetUrl, electionCertPath);
             this.forceCalculations = forceCalculations;
         }
 

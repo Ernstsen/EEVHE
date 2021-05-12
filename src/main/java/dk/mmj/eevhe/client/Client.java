@@ -13,6 +13,7 @@ import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
 import org.glassfish.jersey.client.JerseyWebTarget;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -33,7 +34,7 @@ public abstract class Client implements Application {
     public Client(ClientConfiguration<?> configuration) {
         target = configureWebTarget(logger, configuration.targetUrl);
         try {
-            cert = CertificateHelper.getPublicKeyFromCertificate(Paths.get("certs/test_glob.pem"));
+            cert = CertificateHelper.getPublicKeyFromCertificate(configuration.electionCertPath);
         } catch (IOException e) {
             throw new RuntimeException("Failed to load election certificate");
         }
@@ -129,14 +130,20 @@ public abstract class Client implements Application {
 
     static abstract class ClientConfiguration<T extends Client> extends AbstractInstanceCreatingConfiguration<T> {
         private final String targetUrl;
+        private final Path electionCertPath;
 
-        ClientConfiguration(Class<T> clazz, String targetUrl) {
+        ClientConfiguration(Class<T> clazz, String targetUrl, Path electionCertPath) {
             super(clazz);
             this.targetUrl = targetUrl;
+            this.electionCertPath = electionCertPath;
         }
 
         public String getTargetUrl() {
             return targetUrl;
+        }
+
+        public Path getElectionCertPath() {
+            return electionCertPath;
         }
     }
 }

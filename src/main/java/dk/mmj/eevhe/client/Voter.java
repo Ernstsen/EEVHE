@@ -19,6 +19,8 @@ import javax.ws.rs.core.Response;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -54,7 +56,7 @@ public class Voter extends Client {
      */
     @SuppressWarnings("unused")//For GUI impl.
     public Voter(String targetUrl, String id) {
-        super(new VoterConfiguration(targetUrl, id, null, null));
+        super(new VoterConfiguration(targetUrl, id, null, null, Paths.get("certs/test_glob.pem")));
         this.id = id;
         this.vote = null;
         multi = null;
@@ -103,7 +105,7 @@ public class Voter extends Client {
             id = UUID.randomUUID().toString();
             int vote = random.nextInt(size);
 
-            if(doVote(vote, publicKey)){
+            if (doVote(vote, publicKey)) {
                 castVotes[vote]++;
             }
 
@@ -256,13 +258,14 @@ public class Voter extends Client {
         private final Integer multi;
 
         /**
-         * @param targetUrl url for bulletin board to post vote(s) to
-         * @param id        voter id
-         * @param vote      what to vote. True is pro while False is against
-         * @param multi     if different from null, multiple random votes are dispatched
+         * @param targetUrl        url for bulletin board to post vote(s) to
+         * @param id               voter id
+         * @param vote             what to vote. True is pro while False is against
+         * @param multi            if different from null, multiple random votes are dispatched
+         * @param electionCertPath path to global election certificate
          */
-        VoterConfiguration(String targetUrl, String id, Integer vote, Integer multi) {
-            super(Voter.class, targetUrl);
+        VoterConfiguration(String targetUrl, String id, Integer vote, Integer multi, Path electionCertPath) {
+            super(Voter.class, targetUrl, electionCertPath);
             this.id = id;
             this.vote = vote;
             this.multi = multi;

@@ -46,13 +46,13 @@ import static org.junit.Assert.*;
 
 public class TestVoter extends TestUsingBouncyCastle {
     private static final Logger logger = LogManager.getLogger(TestVoter.class);
+    private static final List<AbstractServer> servers = new ArrayList<>();
+    private static final int edgePort = 4894;
+    private static final JerseyWebTarget edgeTarget = SSLHelper.configureWebTarget(logger, "https://localhost:" + edgePort);
     private static BigInteger h;
     private static PublicKey pk;
     private static X509CertificateHolder daOneCert;
     private static AsymmetricKeyParameter daOneSk;
-    private static final List<AbstractServer> servers = new ArrayList<>();
-    private static final int edgePort = 4894;
-    private static final JerseyWebTarget edgeTarget = SSLHelper.configureWebTarget(logger, "https://localhost:" + edgePort);
 
     @BeforeClass
     public static void beforeClass() throws Exception {
@@ -102,6 +102,24 @@ public class TestVoter extends TestUsingBouncyCastle {
         Thread.sleep(5_000);
     }
 
+    private static void initializeBulletinBoard(JerseyWebTarget target) throws IOException {
+        List<Candidate> candidates = Arrays.asList(
+                new Candidate(0, "name1", "desc1"),
+                new Candidate(1, "name2", "desc3"),
+                new Candidate(2, "name3", "desc2")
+        );
+
+        SignedEntity<PartialPublicInfo> ppi = new SignedEntity<>(
+                new PartialPublicInfo(1, pk, h, candidates, new Date().getTime() + (1_000 * 5),
+                        CertificateHelper.certificateToPem(daOneCert)),
+                daOneSk
+        );
+
+        assertEquals("should be successful in posting public info to bb", 204,
+                target.path("publicInfo").request().post(Entity.entity(ppi, MediaType.APPLICATION_JSON)).getStatus()
+        );
+    }
+
     @Before
     public void setUp() throws Exception {
         ServerState.getInstance().put("bbState.1", new BulletinBoardState());
@@ -110,7 +128,7 @@ public class TestVoter extends TestUsingBouncyCastle {
     @Test
     public void testSingleVote() throws IOException {
         String id = "id";
-        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, id, 2, null);
+        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, id, 2, null, Paths.get("certs/test_glob.pem"));
         Voter voter = new Voter(conf);
 
         initializeBulletinBoard(edgeTarget);
@@ -127,10 +145,10 @@ public class TestVoter extends TestUsingBouncyCastle {
     }
 
     @Test
-    public void testMultiVote() throws  IOException {
+    public void testMultiVote() throws IOException {
 
 
-        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, null, null, 5);
+        Voter.VoterConfiguration conf = new Voter.VoterConfiguration("https://localhost:" + edgePort, null, null, 5, Paths.get("certs/test_glob.pem"));
         Voter voter = new Voter(conf);
         JerseyWebTarget target = SSLHelper.configureWebTarget(logger, "https://localhost:" + edgePort);
 
@@ -149,24 +167,6 @@ public class TestVoter extends TestUsingBouncyCastle {
         for (PersistedBallot ballot : ballots) {
             assertTrue("Failed to verify ballot", VoteProofUtils.verifyBallot(ballot, pk));
         }
-    }
-
-    private static void initializeBulletinBoard(JerseyWebTarget target) throws IOException {
-        List<Candidate> candidates = Arrays.asList(
-                new Candidate(0, "name1", "desc1"),
-                new Candidate(1, "name2", "desc3"),
-                new Candidate(2, "name3", "desc2")
-        );
-
-        SignedEntity<PartialPublicInfo> ppi = new SignedEntity<>(
-                new PartialPublicInfo(1, pk, h, candidates, new Date().getTime() + (1_000 * 5),
-                        CertificateHelper.certificateToPem(daOneCert)),
-                daOneSk
-        );
-
-        assertEquals("should be successful in posting public info to bb", 204,
-                target.path("publicInfo").request().post(Entity.entity(ppi, MediaType.APPLICATION_JSON)).getStatus()
-        );
     }
 
 }
