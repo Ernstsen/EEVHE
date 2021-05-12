@@ -42,16 +42,15 @@ import static org.junit.Assert.assertTrue;
 public class TestBulletinBoardEdgeCommunication {
     private static final Logger logger = LogManager.getLogger(TestBulletinBoardPeer.class);
     private static final int edgePort = 28081;
+    private static final List<Integer> bulletinBoardPeerIds = Arrays.asList(1, 2, 3, 4);
     private final List<File> files = new ArrayList<>();
-    private BulletinBoardEdge bulletinBoardEdge;
     private final ObjectMapper mapper = new ObjectMapper();
-    private String confPath;
-    private JerseyWebTarget edgeTarget;
-        private static final List<Integer> bulletinBoardPeerIds = Arrays.asList(1, 2, 3, 4);
-//    private static final List<Integer> bulletinBoardPeerIds = Collections.singletonList(1);
     private final Map<Integer, BulletinBoardPeer> bulletinBoardPeers = new HashMap<>();
     private final Map<Integer, JerseyWebTarget> peerTargets = new HashMap<>();
     private final int CONSENSUS_WAIT_TIMEOUT = 2000;
+    private BulletinBoardEdge bulletinBoardEdge;
+    private String confPath;
+    private JerseyWebTarget edgeTarget;
     private ArrayList<Thread> peerThreads;
     private AsymmetricKeyParameter secretKey;
     private String cert;
@@ -175,9 +174,10 @@ public class TestBulletinBoardEdgeCommunication {
                     new TypeReference<SignedEntity<BallotWrapper>>() {
                     });
             List<PersistedBallot> fetchedBallotList = unpack(signedBallotList);
+            fetchedBallotList.sort(Comparator.comparing(BallotDTO::getId));
 
             if (!lastSeenBallotList.isEmpty()) {
-                assertEquals("BB peers does not agree on ballot list length",lastSeenBallotList.size(), fetchedBallotList.size());
+                assertEquals("BB peers does not agree on ballot list length", lastSeenBallotList.size(), fetchedBallotList.size());
                 for (int i = 0; i < lastSeenBallotList.size(); i++) {
                     assertTrue("BBPeers disagreed on ballot in position " + i, lastSeenBallotList.get(i).isSameBallot(fetchedBallotList.get(i)));
                 }
