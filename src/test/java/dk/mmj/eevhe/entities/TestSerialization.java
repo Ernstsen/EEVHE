@@ -24,7 +24,6 @@ import java.util.List;
 
 import static junit.framework.TestCase.*;
 
-@SuppressWarnings("deprecation")
 public class TestSerialization {
     private List<Object> serializables;
 
@@ -84,8 +83,7 @@ public class TestSerialization {
         PersistedBallot persistedBallot = new PersistedBallot(ballot);
         PersistedBallot persistedBallot2 = new PersistedBallot(ballot2);
         serializables.add(persistedBallot);
-        PersistedVote pv1 = new PersistedVote(candidateVoteDTO);
-        serializables.add(pv1);
+
         serializables.add(new PrimePair(new BigInteger("3253"), new BigInteger("3298573493")));
 
         String cert = new String(Files.readAllBytes(Paths.get("certs/test_glob.pem")));
