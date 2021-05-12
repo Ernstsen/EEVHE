@@ -8,7 +8,6 @@ import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static dk.mmj.eevhe.crypto.TestUtils.generateBallots;
@@ -18,10 +17,9 @@ import static dk.mmj.eevhe.crypto.TestUtils.generateKeysFromP2048bitsG2;
 public class BenchmarkBallotVerification {
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
+    @BenchmarkMode(Mode.SingleShotTime)
     @Fork(value = 1)
-    @Measurement(iterations = 1, batchSize = 10)
-    @Timeout(time = 5, timeUnit = TimeUnit.HOURS)
+    @Measurement(iterations = 10, batchSize = 1)
     public void verifyBallots(Blackhole blackhole, BallotState ballotState) {
         List<PersistedBallot> collect = ballotState.ballots.stream()
                 .filter(b -> VoteProofUtils.verifyBallot(b, ballotState.publicKey))
