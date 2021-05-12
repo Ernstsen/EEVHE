@@ -2,10 +2,7 @@ package dk.mmj.eevhe.crypto;
 
 import dk.mmj.eevhe.crypto.keygeneration.KeyGenerationParameters;
 import dk.mmj.eevhe.crypto.keygeneration.PersistedKeyParameters;
-import dk.mmj.eevhe.entities.KeyPair;
-import dk.mmj.eevhe.entities.PersistedVote;
-import dk.mmj.eevhe.entities.PrimePair;
-import dk.mmj.eevhe.entities.PublicKey;
+import dk.mmj.eevhe.entities.*;
 import org.apache.commons.collections4.ListUtils;
 
 import java.math.BigInteger;
@@ -66,23 +63,26 @@ public class TestUtils {
     /**
      * Concurrently generates a big number of votes, with different ID's
      *
-     * @param amount    number of votes
      * @param publicKey public key to use in vote encryption and proofs
-     * @return list of votes
+     * @return list of candidate votes
      */
-    static List<PersistedVote> generateVotes(int amount, final PublicKey publicKey) {
+    static List<CandidateVoteDTO> generateVotes(final PublicKey publicKey) {
         ArrayList<String> ids = new ArrayList<>();
-        for (int i = 0; i < amount; i++) {
+        for (int i = 0; i < TestSecurityUtils.ITERATIONS; i++) {
             ids.add("ID" + i);
         }
 
-        List<List<String>> partitions = ListUtils.partition(ids, amount / 20);
+        List<List<String>> partitions = ListUtils.partition(ids, TestSecurityUtils.ITERATIONS / 20);
 
-        ConcurrentLinkedQueue<PersistedVote> res = new ConcurrentLinkedQueue<>();
+        ConcurrentLinkedQueue<CandidateVoteDTO> res = new ConcurrentLinkedQueue<>();
 
         ArrayList<Thread> threads = new ArrayList<>();
         for (List<String> partition : partitions) {
-            Thread thread = new Thread(new VoteCreator(partition, res, publicKey));
+            Thread thread = new Thread(() -> {
+                for (int i = 0; i < partition.size(); i++) {
+                    res.add(SecurityUtils.generateVote(i%2, partition.get(i), publicKey));
+                }
+            });
             threads.add(thread);
             thread.start();
         }
@@ -98,23 +98,62 @@ public class TestUtils {
         return new ArrayList<>(res);
     }
 
-    private static class VoteCreator implements Runnable {
-        private final List<String> ids;
-        private final Collection<PersistedVote> votes;
-        private final PublicKey publicKey;
 
-        private VoteCreator(List<String> ids, Collection<PersistedVote> votes, PublicKey publicKey) {
+    /**
+     * Concurrently generates a big number of votes, with different ID's
+     *
+     * @param amount    number of votes
+     * @param publicKey public key to use in vote encryption and proofs
+     * @param candidates number of candidates in election
+     * @return list of ballots
+     */
+    static List<PersistedBallot> generateBallots(int amount, final PublicKey publicKey, int candidates) {
+        ArrayList<String> ids = new ArrayList<>();
+        for (int i = 0; i < amount; i++) {
+            ids.add("ID" + i);
+        }
+
+        List<List<String>> partitions = ListUtils.partition(ids, amount / 20);
+
+        ConcurrentLinkedQueue<PersistedBallot> res = new ConcurrentLinkedQueue<>();
+
+        ArrayList<Thread> threads = new ArrayList<>();
+        for (List<String> partition : partitions) {
+            Thread thread = new Thread(new BallotCreator(partition, res, publicKey, candidates));
+            threads.add(thread);
+            thread.start();
+        }
+
+        for (Thread thread : threads) {
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Failed to concurrently create votes", e);
+            }
+        }
+
+        return new ArrayList<>(res);
+    }
+
+    private static class BallotCreator implements Runnable {
+        private final List<String> ids;
+        private final Collection<PersistedBallot> votes;
+        private final PublicKey publicKey;
+        private final int candidates;
+
+        private BallotCreator(List<String> ids, Collection<PersistedBallot> votes, PublicKey publicKey, int candidates) {
             this.ids = ids;
             this.votes = votes;
             this.publicKey = publicKey;
+            this.candidates = candidates;
         }
 
         @Override
         public void run() {
-            ArrayList<PersistedVote> result = new ArrayList<>();
+            ArrayList<PersistedBallot> result = new ArrayList<>();
 
             for (int i = 0; i < ids.size(); i++) {
-                PersistedVote e = new PersistedVote(SecurityUtils.generateVote(i % 2, ids.get(i), publicKey));
+                PersistedBallot e = new PersistedBallot(SecurityUtils.generateBallot(i % candidates, candidates, ids.get(i), publicKey));
                 e.setTs(new Date());
                 result.add(e);
             }

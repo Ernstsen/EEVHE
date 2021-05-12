@@ -31,6 +31,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -42,16 +43,15 @@ import static org.junit.Assert.assertTrue;
 public class TestBulletinBoardEdgeCommunication {
     private static final Logger logger = LogManager.getLogger(TestBulletinBoardPeer.class);
     private static final int edgePort = 28081;
+    private static final List<Integer> bulletinBoardPeerIds = Arrays.asList(1, 2, 3, 4);
     private final List<File> files = new ArrayList<>();
-    private BulletinBoardEdge bulletinBoardEdge;
     private final ObjectMapper mapper = new ObjectMapper();
-    private String confPath;
-    private JerseyWebTarget edgeTarget;
-        private static final List<Integer> bulletinBoardPeerIds = Arrays.asList(1, 2, 3, 4);
-//    private static final List<Integer> bulletinBoardPeerIds = Collections.singletonList(1);
     private final Map<Integer, BulletinBoardPeer> bulletinBoardPeers = new HashMap<>();
     private final Map<Integer, JerseyWebTarget> peerTargets = new HashMap<>();
     private final int CONSENSUS_WAIT_TIMEOUT = 2000;
+    private BulletinBoardEdge bulletinBoardEdge;
+    private String confPath;
+    private JerseyWebTarget edgeTarget;
     private ArrayList<Thread> peerThreads;
     private AsymmetricKeyParameter secretKey;
     private String cert;
@@ -139,6 +139,14 @@ public class TestBulletinBoardEdgeCommunication {
     }
 
     private <T extends Wrapper<?>> void assertEdgeReceivedCorrectDataFromPeers(String path, TypeReference<List<SignedEntity<T>>> typeReference) throws JsonProcessingException {
+        assertEdgeReceivedCorrectDataFromPeers(
+                path,
+                typeReference,
+                (lastSeen, current) -> assertEquals("Bulletin Board Peers do not agree", lastSeen, current));
+    }
+
+    private <T extends Wrapper<?>> void assertEdgeReceivedCorrectDataFromPeers(String path, TypeReference<List<SignedEntity<T>>> typeReference,
+                                                                               BiConsumer<SignedEntity<T>, SignedEntity<T>> equalityAssertion) throws JsonProcessingException {
         // Assert that edge retrieves correct data from peers
         String listOfSignedWrapperStrings = edgeTarget.path(path).request().get(String.class);
         List<SignedEntity<T>> listOfSignedWrappers = mapper.readValue(listOfSignedWrapperStrings, typeReference);
@@ -146,7 +154,7 @@ public class TestBulletinBoardEdgeCommunication {
         SignedEntity<T> lastSeenSignedWrapper = null;
         for (SignedEntity<T> signedWrapper : listOfSignedWrappers) {
             if (lastSeenSignedWrapper != null) {
-                assertEquals("Bulletin Board Peers do not agree", lastSeenSignedWrapper, signedWrapper);
+                equalityAssertion.accept(lastSeenSignedWrapper, signedWrapper);
             }
 
             assertEquals("List should be of size 1", 1, ((List<?>) signedWrapper.getEntity().getContent()).size());
@@ -175,9 +183,10 @@ public class TestBulletinBoardEdgeCommunication {
                     new TypeReference<SignedEntity<BallotWrapper>>() {
                     });
             List<PersistedBallot> fetchedBallotList = unpack(signedBallotList);
+            fetchedBallotList.sort(Comparator.comparing(BallotDTO::getId));
 
             if (!lastSeenBallotList.isEmpty()) {
-                assertEquals("BB peers does not agree on ballot list length",lastSeenBallotList.size(), fetchedBallotList.size());
+                assertEquals("BB peers does not agree on ballot list length", lastSeenBallotList.size(), fetchedBallotList.size());
                 for (int i = 0; i < lastSeenBallotList.size(); i++) {
                     assertTrue("BBPeers disagreed on ballot in position " + i, lastSeenBallotList.get(i).isSameBallot(fetchedBallotList.get(i)));
                 }
@@ -189,7 +198,13 @@ public class TestBulletinBoardEdgeCommunication {
         }
 
         assertEdgeReceivedCorrectDataFromPeers("getBallots", new TypeReference<List<SignedEntity<BallotWrapper>>>() {
-        });
+                },
+                (last, current) -> {
+                    assertEquals("Content differed in length", last.getEntity().getContent().size(), current.getEntity().getContent().size());
+                    for (int i = 0; i < last.getEntity().getContent().size(); i++) {
+                        assertTrue("BBPeers disagreed on ballot in position " + i, last.getEntity().getContent().get(i).isSameBallot(current.getEntity().getContent().get(i)));
+                    }
+                });
     }
 
     @Test

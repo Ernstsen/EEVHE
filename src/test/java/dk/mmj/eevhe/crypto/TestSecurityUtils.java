@@ -325,28 +325,13 @@ public class TestSecurityUtils {
         KeyPair keyPair = generateKeysFromP2048bitsG2();
         PublicKey publicKey = keyPair.getPublicKey();
 
-        List<? extends CandidateVoteDTO> votes = generateVotes(ITERATIONS, publicKey);
+        List<? extends CandidateVoteDTO> votes = generateVotes(publicKey);
 
         CipherText oldSum = SecurityUtils.voteSum(votes, publicKey);
 
         CipherText concSum = SecurityUtils.concurrentVoteSum(votes, publicKey, ITERATIONS / 10);
 
         assertEquals("Sums did not match.", oldSum, concSum);
-    }
-
-    @Test
-    public void benchmarkFilter() {
-        KeyPair keyPair = generateKeysFromP2048bitsG2();
-        PublicKey publicKey = keyPair.getPublicKey();
-        long endTime = new Date().getTime() + 5000;
-
-        List<PersistedVote> votes = generateVotes(ITERATIONS, publicKey);
-
-        List<PersistedVote> collect = votes.stream().filter(v -> v.getTs().getTime() < endTime).collect(Collectors.toList());
-
-        List<PersistedVote> collectConc = votes.stream().filter(v -> v.getTs().getTime() < endTime).collect(Collectors.toList());
-
-        assertEquals("Filters did not match in results", collect.size(), collectConc.size());
     }
 
     private BallotDTO generateBallot(int candidates, List<Integer> chosenVotes, PublicKey publicKey, String id) {
